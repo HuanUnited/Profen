@@ -1,0 +1,602 @@
+Writing this document started at 18:00 01.01.2026 (such a nice number)
+
+Phase 1: Problem & Vision Clarity
+1. Current vs Desired State
+- The current app aside from being built on electron which makes the loading bulky (also since I lack control over its initial creation i cannot optimize it as well.), though it suprisingly works for its intended original use, I find that I wanted to add more complexity to the application, mainly building on the implementation of FSRS for spaced repetition and problem suggestion, as well as designing a more streamlined UI/UX. The data structure and architecture was also not clear at the time and with the growing need and implementation of FSRS SQLite isn't cutting it anymore and there is a real need to expand and use a different engine for my data management.
+- There is also a lack of modularity and composition in the initial iteration which makes adding new features and optimizations impossible with how the operations link and function (also due to lack of control and documentation that makes tackling the codebase much much harder)
+- A significant improvement would be better modularity and architecture, redesigned for optimal performance mainly the ability to analyze data, make suggestions and optimizations for the spaced repetition system as the user's skill grows when learning.
+
+2. The Subject → Topic → Problem/Theory → Attempt → Error Model.
+- This heirarchy matters due to first the nature of exporting the database as a machine readable file (the initial intentions of the mastery learning application). The hierarchy also allows for better implementation of business logic as the older hierarchy was much more interlinked and frankly not well planned out (again emphasis on lack of control). 
+- This hierarchy also works well with the evolving complexity of the system, allow for the implementation of the FSRS and suggestion system for problems and theories without having to break apart it's inner components for queries.
+- FSRS integrates with this model by having an explicit FSRS "card" for each piece of problem / theory, based on this card with FSRS's initial parameters and settings as well as weights by applying the evolving difficulty system (allowing the user to determine the difficulty of the problem or theory iteratively over their attempts at solving/learning to adjust the suggestion and spaced repetitions accordingly, as well as illustrating the users fluency on the current topic / problem), the error solved system (given error types have weights that determine the suggestability and spaced repetition patterns of their problem / theory). This only applies to the problem / theory level and not accross the entire hierarchy.
+- Tracking at the problem theory level depends on their difficulty (does not have a default value, instead set after its first learning/solving attempt) across the timeline and its changes, their errors (resolved and unresolved), the number of their learning / solving attempts.
+
+3. Scope Boundaries
+- As of now: {Avoid Real-time Collaboration: Do not build multi-user sync or live editing. Keep the database local-first (SQLite/PostgreSQL local) to focus on the FSRS performance.
+Avoid Manual File Versioning: Don't build a Git-like version control for text. Use the snapshot_json in your attempts table to capture how your understanding changed over time instead of versioning the theory node itself.
+Limit Multi-Media Hosting: Don't build an image hosting service. Store images as local file paths or Base64 in your metadata JSONB to keep the architecture portable.}
+- If there is anything else, give me suggestions.
+- Implanning to build incrementally from the most independent parts to the parts that depend the most on the its predecessors.
+- That means I want to approach it in a manner where by the end I have a working product not just minimally viable.
+
+Phase 2: Architecture & Design
+4. Data Architecture.
+- So making notes on the data architecture so far.
+- We'll be having these entitites: Subject, Topic, Problem, Theory, Attempts (as of now im determining whether to have them separated as Theory Attempts and Problem Attempts), Errors, Resolutions, and an FSRS entity that links to a problem or piece of theory that allows for the operation of the FSRS spaced repetition algo and the suggestion engine (these are two separate pieces).
+- We'll be implementing a hierarchy and graph infrastructure as follows
++ We utilize a Hybrid Adjacency List + Closure Table for the tree structure (ancestor descendant relations between subject topic, topic problem, topic theory, problem attempt, theory attempt, and attempt error) and a Junction Table (problem theory, theory theory, problem problem) for the graph links.
++ Tables:
+
+++ Table (nodes) - for the adjacency list
+node_id (PK, UUID): Unique identifier.
+parent_id (FK): References nodes.node_id. NULL for root "Subjects".
+type: ENUM ('subject', 'topic', 'problem', 'theory','term').
+body (TEXT): The educational content stored in Markdown (single multi modal markdown field that allows to store latex, code snippets, images etc)
+metadata: JSONB: Store image dimensions or code language flags.
+created_at: Timestamp for versioning.
+
+++ Table (node_closure) - closure table:
+Stores all ancestor-descendant paths for efficient querying.
+ancestor_id (FK): References nodes.node_id.
+descendant_id (FK): References nodes.node_id.
+depth (INT): Distance between ancestor and descendant (0 for self).
+
+++ Table (node_associations) - Junction Table / Graph
+Enables bi-directional multiplicity (e.g., Problem links to a Theory).
+source_id (FK): References nodes.node_id.
+target_id (FK): References nodes.node_id.
+rel_type: ENUM ('prerequisite', 'example','tests', 'similar_to','defines,'translation','translated_from,'variant_of','source_variant').
+Constraint: CHECK (source_id < target_id) to prevent duplicates and circular references.
+
+++ Table (fsrs_cards):
+These fields exist solely for the FSRS algorithm (v6 standard) and should be isolated in their own table to maintain independence.
+node_id (FK): Unique reference to the nodes table.
+Stability (s): Float. The number of days it takes for retention to drop to 90%.
+Difficulty (d): Float. A value from 1–10 representing the complexity of the node.
+Last Review (last_review): Timestamp of the previous attempt.
+Last Elapsed Days (elapsed_days): Days since the review before the last one.
+Scheduled Days (scheduled_days): The interval (in days) predicted by FSRS.
+Weights (w): JSONB. Stores the 17–20 optimizable weight parameters (w0–w19) specific to the user's memory pattern.
+
+// There is also now the idea of implementing a suggestion engine and mastery tracking system:
+This engine runs concurrently with FSRS to pull content based on unresolved gaps rather than just time. (problem theory reviewing suggestions based on their relation attempts, errors dif, etc)
+
+++ Table: attempts (Input Log)
+attempt_id (PK): Unique ID for each solve/study event.
+node_id (FK): Problem/Theory attempted.
+grade (INT): 1 (Again), 2 (Hard), 3 (Good), 4 (Easy).
+time_limit_seconds (INT): Pulled from the nodes metadata at the start of the attempt.
+actual_duration_seconds (INT): Recorded on submission.
+is_timed_out (BOOLEAN): Flag if the user exceeded the limit.
+created_at (date): self explanatory.
+snapshot_json: LLM Synergy Field. Stores a JSON object of the user's raw input at that moment for later analysis.
+// Note: FSRS grades (1–4) should be penalized (e.g., forced "Hard" or "Again") if is_timed_out is true, even if the answer was correct.
+
+
+++ Table: error_resolutions (Diagnostic Engine)
+error_id (PK): Reference to an error_types master table.
+node_id (FK): Where the error occurred.
+is_resolved (BOOLEAN): Current state.
+weight_impact (FLOAT): How much this error should prioritize the node in the suggestion queue.
+
+++ Table: error_types (Dynamic Master Table)
+error_type_id (PK, UUID)
+label (TEXT): e.g., "Calculation Error," "Syntax Lapse."
+is_system (BOOLEAN): True for default types; False for user-defined.
+base_weight (FLOAT): Default impact on the suggestion engine
+
+
+// There are thoughts of LLM usage for rapid solutions / learning feedback, that will be reflected here:
+To facilitate rapid feedback through local LLMs or exports, use a Context-Snapshot View.
+Engineered Prompt Metadata:
+prompt_template: A text field containing system instructions (e.g., "Analyze the following LaTeX solution for logical fallacies...").
+machine_context: A generated JSON field containing the full path from the node_closure table (e.g., ["Math", "Calculus", "Derivatives"]).
+
+Summary of RelationsHierarchy: nodes (1) \(\rightarrow \) (N) nodes (Self-ref parent/child).Lookup: nodes (1) \(\rightarrow \) (N) node_closure (Paths for analysis).Cross-Links: nodes (M) \(\leftrightarrow \) (N) nodes via node_associations (Graph links).Learning State: nodes (1) \(\leftrightarrow \) (1) fsrs_cards (Scheduling data).Diagnostic: attempts (1) \(\rightarrow \) (N) error_resolutions (Tracking gaps). Creating a public link...
+
+// The translation loop for dictionary implementation:
++ {The Translation Loop: To facilitate "Learning to encode it into Russian again," you create a specific Attempt Type.
+Attempt Table Update: Add a mode field to the attempts table: ENUM('retell', 'translate_to_target', 'translate_to_source', 'solve').
+FSRS Impact: FSRS treats the "Russian -> English" card and the "English -> Russian" card as two separate fsrs_cards entries linked to the same node. This allows you to be "Good" at recognizing a word but "Hard" at recalling (encoding) it.}
++{-- Table: dictionary_metadata (Optional, or use JSONB in nodes)
+-- Specifically for linguistic features
+{
+  "part_of_speech": "noun",
+  "transliteration": "teoriya",
+  "language": "ru-RU"
+}}
+
+// Multi-Source Theory Consolidation
++ {To handle "importing variations of the same theory from different sources," you should avoid duplicating the primary Theory node. Instead, use a Version/Source pattern.
+Theory Variations: Create a theory_variants table or use the node_associations table with a rel_type of 'variant_of'.
+The "Expanded" Theory: When you import a new source, it becomes a new theory node. You link it to the "Master" theory node.
+UI/UX Implementation: Your suggestion engine can then "merge" these variants into a single study session, showing you: "Source A explains this using X, but Source B adds the context of Y."}
+
+// Attempt Type: Review/Retell Logic
++ {For the "Retell (English to English)" or "Review (English to Russian)" modes:
+Selection: The Suggestion Engine identifies a theory node due for review via FSRS.
+Mode Trigger: Based on your "Fluency" score (calculated from previous attempts), the engine selects the mode.
+Low Fluency: Simple review (English to English).
+High Fluency: Encoding challenge (English to Russian).
+Validation: Use the LLM Synergy Field. The user types/speaks their "Retell" attempt; the LLM compares the snapshot_json against the nodes.body (the source theory) and returns a grade (1-4) for the FSRS algorithm.}
+
+// Notes while writing planning this section
++ another thing of note here is rapid feedback for the learning process, if we could somehow implement the database and application in a way where we could either hook it into an LLM api (i'm not thinking of it though since i'm too poor to afford api keys) or allow for an immediate machine readable json export (say letting the LLM that reads the json know the specific subject, topic, problem, the current exported attempt, solution and errors - with the solution being written in rich text like markdown style) that can allow for better error detection, optimal unoptimal solutions detection and immediate feedback for the user.
++ I also have a problem suggestion engine that runs alongside the fsrs algo, while the fsrs algo works with spaced repetition, the problem suggestion engine allows us to bypass the long amounts of time between problems and helps us pull and suggest 1. solved problems (each problems have a solved/unsolved state) or mastered theories (each theory has a mastered/non-mastered state) that have a longer spaced repetition date. 2. Suggest similar problems (this means we'll need to figure out how to define problems as similar). 3. Suggest unsolved problems / problems with unresolved errors or pull from the due date.
++ {To suggest "Similar" problems (item #2 in your list), use Feature-Based Tagging combined with your Closure Table.
+Hierarchical Similarity: Two problems are similar if they share the same immediate Topic_ID.
+Error-Type Similarity: Two problems are similar if they have historically triggered the same Error_Type_ID.
+Tag-Based Similarity: If your Related_Content table has a "Similar_To" link, that is an explicit similarity.
+Scoring: Create a simple heuristic: Similarity Score = (Shared Topic * 2) + (Shared Errors * 3) + (Explicit Links * 5).}
+
++{The Three-Queue Suggestion Engine
+Since your engine runs alongside FSRS to bypass long wait times, you should implement a Priority Queue architecture that merges three distinct streams:
+Stream 1: The Maintenance Stream (FSRS-Led)
+Focus: Problems "Due" or "Overdue."
+Query: SELECT * FROM FSRS_Cards WHERE due_date <= NOW() ORDER BY stability ASC.
+Stream 2: The Diagnostic Stream (Unresolved Errors)
+Focus: Your "Resolution" entity (item #3 in your list).
+Query: SELECT * FROM Error_States WHERE is_resolved = FALSE.
+Action: This stream "bypasses" the FSRS date because the user is fundamentally lacking a concept, regardless of the spaced repetition schedule.
+Stream 3: The Mastery Stream (Solved/Mastered)
+Focus: Keeping high-stability nodes "fresh" (item #1 in your list).
+Query: SELECT * FROM Nodes WHERE state = 'Solved' AND last_review > 30 days.
+Action: This stream pulls from the "back of the deck" to ensure long-term retention of mastered content during periods of high fluency.}
+
++{4. Database Architecture for "Solved/Mastered" States
+To keep the FSRS algorithm pure, do not store "Solved" or "Mastered" within the FSRS weights.
+State Table: Create a Node_Mastery table.
+node_id, is_mastered (Boolean), consecutive_correct_count.
+Trigger: When an Attempt is logged with a "Good" or "Easy" rating and the FSRS stability reaches a certain threshold (e.g., 100 days), the database sets is_mastered = TRUE.}
+
++{what if i wanted to add a dictionary feature (most just new words and their definitions) along with words being connected to the theories (for example having the source theory in russian, translating it into english to study and then learning to encode it into russian again (can connect to multiple theory) and a attempt type that allows me to review (retell / review theory - english to english, english to russian), able to import variations of a the same theory from different sources in order to expand our learning}
+
+5. FSRS Integration
++ Atomic Updates: Ensure that when an Attempt is logged, a database transaction updates both the FSRS_Cards (for scheduling) and the Error_States (for diagnostics) simultaneously.
++ FSRS as a "Black Box": Keep your FSRS parameters (w1 through w17) in a separate configuration table. This allows the algorithm to stay pure and mathematical, relying only on the Attempts history for that specific node without being "polluted" by the hierarchical structure.
++ FSRS as described above does not know about the relations between problem and theory.
+
+5.5. Problem suggestion algorithm
++ Diagnostic Suggestions: By having a separate Resolution entity, you can implement logic such as: "If Error X is unresolved, increase the difficulty weight of all Problems linked to Theory Y." This achieves the "suggestion" behavior you want without changing the core FSRS code.
++ Details as listed above, expand with questions if needed.
+
+6. UI/UX Flows
+- Let's take a look at the QOL improvements first
++ Improved dashboard, with stats, heatmap, streak tracking, plugins (maybe we could add a plugin system similar to ankis but that's stretching things too far), data analytics of our study progress, mastery, quick review window, suggesting problems.
++ Modals for problem and theory viewing and attempting.
++ Timer with implemented studying phases, and enhanced guideline viewing (for when we forget what we need to do)
++ Dictionary (as listed above)
+
+- Workflows:
+
+1. Workflow: Create or Expand a Theory (Multi-Source)
+This workflow handles adding a new theory or importing a variation from a different source (e.g., Russian source vs. English translation).
+Inbound Data:
+Content: Multi-modal Markdown (text, LaTeX, code).
+Context: parent_id (Topic), type ('theory'), and metadata (Source URL/name).
+Relationships: target_id of an existing node to link as a source_variant or prerequisite.
+Process:
+Create entry in nodes.
+Update node_closure to map its position in the Subject → Topic hierarchy.
+Create node_associations links (e.g., Russian Theory ↔ English Theory).
+Initialize an fsrs_cards entry with default starting stability and difficulty.
+Outbound Data: Success confirmation and the new node_id.
+
+2. Workflow: Dictionary Term Extraction
+Triggered when a user identifies a "new word" within a Theory or Problem.
+Inbound Data:
+Term: The specific word/phrase.
+Definition: The meaning (in the same or target language).
+Origin: The node_id of the Theory/Problem where the word was found.
+Process:
+Create a new node of type 'term'.
+Create a node_associations entry with rel_type: 'defines' linking the Theory to the Term.
+If a translation is provided, create a second 'term' node and link them via rel_type: 'translated_from'.
+Generate separate fsrs_cards for the Term (Recognition) and the Translation (Encoding).
+Outbound Data: Visual confirmation of the term being "linked" in the source text.
+
+3. Workflow: Smart Attempt (The Learning Loop)
+This is the core "study" session, which varies by mode (e.g., Russian → English translation or English → English retelling).
+Inbound Data:
+User Input: Raw text or selected grade (1–4).
+Metadata: attempt_mode (e.g., 'retell', 'translate'), duration, and the node_id.
+Process:
+Validation: If it's a "Retell" attempt, the LLM compares user input against the nodes.body and suggests a grade.
+Log: Create a record in attempts with a snapshot_json of the user's input.
+FSRS Update: Input the grade into the FSRS algorithm to calculate new Stability, Difficulty, and scheduled_days in fsrs_cards.
+Error Check: If errors are flagged, update the error_resolutions table to adjust the node's priority in future suggestions.
+Outbound Data: Next scheduled review date and immediate feedback (Correct/Incorrect/LLM Analysis).
+
+4. Workflow: Review Analytics & Mastery Tracking
+This workflow provides the "Suggestion Engine" logic and visual progress.
+Inbound Data:
+Current timestamp.
+Scope filter (e.g., "Show me analytics for 'Russian History' topic").
+Process:
+Query: Join nodes, fsrs_cards, and error_resolutions to find nodes where scheduled_days has elapsed OR is_resolved is False.
+Calculate: Aggregate "Fluency" by averaging Difficulty and Stability across a Topic's descendants in node_closure.
+Visualize: Generate a graph showing the "forgetting curve" and the growth of the dictionary/links.
+Outbound Data: A prioritized "Next Up" queue of Problems/Theories and a mastery percentage for the Subject/Topic.
+
+5. Workflow: Create or Import a Problem
+This workflow establishes the "Challenge" and links it to the "Support" (Theory).
+Inbound Data:
+Problem Statement: Markdown/LaTeX content describing the challenge.
+Reference Links: source_id (the Theory it tests).
+Validation Logic: Correct answer, test cases, or an "LLM Rubric" for open-ended solutions.
+Difficulty Seed: User's initial estimate (1–10).
+Process:
+Create node (type: 'problem').
+Update node_closure for hierarchy (Topic → Problem).
+Create node_associations (Rel: 'example_of' or 'tests') to the Theory node.
+Initialize fsrs_cards entry for the Problem.
+Outbound Data: A new problem entry accessible from the "Related Problems" view of its parent Theory.
+
+6. Workflow: Problem Solving Attempt (Active Recall)
+Unlike Theory review, this includes a "Solution" step that interacts with your Error Tracking system.
+Inbound Data:
+User Solution: Code, text, or a specific answer.
+Diagnostic Signal: If the user gets it wrong, they select an Error Type (e.g., "Calculation Error," "Misunderstood Russian Term").
+Process:
+Grade Assignment: If the solution is self-graded (1–4) or LLM-validated.
+FSRS Update: Update Stability/Difficulty in fsrs_cards.
+Error Logging: If a grade is < 3 (Hard/Again), create/update a record in error_resolutions.
+Association Weighting: Increase the weight_impact for linked Theory nodes, signaling the suggestion engine that you need to re-study the underlying Theory.
+Outbound Data: Step-by-step feedback and an updated "Mastery" score for that problem.
+
+7. Workflow: Error Resolution (The "Gap" Closer)
+This is a unique workflow for Problems where you revisit specifically unresolved errors.
+Inbound Data:
+Filter: is_resolved = False.
+Process:
+Suggestion Engine: Pulls problems where errors exist, even if the FSRS scheduled_days hasn't arrived yet.
+Re-Attempt: User solves the problem again.
+Resolution: If successful, toggle is_resolved = True.
+Outbound Data: Updated diagnostic dashboard showing a reduction in "Gap" areas.
+
+Phase 3: Technical Decisions
+7. Tech Stack Confirmations
+- We'll be using Wails, Golang, and PostgreSQL (pg_embed for embedded PostgreSQL) for the backend. With React + Typescript + Tailwind and prebuilt UI packs like shadcn for the front end.
+- It will be local first (currently not thinking of syncing or different platforms)
+
+8. Code Organization
++ Split everything as per the above architecture.
+
+
+"Presentation (UI)	User Interaction & Visual State	React, Tailwind CSS, TypeScript interfaces for binding.
+Bridge (Wails)	Frontend-Backend Communication	Go structs bound to Wails; handles command routing.
+Application (Logic)	Business Workflows	"Study Sessions," "Dictionary Management," "Mastery Tracking."
+Domain (Core)	Business Rules & Entities	FSRS algorithm, Node hierarchy models, Error weight definitions.
+Infrastructure (Data)	Persistence & External Tools	Postgres queries (pgx), Ent ORM, Local LLM integration."
+
++ Each section should definitely map to a folder structure.
+/profen
+├── cmd/
+│   └── profen/             # Main entry point (main.go, config initialization)
+├── internal/
+│   ├── app/                # Application Layer: Orchestrates business flows
+│   │   ├── study.go        # Logic for a "Study Session" attempt
+│   │   ├── dictionary.go   # Logic for term extraction & translation loops
+│   │   └── analyzer.go     # Suggestion engine using FSRS and Error data
+│   ├── domain/             # Domain Layer: Core entities and FSRS logic
+│   │   ├── fsrs/           # FSRS v6 algorithm (Stability, Difficulty, Retrievability)
+│   │   ├── node.go         # Node interface (Subject, Topic, Problem, Theory)
+│   │   └── error.go        # Error weight and resolution logic
+│   ├── data/               # Infrastructure Layer: Postgres & Ent
+│   │   ├── postgres/       # SQL queries, migrations, and pgx pool setup
+│   │   └── ent/            # Generated Ent ORM schemas for the graph
+│   └── platform/           # Platform helpers (Logging, LLM wrappers via Ollama)
+├── frontend/               # React + TypeScript Frontend (Standard Wails folder)
+│   ├── src/
+│   │   ├── components/     # Atomic UI (Cards, Graph Viewers, Dictionary UI)
+│   │   ├── hooks/          # TanStack Query hooks for study attempts
+│   │   └── wailsjs/        # AUTO-GENERATED: Go-to-TS bindings
+├── build/                  # Platform-specific build assets (icons, installers)
+├── wails.json              # Wails project configuration
+└── go.mod                  # Go dependencies
+
+
+Phase 4: Modularity & Implementation Strategy
+"Inside-Out" Strategy. Building the backend first then the UI as a shell.
+
+1. The Foundation The Data Model & Node Engine is the absolute foundation. Everything in Profen—from the dictionary to the FSRS scheduling—rely on the node and node_closure tables. If the hierarchy logic is broken, the suggestion engine will fail. 
+
+2. Six Distinct Work Blocks Each block must be fully functional (Go backend + unit tests) before moving to the next. 
++ Block 1: The Core Graph (Go + Postgres):Setup Postgres with pg_embed.Implement the Ent ORM schema: nodes, node_closure, and node_associations.
+Validation: Script that creates a 5-level Subject \(\rightarrow \) Topic \(\rightarrow \) Theory hierarchy and retrieves all descendants in < 10ms.
+
++ Block 2: The FSRS Engine (Math & Persistence):Implement FSRS v6 logic in Go.Create the fsrs_cards table linked to nodes.Validation: Unit tests ensuring that a "Grade 1 (Again)" result correctly drops Stability and schedules a review for < 1 day.
+
++ Block 3: The Translation Loop (Dictionary & Bilingual logic):Build the term node type and the translated_from association logic.Implement "Dual-Card" initialization (one card for Russian \(\rightarrow \) English, one for English \(\rightarrow \) Russian).
+
++ Block 4: The Suggestion Engine (Analytics & Priority):Write the Postgres Recursive CTEs that find "Unresolved Errors" and "Due Cards."Build the priority queue logic (combining FSRS due dates + error weights).
+''' --SQL
+-- Conceptual Query for Stream 2: Diagnostic Gaps
+WITH RECURSIVE topic_hierarchy AS (
+    -- Get the current topic and all its sub-problems/theories
+    SELECT descendant_id FROM node_closure WHERE ancestor_id = :current_topic_id
+)
+SELECT n.node_id, er.weight_impact
+FROM nodes n
+JOIN error_resolutions er ON n.node_id = er.node_id
+WHERE n.node_id IN (SELECT descendant_id FROM topic_hierarchy)
+  AND er.is_resolved = FALSE
+ORDER BY er.weight_impact DESC
+LIMIT 5;
+
+'''
+
+
++ Block 5: The Attempt Interface (Wails + React):Connect the frontend to the backend "Attempt" service.Create the UI for "Retell" (Markdown viewer) and "Problem Solving" (Input fields).
+
++ Block 6: LLM Diagnostic Integration: As for now just exporting the snapshot_json from attempts. 
+
++ Block 7: The Optimizer: Create a background Go routine that triggers after every 1,000 attempts.
+{Function: It fetches all historical attempts (grade + interval), runs the FSRS-rs optimization (via CGO or a Go port), and calculates new global Weights (w0–w19).
+Storage: These optimized weights are saved in a global_settings table and used as the "Seed" for any new fsrs_cards}
+
+3. Definition of "Done" A feature is done when: 
++ Back-end: 80% unit test coverage for the Go package.
++ Front-end: The Wails binding generates TypeScript interfaces without errors.
++ Data Integrity: A "History Log" entry is created in the attempts table for every action.
++ FSRS Validation: Use the FSRS Benchmark tool logic to simulate 1,000 reviews and ensure the "Predicted Retention" matches the actual simulated success rate.
+
+Phase 5: Documentation & Knowledge Capture
+
+1. Architecture Decision Records
+
+2. Schema Blueprints
+
+3. Implementation Records.
+
+4. Workflow Diagrams
+
+5. README.md
+
+
+// Additional Notes:
+I'll continue to answer questions and add notes to this file as part of the documentation process. 
+
+1. Block 1 Validation – Realistic Success Criteria?
+You wrote: "Script that creates a 5-level Subject → Topic → Theory hierarchy and retrieves all descendants in < 10ms."
+Question: Have you actually measured what "< 10ms" means on your machine with realistic data sizes? (How many descendants are we talking? 100? 10,000?) Is this a hard constraint or a "nice-to-have"?
+Answer: I'd set it for about 1000 to 5000 descendants, not technically a hard constraint but it's whats needed for a users growing knowledge base.
+
+2. Block 4 (Suggestion Engine) – Fuzzy vs. Concrete
+Your suggestion logic has three streams (Maintenance/FSRS, Diagnostic/Errors, Mastery/Fresh). But I see potential complexity:
+Scoring heuristic: (Shared Topic * 2) + (Shared Errors * 3) + (Explicit Links * 5) – Where did these weights come from? Have you thought about how to tune them?
+Answer: Weights come from the numbers of explicitly, if there are shared topics between the problems (only one actually since its more likely for problems to be from the same topic), if they have similar errors (we need to define error types, for example when we have an input we can make autosuggestions for the errors), and if there exists any explicit links between the problems (eg two problems linked to the same theory)
+
+Recursive CTEs in Postgres – You'll need these for hierarchical queries. Have you written a sample query yet, or is this a "figure it out during implementation" moment?
+Question: Do you have a working prototype query for "find all problems with unresolved errors that link to a theory I just studied"? Or is Block 4 partially speculative at this point?
+Answer: I'll need to figure this thing out before we get to its development.
+
+3. The "Inside-Out" Strategy – Frontend Timing?
+You're building Blocks 1–4 (backend only) before touching React. That's smart for isolation testing.
+Question: At what point does Block 5 (Wails + React) happen? Is it:
+After Block 4 is fully complete and tested, OR
+In parallel with Block 6 (LLM integration)?
+Answer: Block 5 is in parallel with block 6 (technically block 6 is just a button that allows for an immediate export of a json file), and exists after block 4 is fully complete and tested.
+
+And who defines the React component structure—you (the designer), or does it emerge from the Wails bindings?
+Answer: Components (if i understand correctly visual elements) will be inheritance by composition based (base component, expansions, etc). While hooks between the front and back largely depend on the wail bindings and application layers. (with some additional modular elements being completely local to the front-end (we need to figure out how to implement a streak/heatmap without fucking up our backend, i thought about this too late)
+
+I forgot some important details that are core to this apps implementations. first, the time taken for each attempt should be recorded, all attempts have a time limitation. There should be an error_types table or Enum that allows for base error types as well as user added error types.
+
+Offline availability is based on the embedded postgresSQL (for user simplicity, i don't know if this will mess with our tech stack)
+
+Fsrs weights will be hard coded by default for all problems/ theory (we can add an fsrs optimization function based on our cards, similar to what anki has), but i haven't detailed this out yet.
+
+I'll dynamically answer these questions and add them back into the original SDLC documentation on top.
+
+// Added:
+
++ 5.6 Expanded Diagnostic & Timing Logic
+To address your note on time limitations and error types, we need to refine the attempts and error_types structures.
+
+Table: error_definitions (Dynamic Master Table)
+Instead of a rigid Enum, a table allows for the user-added flexibility you mentioned.
+error_type_id (PK, UUID)
+label (TEXT): e.g., "Calculation Error," "Syntax Lapse."
+is_system (BOOLEAN): True for default types; False for user-defined.
+base_weight (FLOAT): Default impact on the suggestion engine.
+
+Table: attempts (Updated)
+time_limit_seconds (INT): Pulled from the nodes metadata at the start of the attempt.
+actual_duration_seconds (INT): Recorded on submission.
+is_timed_out (BOOLEAN): Flag if the user exceeded the limit.
+created_at (date): for heatmap / streak implementation.
+
+Note: FSRS grades (1–4) should be penalized (e.g., forced "Hard" or "Again") if is_timed_out is true, even if the answer was correct.
+
++ Suggestion Engine: Block 4 "Fuzzy to Concrete" -- written query
+
++ Analytics & Quality of Life (The "Streak" Problem)
+Implementation Strategy: Do not create a "Streak" table. Instead, create a Database View.
+The Logic: A streak is just a calculation of consecutive days with at least one entry in the attempts table.
+Frontend vs. Backend: * Backend: Provides a Go function GetActivityHeatmap(year int) that runs a simple COUNT grouped by date(created_at).
+Frontend: The React layer takes that JSON array and renders the GitHub-style squares. This keeps the backend "pure" while providing the data the UI needs.
+
++ FSRS Optimization Worker (Block 7)
+
+// Answering Questions 2.
+
+1. Block 4 – The Recursive CTE Query (You Said "Figure It Out Later")
+Challenge: Write a pseudocode or actual SQL query for this:
+
+"After a user completes a study attempt on Theory X, find all Problems that:
+Link to Theory X (via node_associations with rel_type = 'tests' or 'example')
+Have unresolved errors (is_resolved = FALSE in error_resolutions)
+Rank them by weight_impact (highest first)
+Return top 5"
+
+''' --SQL
+-- Find problems linked to Theory :id with unresolved errors, ranked by impact.
+SELECT 
+    n.node_id, 
+    n.body,
+    SUM(er.weight_impact) AS total_impact
+FROM nodes n
+JOIN node_associations na ON n.node_id = na.source_id
+JOIN error_resolutions er ON n.node_id = er.node_id
+WHERE na.target_id = :current_theory_id
+  AND na.rel_type = 'tests'          -- Explicit link: Problem tests Theory [cite: 107, 110]
+  AND er.is_resolved = FALSE         -- Only unresolved gaps [cite: 41, 119]
+  AND n.type = 'problem'             -- Ensure we are pulling problems [cite: 22]
+GROUP BY n.node_id
+ORDER BY total_impact DESC;          -- Prioritize the "messiest" problems first [cite: 41]
+LIMIT 5;
+'''
+
+2. FSRS Weights – Default Values & Optimization
+You wrote:
+"FSRS weights will be hard coded by default for all problems/theory (we can add an fsrs optimization function based on our cards, similar to what anki has), but i haven't detailed this out yet."
+
+Questions:
+a) Where do the default weights come from?
+Are you using FSRS v6's published defaults? (w0, w1, ... w19)
+Or are you deriving them empirically from your current Electron app?
+This matters for Block 2 implementation.
+Answer: Firstly comes from the FSRS default weights, then the user optimized weights when they change.
+
+b) The optimization worker (Block 7):
+You mention "runs the FSRS-rs optimization (via CGO or a Go port)"
+Do you have a concrete plan, or is this speculative?
+Specifically: Will you call out to the official FSRS library, or port the algorithm yourself?
+Answer: {
+For Scheduling (Block 2/4): Use the existing go-fsrs library.
+Status: This is an official community-maintained Go port.
+Role: It handles the day-to-day logic (calculating the next Stability, Difficulty, and Interval when a user makes an attempt).
+Limitation: It is a "Scheduler-only" library. It cannot generate the weights (the 17–21 parameters) from a user’s history; it can only apply them.
+
+For Optimization (Block 7): Use fsrs-rs-c via CGO.
+Status: This is the official C-binding for the Rust implementation (fsrs-rs).
+Role: The optimization worker will wake up periodically (e.g., every 1,000 reviews), pull the revlog from your Postgres, and pass it through the C-bridge to the Rust optimizer.
+Output: It returns a new array of weights (floats) which you then save to your user_settings table in Postgres.
+}
+
+3. Canonical Error Types & Weights
+Error Type (System) LabelDefault Base WeightDescription
+ERR_LAPSE Memory Lapse 1.0 Pure recall failure of a known fact.
+ERR_CONCEPT Conceptual Gap 2.5 Fundamental misunderstanding of the Theory node
+ERR_EXECUTION Execution/Syntax 1.2 Correct logic, but "typo" in LaTeX, code, or math 
+ERR_LANG_REC Recognition (Decoding) 1.5 Failing to translate Target $\rightarrow$ Source (e.g., RU $\rightarrow$ EN)
+ERR_LANG_PROD Production (Encoding) 2.0 Failing to translate Source $\rightarrow$ Target (e.g., EN $\rightarrow$ RU)
+ERR_FLUENCY Speed/Timing 1.1 Correct answer but exceeded the time limit.
+Custom Error Weighting: When a user creates a custom error, the default base_weight is 1.0. Users can override this manually in the settings.
+Retroactivity: Retroactive changes to weights do not affect past attempts. They only affect the live sorting of the Suggestion Engine for future study sessions.
+
+4. Timing Logic & Penalty Formula
+Since Profen is a local-first Wails application , the timing must be resilient to UI pauses while maintaining the integrity of the FSRS algorithm.
+
+a) Source of time_limit_seconds: This is retrieved from the metadata JSONB field of the nodes table.
+Hierarchy: If a node has no specific limit, it inherits the default limit for its type (e.g., Term: 30s, Problem: 600s).
+
+b) Measurement Strategy (Hybrid):
+Client (React): Starts a visual countdown for the user.
+Server (Go): Records a start_time timestamp in memory when the node is served. When the attempt is submitted, Go compares the current_time against the start_time. This prevents "tab-pausing" cheats because the clock runs on the Go backend regardless of the React state
+
+c) Penalty Formula: If is_timed_out = true
+The user's selected grade (1–4) is capped.
+Formula: FinalGrade = MIN(UserGrade, 2)
+Impact: Even if the user eventually gets the answer right (Grade 3 or 4), a timeout forces a "Hard" (2) rating into the FSRS algorithm, drastically reducing the next interval to prioritize fluency.
+
+5. Component Structure: Inheritance by Composition
+- 5 Atomic "Base" Components:
+<Box>: The base layout primitive (handling Tailwind spacing/theme).
+<MarkdownNode>: A pure visual renderer for nodes.body (LaTeX/Code).
+<ActionTrigger>: A wrapper for buttons/hotkeys that sends events to Go.
+<TimerDisplay>: A visual progress bar synced with the backend limit. (or a timer that allows for count-up and count-down crumb)
+<GradeSelector>: The 1–4 button group for FSRS input.
+
+Composition (Expansions):
+<TheoryCard/ProblemCard> = <Box> + <MarkdownNode>
+<TheoryAttemptCard> = <TheoryCard> + <AttemptInput> + <GradeSelector> + <TimerDisplay>
+<ProblemAttemptCard> = <ProblemCard> + <AttemptInput> + <GradeSelector> + <TimerDisplay>
+
+
+// Answering Questions 3:
+1. node_associations Direction – Confirm the Schema
+You wrote:
+'''
+WHERE na.target_id = :current_theory_id
+  AND na.rel_type = 'tests'
+'''
+
+Question: In your node_associations table design, if a Problem tests a Theory, which is the source and which is the target?
+Option A: Problem(source) → tests → Theory(target)?
+Your CHECK (source_id < target_id) suggests alphabetical ordering, but you need to be explicit about the semantic direction for this query to work.
+
+2. Error Type Weights – Tuning Strategy
+Question: When a user changes a base_weight (e.g., "I want Conceptual Gap to be 3.5 instead of 2.5"), how does this affect:
+a) Past error_resolutions records? Do they get recalculated, or do they keep the old weight?
+- keep their old weight.
+b) The suggestion queue in real-time? Does it re-rank immediately, or only on the next fresh query?
+- has a refresh function (no real-time)
+c) User documentation? Should you warn them that changing weights affects future suggestions but not retroactively?
+- Yes
+
+3. Timing Penalty – Edge Case
+You wrote: FinalGrade = MIN(UserGrade, 2)
+Edge case question: If a user submits Grade 1 (Again) within the time limit, the grade stays 1. But if they submit Grade 1 after timeout, it stays 1 (capped at 2, but 1 < 2).
+Answer: It is intentional. If the user wants to do it again, they should be able to. If no they can always choose another difficulty and it'll always be capped at hard.
+
+4. Component Structure – Wails Binding Risk
+You said components are "inheritance by composition." But here's the risk:
+When Wails auto-generates TypeScript from your Go structs, every component will need a corresponding Go struct to bind data from the backend.
+Question: Will you have a Go struct for each React component, or will some components be "pure UI" (no backend binding)?
+Answer: {
+The risk with Wails auto-generation is bloating the codebase with redundant Go-to-TS bindings for every UI element. To maintain control, you must distinguish between Container (Smart) and Presentation (Dumb) components.
+- Go-Bound (Smart) Components: These are few and handle all communication with the internal/app layer via Wails. They receive a single, large Go struct (e.g., StudySessionView) and distribute it.
++ Examples: StudyController.tsx (Binds to study.go), NodeEditor.tsx (Binds to node.go), DictionaryManager.tsx (Binds to dictionary.go).
+- Pure React (Dumb) Components: These receive data via standard React props and have no knowledge of Go or Wails.
++ Examples: <GradeSelector>, <Timer>, <MarkdownRenderer>, <ErrorTag>.
+The Contract: If a component needs to "save" or "fetch" data, it bubbles up an event to its Smart parent, which then calls the Wails-bound Go function.
+}
+
+------
+Phase 5: Architecture Decision Records (ADRs)
+
+ADR 001: Query Semantics & Association Direction
+Context: The node_associations table has a source_id < target_id constraint to prevent duplicate links. However, relationships like "tests" or "prerequisite" are inherently directed.
+Decision: We will maintain the source_id < target_id constraint for database integrity. To handle directionality, the rel_type ENUM will use "Subject-Predicate" naming logic.
+Rationale: Prevents circular references and redundant rows while preserving the graph's semantic meaning
+Consequence: A query for "Problems testing this Theory" must check both columns:
+'''
+WHERE (source_id = :id AND rel_type = 'defines') -- Theory(source) → defines → Problem(target)
+OR (target_id = :id AND rel_type = 'tests') -- Problem(source) → tests → Theory(target)
+'''
+
+ADR 002: Error Weight Tuning Policy
+Context: Users need a way to prioritize content based on error types without corrupting historical FSRS data.
+Decision: Error weights in the error_types table affect the Suggestion Engine in real-time but have zero retroactive impact on fsrs_cards or previous attempts.
+Rationale: FSRS is a mathematical model of memory stability; modifying historical grades based on new weight preferences would break the algorithm's predictive accuracy.
+Consequence: If a user increases the weight of "Syntax Error" today, those nodes will move to the front of the Diagnostic Stream immediately.
+
+ADR 003: Component-Binding Contract
+Context: Minimizing the surface area of Wails bindings to reduce generated TypeScript complexity.
+Decision: Only "Page-Level" or "Feature-Level" controllers will be bound to Go structs. All child components will be pure UI.
+Rationale: Decouples visual styling from backend logic, allowing for faster UI iteration without re-running Wails bindings.
+Consequence: The frontend must implement a robust event-bubbling or state-management pattern (e.g., TanStack Query) to pass user actions from pure UI components up to the Go-bound controllers
+
+----
+
+Block 2 Implementation Note: Timing Penalty Specification
+This specification ensures the FSRS Engine correctly penalizes lack of fluency without overriding more severe memory lapses.
+Penalty Formula: FSRS_Input_Grade = MIN(User_Selected_Grade, 2)
+Logic:
+If is_timed_out is TRUE, the grade sent to the FSRS algorithm is capped at 2 (Hard).
+Test Cases:
+- Scenario A: User gets answer correct (Grade 4) but takes 45s (Limit 30s). MIN(4, 2) = 2. FSRS records a Hard pass, shortening the next interval.
+- Scenario B: User fails the answer (Grade 1) and takes 45s (Limit 30s). MIN(1, 2) = 1. FSRS records an Again failure. This ensures a timeout doesn't "upgrade" a failure to a "Hard" pass.
+Persistence: Both the User_Selected_Grade and the FSRS_Input_Grade must be saved in the attempts.snapshot_json for later LLM or diagnostic analysis.
+
+
+
+
+
+
+
+
+
