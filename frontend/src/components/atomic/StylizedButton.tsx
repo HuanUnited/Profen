@@ -29,12 +29,9 @@ export default function StyledButton({
   };
 
   const variantClasses = {
-    // Primary: Gradient like StyledFormTemplate
-    primary: "bg-gradient-to-r from-[#e81cff] to-[#40c9ff] text-white border-transparent shadow-purple-500/25 hover:shadow-purple-500/40 border-0",
-    // Secondary: Glassmorphism
-    secondary: "bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 border",
-    // Ghost: Subtle
-    ghost: "bg-transparent border-[#2f334d] text-gray-300 hover:bg-white/5 hover:border-gray-500 border"
+    primary: 'bg-gradient-to-r from-[#e81cff] to-[#40c9ff] text-black hover:from-[#c81bde] hover:to-[#30b9ef] shadow-lg',
+    secondary: 'bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20',
+    ghost: 'bg-transparent border-[#2f334d] text-gray-300 hover:bg-white/5 hover:border-gray-500'
   };
 
   return (

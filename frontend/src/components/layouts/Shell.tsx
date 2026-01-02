@@ -48,7 +48,8 @@ export default function Shell({ sidebar }: { sidebar: React.ReactNode }) {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-transparent">
         <div
           key={location.pathname}
-          className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 animate-in fade-in slide-in-from-bottom-2 duration-300"
+          className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 
+             animate-in fade-in slide-in-from-bottom-2 duration-600 delay-100"
         >
           <Outlet />
         </div>

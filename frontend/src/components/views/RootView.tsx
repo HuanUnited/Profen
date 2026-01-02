@@ -57,7 +57,7 @@ export default function RootView() {
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-6 py-3 bg-[#1a1b26] border border-[#2f334d] text-gray-300 hover:text-white hover:border-[#89b4fa] hover:shadow-lg hover:shadow-[#89b4fa]/20 rounded-lg font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap shrink-0"
+              className="px-6 py-3 bg-[#1a1b26] border border-[#2f334d] text-gray-300 hover:text-white hover:border-[#89b4fa] hover:shadow-lg hover:shadow-[#89b4fa]/20 rounded-lg font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ml-auto"
             >
               <Plus size={16} />
               NEW SUBJECT

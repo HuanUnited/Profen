@@ -54,21 +54,22 @@ export default function DashboardSidebar() {
         </StyledButton>
       </nav>
 
-      <div className="flex items-center gap-2 ml-auto">
-        <ThemeToggle />
-      </div>
 
-      <StyledButton
-        variant="ghost"
-        size="sm"
-        icon={<Wrench size={16} />}
-        onClick={() => setSetupOpen(!setupOpen)}
-      >
-        Setup
-      </StyledButton>
 
-      <div className="mt-auto pt-4 border-t border-[#2f334d] absolute bottom-4 left-0 right-0 px-4">
-        <div className="text-xs text-gray-600 font-mono text-center">v0.1.0-alpha</div>
+      <div className="mt-auto pt-4 border-t border-2f334d absolute bottom-4 left-0 right-0 px-4">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-600 font-mono">v0.1.0-alpha</span>
+          {/* ThemeToggle moved to bottom-right */}
+          <ThemeToggle />
+          <StyledButton
+            variant="ghost"
+            size="sm"
+            icon={<Wrench size={16} />}
+            onClick={() => setSetupOpen(!setupOpen)}
+          >
+            Setup
+          </StyledButton>
+        </div>
       </div>
 
     </SidebarFrame>

@@ -1,21 +1,11 @@
 import { useEffect, useState } from "react";
 
-// Use this interface to pass the toggle handler
-interface ThemeToggleProps {
-  isDark?: boolean; // Optional: control state if needed
-  onToggle?: () => void;
-}
+export default function ThemeToggle() {
 
-const ThemeToggle = ({ onToggle }: ThemeToggleProps) => {
-
-  const [isDark] = useState(true);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
   return (
@@ -24,7 +14,7 @@ const ThemeToggle = ({ onToggle }: ThemeToggleProps) => {
         className="peer hidden"
         id="toggle"
         type="checkbox"
-        onChange={onToggle} // Hook up the event
+        onChange={() => setIsDark(!isDark)}
       />
       <div className="relative w-27.5 h-12.5 bg-white peer-checked:bg-zinc-500 rounded-full after:absolute after:content-[''] after:w-10 after:h-10 after:bg-linear-to-r from-orange-500 to-yellow-400 peer-checked:after:from-zinc-900 peer-checked:after:to-zinc-900 after:rounded-full after:top-1.25 after:left-1.25 active:after:w-12.5 peer-checked:after:left-26.25 peer-checked:after:-translate-x-full shadow-sm duration-300 after:duration-300 after:shadow-md transition-all ease-in-out" />
 
@@ -40,5 +30,3 @@ const ThemeToggle = ({ onToggle }: ThemeToggleProps) => {
     </label>
   );
 }
-
-export default ThemeToggle;
