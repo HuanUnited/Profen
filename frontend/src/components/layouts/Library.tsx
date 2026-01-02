@@ -13,6 +13,7 @@ export default function Library() {
     queryKey: ['node', nodeId],
     queryFn: () => GetNode(nodeId!), // This will now succeed
     enabled: !!nodeId,
+    retry: false
   });
 
   if (!nodeId) return <EmptyState />;

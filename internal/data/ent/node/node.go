@@ -16,6 +16,8 @@ const (
 	Label = "node"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "node_id"
+	// FieldTitle holds the string denoting the title field in the database.
+	FieldTitle = "title"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
 	// FieldBody holds the string denoting the body field in the database.
@@ -107,6 +109,7 @@ const (
 // Columns holds all SQL columns for node fields.
 var Columns = []string{
 	FieldID,
+	FieldTitle,
 	FieldType,
 	FieldBody,
 	FieldMetadata,
@@ -125,6 +128,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultTitle holds the default value on creation for the "title" field.
+	DefaultTitle string
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
@@ -163,6 +168,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByTitle orders the results by the title field.
+func ByTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTitle, opts...).ToFunc()
 }
 
 // ByType orders the results by the type field.

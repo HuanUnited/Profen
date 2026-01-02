@@ -20,6 +20,8 @@ type Node struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// The display title of the node
+	Title string `json:"title,omitempty"`
 	// Type holds the value of the "type" field.
 	Type node.Type `json:"type,omitempty"`
 	// Markdown content, LaTeX, code snippets
@@ -144,7 +146,7 @@ func (*Node) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case node.FieldMetadata:
 			values[i] = new([]byte)
-		case node.FieldType, node.FieldBody:
+		case node.FieldTitle, node.FieldType, node.FieldBody:
 			values[i] = new(sql.NullString)
 		case node.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -170,6 +172,12 @@ func (_m *Node) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case node.FieldTitle:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field title", values[i])
+			} else if value.Valid {
+				_m.Title = value.String
 			}
 		case node.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -280,6 +288,9 @@ func (_m *Node) String() string {
 	var builder strings.Builder
 	builder.WriteString("Node(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("title=")
+	builder.WriteString(_m.Title)
+	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Type))
 	builder.WriteString(", ")

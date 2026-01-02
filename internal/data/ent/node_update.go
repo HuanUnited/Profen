@@ -33,6 +33,20 @@ func (_u *NodeUpdate) Where(ps ...predicate.Node) *NodeUpdate {
 	return _u
 }
 
+// SetTitle sets the "title" field.
+func (_u *NodeUpdate) SetTitle(v string) *NodeUpdate {
+	_u.mutation.SetTitle(v)
+	return _u
+}
+
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (_u *NodeUpdate) SetNillableTitle(v *string) *NodeUpdate {
+	if v != nil {
+		_u.SetTitle(*v)
+	}
+	return _u
+}
+
 // SetType sets the "type" field.
 func (_u *NodeUpdate) SetType(v node.Type) *NodeUpdate {
 	_u.mutation.SetType(v)
@@ -411,6 +425,9 @@ func (_u *NodeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.Title(); ok {
+		_spec.SetField(node.FieldTitle, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(node.FieldType, field.TypeEnum, value)
 	}
@@ -774,6 +791,20 @@ type NodeUpdateOne struct {
 	hooks     []Hook
 	mutation  *NodeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetTitle sets the "title" field.
+func (_u *NodeUpdateOne) SetTitle(v string) *NodeUpdateOne {
+	_u.mutation.SetTitle(v)
+	return _u
+}
+
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (_u *NodeUpdateOne) SetNillableTitle(v *string) *NodeUpdateOne {
+	if v != nil {
+		_u.SetTitle(*v)
+	}
+	return _u
 }
 
 // SetType sets the "type" field.
@@ -1183,6 +1214,9 @@ func (_u *NodeUpdateOne) sqlSave(ctx context.Context) (_node *Node, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.Title(); ok {
+		_spec.SetField(node.FieldTitle, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(node.FieldType, field.TypeEnum, value)

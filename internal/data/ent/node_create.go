@@ -25,6 +25,20 @@ type NodeCreate struct {
 	hooks    []Hook
 }
 
+// SetTitle sets the "title" field.
+func (_c *NodeCreate) SetTitle(v string) *NodeCreate {
+	_c.mutation.SetTitle(v)
+	return _c
+}
+
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (_c *NodeCreate) SetNillableTitle(v *string) *NodeCreate {
+	if v != nil {
+		_c.SetTitle(*v)
+	}
+	return _c
+}
+
 // SetType sets the "type" field.
 func (_c *NodeCreate) SetType(v node.Type) *NodeCreate {
 	_c.mutation.SetType(v)
@@ -242,6 +256,10 @@ func (_c *NodeCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *NodeCreate) defaults() {
+	if _, ok := _c.mutation.Title(); !ok {
+		v := node.DefaultTitle
+		_c.mutation.SetTitle(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := node.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -254,6 +272,9 @@ func (_c *NodeCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *NodeCreate) check() error {
+	if _, ok := _c.mutation.Title(); !ok {
+		return &ValidationError{Name: "title", err: errors.New(`ent: missing required field "Node.title"`)}
+	}
 	if _, ok := _c.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Node.type"`)}
 	}
@@ -299,6 +320,10 @@ func (_c *NodeCreate) createSpec() (*Node, *sqlgraph.CreateSpec) {
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.Title(); ok {
+		_spec.SetField(node.FieldTitle, field.TypeString, value)
+		_node.Title = value
 	}
 	if value, ok := _c.mutation.GetType(); ok {
 		_spec.SetField(node.FieldType, field.TypeEnum, value)

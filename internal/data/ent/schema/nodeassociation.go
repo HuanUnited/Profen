@@ -21,17 +21,18 @@ func (NodeAssociation) Fields() []ent.Field {
 		field.UUID("source_id", uuid.UUID{}), // [cite: 26]
 		field.UUID("target_id", uuid.UUID{}), // [cite: 27]
 
+		// UPDATED ENUM
 		field.Enum("rel_type").
 			Values(
-				"prerequisite",
-				"example",
-				"tests",
-				"similar_to",
-				"defines",
-				"translation_of",
-				"translated_from",
-				"variant_of",
-				"source_variant",
+				"comes_before",    // Prerequisite
+				"comes_after",     // Dependent
+				"similar_to",      // Bidirectional
+				"tests",           // Problem -> Theory
+				"defines",         // Theory -> Problem
+				"translation_of",  // Term -> Term
+				"translated_from", // Term -> Term
+				"variant_of",      // Theory -> Theory
+				"source_variant",  // Theory -> Theory
 			), // [cite: 27, 238]
 	}
 }

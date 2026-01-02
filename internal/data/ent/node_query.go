@@ -550,12 +550,12 @@ func (_q *NodeQuery) WithErrorResolutions(opts ...func(*ErrorResolutionQuery)) *
 // Example:
 //
 //	var v []struct {
-//		Type node.Type `json:"type,omitempty"`
+//		Title string `json:"title,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Node.Query().
-//		GroupBy(node.FieldType).
+//		GroupBy(node.FieldTitle).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *NodeQuery) GroupBy(field string, fields ...string) *NodeGroupBy {
@@ -573,11 +573,11 @@ func (_q *NodeQuery) GroupBy(field string, fields ...string) *NodeGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Type node.Type `json:"type,omitempty"`
+//		Title string `json:"title,omitempty"`
 //	}
 //
 //	client.Node.Query().
-//		Select(node.FieldType).
+//		Select(node.FieldTitle).
 //		Scan(ctx, &v)
 func (_q *NodeQuery) Select(fields ...string) *NodeSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)

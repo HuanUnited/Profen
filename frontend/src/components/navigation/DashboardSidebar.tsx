@@ -1,46 +1,77 @@
-import { NavLink } from "react-router-dom";
+import { LayoutDashboard, Library, BookOpen, Terminal, Wrench } from "lucide-react";
+import SidebarFrame from "./SidebarFrame";
 import ThemeToggle from "../atomic/ThemeToggle";
-import { LayoutDashboard, Library, BookOpen, Terminal } from "lucide-react";
-import clsx from "clsx";
+import { useNavigate } from "react-router-dom";
+import StyledButton from "../atomic/StylizedButton";
+import { useState } from "react";
+
 
 export default function DashboardSidebar() {
-  return (
-    <div className="flex flex-col h-full bg-(--tui-sidebar)">
-      <div className="h-14 flex items-center px-4 border-b border-(--tui-border)">
-        <Terminal className="w-5 h-5 text-(--tui-primary) mr-3" />
-        <span className="font-bold tracking-tight text-lg text-white">PROFEN_OS</span>
-      </div>
 
-      <nav className="flex-1 p-4 space-y-1">
-        <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Dashboard" />
-        <NavItem to="/library" icon={<Library size={18} />} label="Library" />
-        <NavItem to="/review" icon={<BookOpen size={18} />} label="Study Session" />
+  const navigate = useNavigate();
+  const [setupOpen, setSetupOpen] = useState(false);
+
+  return (
+    <SidebarFrame
+      resizable={false} // Fixed width
+      initialWidth={256} // w-64
+      // Slot 1: Header
+      header={
+        <div className="flex items-center">
+          <Terminal className="w-5 h-5 text-[#89b4fa] mr-3" />
+          <span className="font-bold tracking-tight text-lg text-white">PROFEN_OS</span>
+        </div>
+      }
+    >
+      {/* Slot 4: Content (Nav Links) */}
+      <nav className="space-y-1 mt-2">
+        <StyledButton
+          variant="ghost"
+          size="md"
+          className="justify-start w-full px-4 py-3"
+          icon={<LayoutDashboard size={18} />}
+          onClick={() => navigate('/')}
+        >
+          Dashboard
+        </StyledButton>
+        <StyledButton
+          variant="ghost"
+          size="md"
+          className="justify-start w-full px-4 py-3"
+          icon={<Library size={18} />}
+          onClick={() => navigate('/library')}
+        >
+          Library
+        </StyledButton>
+        <StyledButton
+          variant="ghost"
+          size="md"
+          className="justify-start w-full px-4 py-3"
+          icon={<BookOpen size={18} />}
+          onClick={() => navigate('/review')}
+        >
+          Study Session
+        </StyledButton>
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 text-xs text-gray-500 border-t border-(--tui-border) flex justify-between items-center">
-        <span>MAIN MENU</span>
-        <ThemeToggle />
+
+
+      <div className="mt-auto pt-4 border-t border-2f334d absolute bottom-4 left-0 right-0 px-4">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-600 font-mono">v0.1.0-alpha</span>
+          {/* ThemeToggle moved to bottom-right */}
+          <ThemeToggle />
+          <StyledButton
+            variant="ghost"
+            size="sm"
+            icon={<Wrench size={16} />}
+            onClick={() => setSetupOpen(!setupOpen)}
+          >
+            Setup
+          </StyledButton>
+        </div>
       </div>
 
-    </div>
-
+    </SidebarFrame>
   );
 }
-
-const NavItem = ({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) =>
-      clsx(
-        "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 group",
-        isActive
-          ? "bg-(--tui-primary)/10 text-(--tui-primary) border-l-2 border-(--tui-primary)"
-          : "text-gray-400 hover:bg-white/5 hover:text-white border-l-2 border-transparent"
-      )
-    }
-  >
-    <span className="mr-3 opacity-70 group-hover:opacity-100">{icon}</span>
-    {label}
-  </NavLink>
-);

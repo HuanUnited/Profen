@@ -3,10 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
-
-	"profen/internal/app/service" // Ensure this import exists
+	"profen/internal/app/service"
 	"profen/internal/data"
 	"profen/internal/data/ent"
+	"profen/internal/data/ent/node"
+	"profen/internal/data/ent/nodeassociation"
 
 	"github.com/google/uuid"
 )
@@ -19,6 +20,7 @@ type App struct {
 	snapshotService *service.SnapshotService
 	nodeRepo        *data.NodeRepository
 	suggestionRepo  *data.SuggestionRepository
+	attemptRepo     *data.AttemptRepository
 }
 
 // NewApp creates a new App application struct
@@ -29,6 +31,7 @@ func NewApp(client *ent.Client) *App {
 		snapshotService: service.NewSnapshotService(client),
 		nodeRepo:        data.NewNodeRepository(client),
 		suggestionRepo:  data.NewSuggestionRepository(client),
+		attemptRepo:     data.NewAttemptRepository(client),
 	}
 }
 
@@ -71,44 +74,127 @@ func (a *App) GetDueCards(limit int) ([]*ent.Node, error) {
 
 // ReviewCard processes a user answer
 func (a *App) ReviewCard(cardIDStr string, grade int, durationMs int, userAnswer string) (*ent.FsrsCard, error) {
-	// 1. Parse ID
 	cardID, err := uuid.Parse(cardIDStr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid card UUID: %w", err)
 	}
 
-	// 2. Validate Grade (1-4)
 	if grade < 1 || grade > 4 {
 		return nil, fmt.Errorf("grade must be between 1 and 4")
 	}
 
-	// 3. Call Service
-	// Note: We pass 'nil' for errorDefID for now, because the basic flow doesn't prompt for specific errors yet.
-	// In Phase 5.3 (Study Session), if the user selects "Again", we might call a separate API to log the error,
-	// OR we update this method to accept an optional error ID.
 	return a.fsrsService.ReviewCard(
 		a.ctx,
 		cardID,
 		service.FSRSGrade(grade),
 		int64(durationMs),
-		userAnswer, // <--- Passed Correctly
-		nil,        // <--- errorDefID (Optional, currently nil)
+		userAnswer,
+		nil,
 	)
 }
 
-func (a *App) UpdateNode(idStr string, body string) (*ent.Node, error) {
+// UpdateNode updates the node's title and body.
+func (a *App) UpdateNode(idStr string, title string, body string) (*ent.Node, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return nil, err
 	}
-	// Pass empty metadata for now, or fetch existing and merge?
-	// For MVP, just updating body is fine.
-	return a.nodeRepo.UpdateNode(a.ctx, id, body, map[string]interface{}{})
+	// Pass empty metadata for now
+	return a.nodeRepo.UpdateNode(a.ctx, id, title, body, map[string]interface{}{})
 }
 
-func (a *App) CreateNode(typeStr string, parentIDStr string, body string) (*ent.Node, error) {
-	// Convert strings to types...
-	// Implementation needed here to map string "topic" -> node.TypeTopic
-	// ...
-	return nil, fmt.Errorf("impl pending")
+// CreateNode creates a new node with the specified type, parent, and title.
+func (a *App) CreateNode(typeStr string, parentIDStr string, title string) (*ent.Node, error) {
+	// 1. Map String to Enum
+	var nodeType node.Type
+	switch typeStr {
+	case "subject":
+		nodeType = node.TypeSubject
+	case "topic":
+		nodeType = node.TypeTopic
+	case "problem":
+		nodeType = node.TypeProblem
+	case "theory":
+		nodeType = node.TypeTheory
+	case "term":
+		nodeType = node.TypeTerm
+	default:
+		return nil, fmt.Errorf("invalid node type: %s", typeStr)
+	}
+
+	// 2. Parse Parent ID (Optional)
+	var parentID uuid.UUID
+	var err error
+	if parentIDStr != "" {
+		parentID, err = uuid.Parse(parentIDStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid parent UUID: %w", err)
+		}
+	}
+
+	// 3. Call Repo
+	// We pass empty string for body initially.
+	return a.nodeRepo.CreateNode(a.ctx, nodeType, parentID, title, "", map[string]interface{}{})
+}
+
+// CreateAssociation links two nodes
+// Helper function (add to app.go or a utils file)
+func parseRelType(relTypeStr string) (nodeassociation.RelType, error) {
+	switch relTypeStr {
+	case "comes_before":
+		return nodeassociation.RelTypeComesBefore, nil
+	case "comes_after":
+		return nodeassociation.RelTypeComesAfter, nil
+	case "similar_to":
+		return nodeassociation.RelTypeSimilarTo, nil
+	case "tests":
+		return nodeassociation.RelTypeTests, nil
+	case "defines":
+		return nodeassociation.RelTypeDefines, nil
+	case "translation_of":
+		return nodeassociation.RelTypeTranslationOf, nil
+	case "translated_from":
+		return nodeassociation.RelTypeTranslatedFrom, nil
+	case "variant_of":
+		return nodeassociation.RelTypeVariantOf, nil
+	case "source_variant":
+		return nodeassociation.RelTypeSourceVariant, nil
+	default:
+		return "", fmt.Errorf("invalid relation type: %s", relTypeStr)
+	}
+}
+
+// Then use it:
+func (a *App) CreateAssociation(sourceIDStr, targetIDStr, relTypeStr string) error {
+	sourceID, err := uuid.Parse(sourceIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid source UUID: %w", err)
+	}
+	targetID, err := uuid.Parse(targetIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid target UUID: %w", err)
+	}
+
+	relType, err := parseRelType(relTypeStr)
+	if err != nil {
+		return err
+	}
+
+	return a.nodeRepo.CreateAssociation(a.ctx, sourceID, targetID, relType)
+}
+
+// SearchNodes finds nodes by title or body
+func (a *App) SearchNodes(query string) ([]*ent.Node, error) {
+	// We need to implement SearchNodes in NodeRepository first
+	return a.nodeRepo.SearchNodes(a.ctx, query)
+}
+
+// GetAttemptHistory retrieves attempts for a node
+func (a *App) GetAttemptHistory(nodeIDStr string) ([]*ent.Attempt, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid node UUID: %w", err)
+	}
+	// Now a.attemptRepo exists!
+	return a.attemptRepo.GetAttemptsByNode(a.ctx, id)
 }

@@ -3,6 +3,7 @@ import { GetDueCards } from '../../wailsjs/go/app/App';
 import { Clock, Activity, Book, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
+import StyledButton from '../atomic/StylizedButton';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -51,23 +52,28 @@ export default function Dashboard() {
             <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             Action Queue
           </h2>
-          <button
+          <StyledButton
+            variant="primary"
+            size="md"
+            icon={<ArrowRight size={16} />}
             onClick={() => navigate('/review')}
             className="text-xs text-(--tui-primary) hover:underline flex items-center"
           >
             START_SESSION <ArrowRight size={12} className="ml-1" />
-          </button>
+          </StyledButton>
         </div>
 
         {(!dueNodes || dueNodes.length === 0) ? (
           <div className="py-16 border-2 border-dashed border-[#2f334d] rounded-lg text-center">
             <p className="text-gray-500 font-mono mb-4">All systems nominal. No pending reviews.</p>
-            <button
+            <StyledButton
+              variant="secondary"
+              size="md"
               onClick={() => navigate('/library')}
               className="px-6 py-2 bg-[#2f334d] hover:bg-[#3b4060] text-white text-sm font-bold rounded transition-colors"
             >
               BROWSE LIBRARY
-            </button>
+            </StyledButton>
           </div>
         ) : (
           <div className="grid gap-3">
