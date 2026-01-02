@@ -1,0 +1,57 @@
+Folder PATH listing
+Volume serial number is 10A6-9A19
+C:.
+│   App.css
+│   App.tsx
+│   index.css
+│   main.tsx
+│   routes.tsx
+│   style.css
+│   vite-env.d.ts
+│
+├───assets
+│   ├───fonts
+│   │       nunito-v16-latin-regular.woff2
+│   │       OFL.txt
+│   │
+│   └───images
+│           logo-universal.png
+│
+├───components
+│   ├───atomic
+│   │       MarkdownRenderer.tsx
+│   │       ThemeToggle.tsx
+│   │
+│   ├───layouts
+│   │       Dashboard.tsx
+│   │       Library.tsx
+│   │       Shell.tsx
+│   │       SubjectList.tsx
+│   │
+│   ├───navigation
+│   │       DashboardSidebar.tsx
+│   │       LibrarySidebar.tsx
+│   │
+│   └───smart
+│           NodeEditor.tsx
+│
+├───hooks
+├───lib
+│   └───editor
+│           completions.ts
+│
+├───providers
+│       AppProviders.tsx
+│
+└───wailsjs
+    ├───go
+    │   │   models.ts
+    │   │
+    │   └───app
+    │           App.d.ts
+    │           App.js
+    │
+    └───runtime
+            package.json
+            runtime.d.ts
+            runtime.js

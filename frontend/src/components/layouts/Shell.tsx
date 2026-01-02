@@ -15,20 +15,25 @@ export default function Shell({ sidebar }: { sidebar: React.ReactNode }) {
   return (
     <div className="flex h-screen w-screen bg-(--tui-bg) text-(--tui-fg) font-mono overflow-hidden">
 
-      {/* Sidebar with Slide/Fade Transition */}
+      {/* 
+          Sidebar Container 
+          CHANGED: Removed 'w-64', 'border-r', and 'bg-...' 
+          The {sidebar} component (SidebarFrame) controls its own width and styling.
+          We only handle the Entry Animation here.
+      */}
       <aside
         className={clsx(
-          "w-64 border-r border-(--tui-border) bg-(--tui-sidebar) shrink-0 transition-all duration-300 ease-in-out transform",
+          "h-full shrink-0 flex transition-all duration-300 ease-in-out transform",
           isSidebarVisible ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
         )}
       >
         {sidebar}
       </aside>
 
-      {/* Main Content with Fade Transition keying on Path */}
+      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-(--tui-bg)">
         <div
-          key={location.pathname} // Forces re-render animation on route change
+          key={location.pathname}
           className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 animate-in fade-in slide-in-from-bottom-2 duration-300"
         >
           <Outlet />
@@ -42,7 +47,6 @@ export default function Shell({ sidebar }: { sidebar: React.ReactNode }) {
           style: { background: '#16161e', border: '1px solid #313244', color: '#cdd6f4' }
         }}
       />
-
     </div>
   );
 }
