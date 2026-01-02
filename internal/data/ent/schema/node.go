@@ -35,7 +35,7 @@ func (Node) Fields() []ent.Field {
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(), // [cite: 24]
-		
+
 		// Adjacency List (Parent Pointer)
 		field.UUID("parent_id", uuid.UUID{}).
 			Optional().
@@ -54,14 +54,20 @@ func (Node) Edges() []ent.Edge {
 
 		// 2. Closure Table Relationships
 		// REMOVE StorageKey here. NodeClosure.Field("ancestor_id") handles this.
-		edge.To("child_closures", NodeClosure.Type), 
-		
+		edge.To("child_closures", NodeClosure.Type),
+
 		edge.To("parent_closures", NodeClosure.Type),
 
 		// 3. Graph Association Relationships
 		// REMOVE StorageKey here. NodeAssociation.Field("source_id") handles this.
 		edge.To("outgoing_associations", NodeAssociation.Type),
-		
+
 		edge.To("incoming_associations", NodeAssociation.Type),
+
+		// 4. FSRS Card Relationship
+		edge.To("fsrs_card", FsrsCard.Type).
+			Unique(), // Enforces 1:1
+		// .CascadeDelete(), TODO: IMPLEMENT
+
 	}
 }
