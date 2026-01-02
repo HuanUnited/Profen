@@ -52,47 +52,55 @@ func (r *DictionaryRepository) CreateTermPair(
 		return nil, nil, fmt.Errorf("creating foreign term: %w", err)
 	}
 
-	// 3. Link Foreign -> Native
-	_, err = r.client.NodeAssociation.Create().
-		SetSourceID(foreignNode.ID).
-		SetTargetID(nativeNode.ID).
-		SetRelType(nodeassociation.RelTypeTranslationOf).
-		Save(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("linking foreign->native: %w", err)
+	// LINKING LOGIC (Respecting Check Constraint source < target)
+	var sourceID, targetID uuid.UUID
+	var relType nodeassociation.RelType
+
+	// Compare UUIDs (Lexicographical string comparison is sufficient for logic)
+	if nativeNode.ID.String() < foreignNode.ID.String() {
+		sourceID = nativeNode.ID
+		targetID = foreignNode.ID
+		// Source is Native ("Dog"). Relation: "Dog is translated from Sobaka"?
+		// Or "Dog defines Sobaka"?
+		// Let's use 'translated_from' as the directed edge from Native -> Foreign
+		relType = nodeassociation.RelTypeTranslatedFrom
+	} else {
+		sourceID = foreignNode.ID
+		targetID = nativeNode.ID
+		// Source is Foreign ("Sobaka"). Relation: "Sobaka is translation of Dog"
+		relType = nodeassociation.RelTypeTranslationOf
 	}
 
-	// 4. Link Native -> Foreign
 	_, err = r.client.NodeAssociation.Create().
-		SetSourceID(nativeNode.ID).
-		SetTargetID(foreignNode.ID).
-		SetRelType(nodeassociation.RelTypeTranslatedFrom).
+		SetSourceID(sourceID).
+		SetTargetID(targetID).
+		SetRelType(relType).
 		Save(ctx)
+
 	if err != nil {
-		return nil, nil, fmt.Errorf("linking native->foreign: %w", err)
+		return nil, nil, fmt.Errorf("linking terms: %w", err)
 	}
 
 	return nativeNode, foreignNode, nil
 }
 
 func (r *DictionaryRepository) GetTranslation(ctx context.Context, nodeID uuid.UUID) ([]*ent.Node, error) {
-	// Return nodes where:
-	// (They are Target AND Source=Me AND Type='translated_from')
-	// OR
-	// (They are Source AND Target=Me AND Type='translation_of')
-
 	return r.client.Node.Query().
 		Where(
 			node.Or(
-				// Forward link
-				node.HasIncomingAssociationsWith(
-					nodeassociation.SourceID(nodeID),
-					nodeassociation.RelTypeEQ(nodeassociation.RelTypeTranslatedFrom),
-				),
-				// Reverse link
+				// Look for partners where I am the Source
 				node.HasOutgoingAssociationsWith(
-					nodeassociation.TargetID(nodeID),
-					nodeassociation.RelTypeEQ(nodeassociation.RelTypeTranslationOf),
+					nodeassociation.RelTypeIn(
+						nodeassociation.RelTypeTranslatedFrom,
+						nodeassociation.RelTypeTranslationOf,
+					),
+				),
+				// Look for partners where I am the Target
+				node.HasIncomingAssociationsWith(
+					nodeassociation.RelTypeIn(
+						nodeassociation.RelTypeTranslatedFrom,
+						nodeassociation.RelTypeTranslationOf,
+					),
 				),
 			),
 		).
