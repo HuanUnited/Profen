@@ -11,12 +11,24 @@
 @import "@webtui/css/components/badge.css";
 @import "@webtui/css/components/input.css";
 
-/* Custom Theme Overrides (Catppuccin-ish) */
-:root {
-  --tui-bg: #1e1e2e;
-  --tui-fg: #cdd6f4;
-  --tui-border: #313244;
-  --tui-primary: #89b4fa;
+@layer base {
+  :root {
+    /* Dark Mode (Default / Catppuccin Mocha) */
+    --tui-bg: #1e1e2e;
+    --tui-fg: #cdd6f4;
+    --tui-border: #313244;
+    --tui-primary: #89b4fa;
+    --tui-sidebar: #16161e; /* New Variable for sidebars */
+  }
+
+  /* Light Mode (Catppuccin Latte) */
+  [data-theme="light"] {
+    --tui-bg: #eff1f5;
+    --tui-fg: #4c4f69;
+    --tui-border: #bcc0cc;
+    --tui-primary: #1e66f5;
+    --tui-sidebar: #e6e9ef;
+  }
 }
 
 html, body, #root {
@@ -29,5 +41,6 @@ html, body, #root {
 body {
   background-color: var(--tui-bg);
   color: var(--tui-fg);
+  transition: background-color 0.3s ease, color 0.3s ease;
   font-family: 'JetBrains Mono', 'Fira Code', monospace; /* Terminal Font */
 }
