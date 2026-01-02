@@ -6,7 +6,7 @@ import { Save, Eye, Code, FileText } from "lucide-react";
 import NodeEditor from "../smart/NodeEditor";
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
 import clsx from "clsx";
-import { toast } from "sonner"; // Assuming you installed sonner, else use console
+import { toast } from "sonner";
 
 type ViewMode = 'edit' | 'preview';
 
@@ -24,12 +24,13 @@ export default function Library() {
 
   // Local State
   const [body, setBody] = useState("");
-  // const [title, setTitle] = useState(""); // We treat the first line or a specific field as title later?
-  // For now, let's assume 'body' contains everything.
+  // We need local state for title if we want to edit it here, but for now let's just use the fetched one
+  // or default to what's in the DB.
   const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [isDirty, setIsDirty] = useState(false);
 
   const safeBody = node?.body || "";
+  const safeTitle = node?.title || "Untitled Node"; // Use new title field
 
   // Sync
   useEffect(() => {
@@ -43,12 +44,14 @@ export default function Library() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!nodeId) throw new Error("No node");
-      return UpdateNode(nodeId, body);
+      // FIXED: Passing 3 arguments: ID, Title, Body
+      // We pass the EXISTING title back because this specific view doesn't edit titles yet.
+      return UpdateNode(nodeId, safeTitle, safeBody);
     },
     onSuccess: (updated) => {
       setIsDirty(false);
       queryClient.setQueryData(['node', nodeId], updated);
-      toast.success("Changes saved to disk"); // <--- Wired up!
+      toast.success("Changes saved to disk");
     }
   });
 
@@ -65,7 +68,7 @@ export default function Library() {
     <div className="h-full flex flex-col p-6 animate-in fade-in">
 
       {/* 1. Meta Header (Always Visible) */}
-      <div className="mb-6 flex justify-between items-start border-b border-(--tui-border) pb-4">
+      <div className="mb-6 flex justify-between items-start border-b border-[#2f334d] pb-4">
         <div className="flex-1 mr-8">
           <div className="flex items-center gap-3 mb-2">
             <span className={clsx(
@@ -77,9 +80,9 @@ export default function Library() {
             <span className="text-xs font-mono text-gray-600">ID: {String(node.id).split('-')[0]}</span>
           </div>
 
-          {/* Title Input (Visual only for now, maps to nothing in DB unless we split body) */}
+          {/* Title Display */}
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            {safeBody.split('\n')[0] || "Untitled Node"}
+            {safeTitle}
           </h1>
         </div>
 
@@ -107,7 +110,7 @@ export default function Library() {
             disabled={!isDirty || saveMutation.isPending}
             className={clsx(
               "flex items-center gap-2 px-4 py-2 text-xs font-bold rounded transition-all",
-              isDirty ? "bg-(--tui-primary) text-black" : "bg-gray-800 text-gray-500 opacity-50"
+              isDirty ? "bg-[#89b4fa] text-black" : "bg-gray-800 text-gray-500 opacity-50"
             )}
           >
             <Save size={14} className="bg-transparent" />
@@ -117,7 +120,7 @@ export default function Library() {
       </div>
 
       {/* 2. Editor / Preview Area */}
-      <div className="flex-1 min-h-0 relative border border-(--tui-border) rounded-md overflow-hidden bg-[#1e1e2e]">
+      <div className="flex-1 min-h-0 relative border border-[#2f334d] rounded-md overflow-hidden bg-[#1e1e2e]">
         {viewMode === 'edit' ? (
           <NodeEditor
             initialContent={body}
@@ -142,8 +145,8 @@ export default function Library() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-gray-600 space-y-4">
-      <div className="p-6 bg-(--tui-sidebar) rounded-full">
-        <FileText size={48} className="opacity-50 text-(--tui-primary)" />
+      <div className="p-6 bg-[#16161e] rounded-full border border-[#2f334d]">
+        <FileText size={48} className="opacity-50 text-[#89b4fa]" />
       </div>
       <p>Select a node to edit.</p>
     </div>

@@ -14,4 +14,4 @@ export function GetSubjects():Promise<Array<ent.Node>>;
 
 export function ReviewCard(arg1:string,arg2:number,arg3:number,arg4:string):Promise<ent.FsrsCard>;
 
-export function UpdateNode(arg1:string,arg2:string):Promise<ent.Node>;
+export function UpdateNode(arg1:string,arg2:string,arg3:string):Promise<ent.Node>;

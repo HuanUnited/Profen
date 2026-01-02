@@ -332,6 +332,7 @@ export namespace ent {
 	}
 	export class Node {
 	    id?: number[];
+	    title?: string;
 	    type?: string;
 	    body?: string;
 	    metadata?: Record<string, any>;
@@ -347,6 +348,7 @@ export namespace ent {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.title = source["title"];
 	        this.type = source["type"];
 	        this.body = source["body"];
 	        this.metadata = source["metadata"];
