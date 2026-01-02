@@ -1,42 +1,40 @@
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { GetNode } from "../../wailsjs/go/app/App";
-import { FileText } from "lucide-react"; // Removed Layers, BookOpen
-
-// Import Sub-Views
-import RootView from "../views/RootView";
-import ContainerView from "../views/ContainerView";
-import LeafView from "../views/LeafView";
+import ContainerNodeView from "./library/ContainerNodeView";
+import LeafNodeView from "./library/LeafNodeView";
+import { FileText } from "lucide-react";
 
 export default function Library() {
   const [searchParams] = useSearchParams();
   const nodeId = searchParams.get('nodeId');
 
-  // ... (rest of logic same as previous response) ...
-  const { data: node, isLoading, error } = useQuery({
+  const { data: node, isLoading } = useQuery({
     queryKey: ['node', nodeId],
-    queryFn: () => GetNode(nodeId!),
+    queryFn: () => GetNode(nodeId!), // This will now succeed
     enabled: !!nodeId,
     retry: false
   });
 
-  if (!nodeId) return <RootView />;
+  if (!nodeId) return <EmptyState />;
+  if (isLoading) return <div className="p-8 text-gray-500 font-mono animate-pulse">{">"} Fetching node signal...</div>;
+  if (!node) return <div className="p-8 text-red-400 font-mono">Error: Signal lost.</div>;
 
-  if (isLoading) return <div className="p-8 text-gray-500 font-mono animate-pulse">Loading Knowledge Graph...</div>;
-  if (error || !node) return (
-    <div className="h-full flex flex-col items-center justify-center text-red-400">
-      <FileText size={48} className="mb-4 opacity-50" />
-      <p>Node not found or access denied.</p>
-    </div>
-  );
-
+  // CONTEXT SWITCHER LOGIC
   if (node.type === 'subject' || node.type === 'topic') {
-    return <ContainerView node={node} />;
+    return <ContainerNodeView node={node} />;
+  } else {
+    return <LeafNodeView node={node} />;
   }
+}
 
-  if (node.type === 'problem' || node.type === 'theory' || node.type === 'term') {
-    return <LeafView node={node} />;
-  }
-
-  return <div>Unknown Node Type: {node.type}</div>;
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-gray-600 space-y-4 animate-in fade-in">
+      <div className="p-6 bg-(--tui-sidebar) rounded-full">
+        <FileText size={48} className="opacity-50 text-(--tui-primary)" />
+      </div>
+      <p className="font-mono text-sm tracking-wide">Select a node to view contents.</p>
+    </div>
+  )
 }

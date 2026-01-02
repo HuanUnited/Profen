@@ -17,9 +17,9 @@ const profenTheme = EditorView.theme({
   "&": {
     backgroundColor: "#16161e !important", // Force Dark Background
     height: "100%",
-    fontSize: "14px",
+    fontSize: "15px",
     fontFamily: "'JetBrains Mono', monospace",
-    color: "#cdd6f4"
+    color: "#cdd6f4",
   },
   ".cm-scroller": {
     overflow: "auto",
@@ -27,7 +27,8 @@ const profenTheme = EditorView.theme({
   },
   ".cm-content": {
     caretColor: "#89b4fa",
-    padding: "1rem 0"
+    padding: "1rem 0",
+    paddingBottom: "50vh"
   },
   ".cm-line": {
     padding: "0 1rem"
@@ -39,6 +40,13 @@ const profenTheme = EditorView.theme({
     backgroundColor: "#16161e", // Match background
     color: "#585b70",
     borderRight: "1px solid #1e1e2e"
+  }, ".cm-cursor": {
+    borderLeftColor: "#89b4fa",
+    borderLeftWidth: "2px",
+    boxShadow: "0 0 10px #89b4fa" // <--- The Glow Effect
+  },
+  ".cm-activeLine": {
+    backgroundColor: "#89b4fa1a" // 10% opacity primary
   }
 }, { dark: true });
 
