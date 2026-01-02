@@ -1,7 +1,5 @@
 package schema
 
-// error_resolutions
-
 import (
 	"time"
 
@@ -11,8 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// ErrorResolution tracks a specific error instance on a node (Problem).
-// It acts as a "Todo" item for the suggestion engine.
+// ErrorResolution tracks a specific error instance on a node.
 type ErrorResolution struct {
 	ent.Schema
 }
@@ -23,20 +20,21 @@ func (ErrorResolution) Fields() []ent.Field {
 			Default(uuid.New).
 			StorageKey("resolution_id"),
 
-		// Who: The node where the error happened (e.g., the Problem)
 		field.UUID("node_id", uuid.UUID{}),
-
 		field.UUID("error_type_id", uuid.UUID{}),
 
-		// Impact: How much this error weighs in the algorithm
 		field.Float("weight_impact").
 			Default(1.0).
 			Comment("Higher value = higher priority to fix"),
 
-		// Status: Is it fixed?
 		field.Bool("is_resolved").
 			Default(false).
 			Comment("False = Active Gap. True = History."),
+
+		// --- NEW FIELD ---
+		field.String("resolution_notes").
+			Optional().
+			Comment("User explanation of the fix"),
 
 		field.Time("created_at").
 			Default(time.Now),

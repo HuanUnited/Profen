@@ -76,6 +76,11 @@ func IsResolved(v bool) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldEQ(FieldIsResolved, v))
 }
 
+// ResolutionNotes applies equality check predicate on the "resolution_notes" field. It's identical to ResolutionNotesEQ.
+func ResolutionNotes(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldResolutionNotes, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldEQ(FieldCreatedAt, v))
@@ -194,6 +199,81 @@ func IsResolvedEQ(v bool) predicate.ErrorResolution {
 // IsResolvedNEQ applies the NEQ predicate on the "is_resolved" field.
 func IsResolvedNEQ(v bool) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldNEQ(FieldIsResolved, v))
+}
+
+// ResolutionNotesEQ applies the EQ predicate on the "resolution_notes" field.
+func ResolutionNotesEQ(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesNEQ applies the NEQ predicate on the "resolution_notes" field.
+func ResolutionNotesNEQ(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNEQ(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesIn applies the In predicate on the "resolution_notes" field.
+func ResolutionNotesIn(vs ...string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIn(FieldResolutionNotes, vs...))
+}
+
+// ResolutionNotesNotIn applies the NotIn predicate on the "resolution_notes" field.
+func ResolutionNotesNotIn(vs ...string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotIn(FieldResolutionNotes, vs...))
+}
+
+// ResolutionNotesGT applies the GT predicate on the "resolution_notes" field.
+func ResolutionNotesGT(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGT(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesGTE applies the GTE predicate on the "resolution_notes" field.
+func ResolutionNotesGTE(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGTE(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesLT applies the LT predicate on the "resolution_notes" field.
+func ResolutionNotesLT(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLT(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesLTE applies the LTE predicate on the "resolution_notes" field.
+func ResolutionNotesLTE(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLTE(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesContains applies the Contains predicate on the "resolution_notes" field.
+func ResolutionNotesContains(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldContains(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesHasPrefix applies the HasPrefix predicate on the "resolution_notes" field.
+func ResolutionNotesHasPrefix(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldHasPrefix(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesHasSuffix applies the HasSuffix predicate on the "resolution_notes" field.
+func ResolutionNotesHasSuffix(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldHasSuffix(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesIsNil applies the IsNil predicate on the "resolution_notes" field.
+func ResolutionNotesIsNil() predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIsNull(FieldResolutionNotes))
+}
+
+// ResolutionNotesNotNil applies the NotNil predicate on the "resolution_notes" field.
+func ResolutionNotesNotNil() predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotNull(FieldResolutionNotes))
+}
+
+// ResolutionNotesEqualFold applies the EqualFold predicate on the "resolution_notes" field.
+func ResolutionNotesEqualFold(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEqualFold(FieldResolutionNotes, v))
+}
+
+// ResolutionNotesContainsFold applies the ContainsFold predicate on the "resolution_notes" field.
+func ResolutionNotesContainsFold(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldContainsFold(FieldResolutionNotes, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

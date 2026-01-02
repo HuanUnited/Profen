@@ -62,6 +62,20 @@ func (_c *ErrorResolutionCreate) SetNillableIsResolved(v *bool) *ErrorResolution
 	return _c
 }
 
+// SetResolutionNotes sets the "resolution_notes" field.
+func (_c *ErrorResolutionCreate) SetResolutionNotes(v string) *ErrorResolutionCreate {
+	_c.mutation.SetResolutionNotes(v)
+	return _c
+}
+
+// SetNillableResolutionNotes sets the "resolution_notes" field if the given value is not nil.
+func (_c *ErrorResolutionCreate) SetNillableResolutionNotes(v *string) *ErrorResolutionCreate {
+	if v != nil {
+		_c.SetResolutionNotes(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *ErrorResolutionCreate) SetCreatedAt(v time.Time) *ErrorResolutionCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -228,6 +242,10 @@ func (_c *ErrorResolutionCreate) createSpec() (*ErrorResolution, *sqlgraph.Creat
 	if value, ok := _c.mutation.IsResolved(); ok {
 		_spec.SetField(errorresolution.FieldIsResolved, field.TypeBool, value)
 		_node.IsResolved = value
+	}
+	if value, ok := _c.mutation.ResolutionNotes(); ok {
+		_spec.SetField(errorresolution.FieldResolutionNotes, field.TypeString, value)
+		_node.ResolutionNotes = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(errorresolution.FieldCreatedAt, field.TypeTime, value)

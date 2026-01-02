@@ -19,6 +19,7 @@ var (
 		{Name: "difficulty", Type: field.TypeFloat64},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "is_correct", Type: field.TypeBool},
+		{Name: "user_answer", Type: field.TypeString, Nullable: true},
 		{Name: "error_type_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "card_id", Type: field.TypeUUID},
 	}
@@ -30,13 +31,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "attempts_error_definitions_attempts",
-				Columns:    []*schema.Column{AttemptsColumns[8]},
+				Columns:    []*schema.Column{AttemptsColumns[9]},
 				RefColumns: []*schema.Column{ErrorDefinitionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "attempts_fsrs_cards_attempts",
-				Columns:    []*schema.Column{AttemptsColumns[9]},
+				Columns:    []*schema.Column{AttemptsColumns[10]},
 				RefColumns: []*schema.Column{FsrsCardsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -61,6 +62,7 @@ var (
 		{Name: "error_type_id", Type: field.TypeUUID},
 		{Name: "weight_impact", Type: field.TypeFloat64, Default: 1},
 		{Name: "is_resolved", Type: field.TypeBool, Default: false},
+		{Name: "resolution_notes", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "resolved_at", Type: field.TypeTime, Nullable: true},
 		{Name: "node_id", Type: field.TypeUUID},
@@ -73,7 +75,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "error_resolutions_nodes_error_resolutions",
-				Columns:    []*schema.Column{ErrorResolutionsColumns[6]},
+				Columns:    []*schema.Column{ErrorResolutionsColumns[7]},
 				RefColumns: []*schema.Column{NodesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

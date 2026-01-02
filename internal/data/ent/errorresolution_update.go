@@ -94,6 +94,26 @@ func (_u *ErrorResolutionUpdate) SetNillableIsResolved(v *bool) *ErrorResolution
 	return _u
 }
 
+// SetResolutionNotes sets the "resolution_notes" field.
+func (_u *ErrorResolutionUpdate) SetResolutionNotes(v string) *ErrorResolutionUpdate {
+	_u.mutation.SetResolutionNotes(v)
+	return _u
+}
+
+// SetNillableResolutionNotes sets the "resolution_notes" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableResolutionNotes(v *string) *ErrorResolutionUpdate {
+	if v != nil {
+		_u.SetResolutionNotes(*v)
+	}
+	return _u
+}
+
+// ClearResolutionNotes clears the value of the "resolution_notes" field.
+func (_u *ErrorResolutionUpdate) ClearResolutionNotes() *ErrorResolutionUpdate {
+	_u.mutation.ClearResolutionNotes()
+	return _u
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_u *ErrorResolutionUpdate) SetCreatedAt(v time.Time) *ErrorResolutionUpdate {
 	_u.mutation.SetCreatedAt(v)
@@ -208,6 +228,12 @@ func (_u *ErrorResolutionUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if value, ok := _u.mutation.IsResolved(); ok {
 		_spec.SetField(errorresolution.FieldIsResolved, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.ResolutionNotes(); ok {
+		_spec.SetField(errorresolution.FieldResolutionNotes, field.TypeString, value)
+	}
+	if _u.mutation.ResolutionNotesCleared() {
+		_spec.ClearField(errorresolution.FieldResolutionNotes, field.TypeString)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(errorresolution.FieldCreatedAt, field.TypeTime, value)
@@ -329,6 +355,26 @@ func (_u *ErrorResolutionUpdateOne) SetNillableIsResolved(v *bool) *ErrorResolut
 	if v != nil {
 		_u.SetIsResolved(*v)
 	}
+	return _u
+}
+
+// SetResolutionNotes sets the "resolution_notes" field.
+func (_u *ErrorResolutionUpdateOne) SetResolutionNotes(v string) *ErrorResolutionUpdateOne {
+	_u.mutation.SetResolutionNotes(v)
+	return _u
+}
+
+// SetNillableResolutionNotes sets the "resolution_notes" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableResolutionNotes(v *string) *ErrorResolutionUpdateOne {
+	if v != nil {
+		_u.SetResolutionNotes(*v)
+	}
+	return _u
+}
+
+// ClearResolutionNotes clears the value of the "resolution_notes" field.
+func (_u *ErrorResolutionUpdateOne) ClearResolutionNotes() *ErrorResolutionUpdateOne {
+	_u.mutation.ClearResolutionNotes()
 	return _u
 }
 
@@ -476,6 +522,12 @@ func (_u *ErrorResolutionUpdateOne) sqlSave(ctx context.Context) (_node *ErrorRe
 	}
 	if value, ok := _u.mutation.IsResolved(); ok {
 		_spec.SetField(errorresolution.FieldIsResolved, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.ResolutionNotes(); ok {
+		_spec.SetField(errorresolution.FieldResolutionNotes, field.TypeString, value)
+	}
+	if _u.mutation.ResolutionNotesCleared() {
+		_spec.ClearField(errorresolution.FieldResolutionNotes, field.TypeString)
 	}
 	if value, ok := _u.mutation.CreatedAt(); ok {
 		_spec.SetField(errorresolution.FieldCreatedAt, field.TypeTime, value)

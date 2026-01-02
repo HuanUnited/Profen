@@ -57,6 +57,7 @@ type AttemptMutation struct {
 	adddifficulty           *float64
 	created_at              *time.Time
 	is_correct              *bool
+	user_answer             *string
 	clearedFields           map[string]struct{}
 	card                    *uuid.UUID
 	clearedcard             bool
@@ -588,6 +589,55 @@ func (m *AttemptMutation) ResetErrorTypeID() {
 	delete(m.clearedFields, attempt.FieldErrorTypeID)
 }
 
+// SetUserAnswer sets the "user_answer" field.
+func (m *AttemptMutation) SetUserAnswer(s string) {
+	m.user_answer = &s
+}
+
+// UserAnswer returns the value of the "user_answer" field in the mutation.
+func (m *AttemptMutation) UserAnswer() (r string, exists bool) {
+	v := m.user_answer
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserAnswer returns the old "user_answer" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldUserAnswer(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserAnswer is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserAnswer requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserAnswer: %w", err)
+	}
+	return oldValue.UserAnswer, nil
+}
+
+// ClearUserAnswer clears the value of the "user_answer" field.
+func (m *AttemptMutation) ClearUserAnswer() {
+	m.user_answer = nil
+	m.clearedFields[attempt.FieldUserAnswer] = struct{}{}
+}
+
+// UserAnswerCleared returns if the "user_answer" field was cleared in this mutation.
+func (m *AttemptMutation) UserAnswerCleared() bool {
+	_, ok := m.clearedFields[attempt.FieldUserAnswer]
+	return ok
+}
+
+// ResetUserAnswer resets all changes to the "user_answer" field.
+func (m *AttemptMutation) ResetUserAnswer() {
+	m.user_answer = nil
+	delete(m.clearedFields, attempt.FieldUserAnswer)
+}
+
 // ClearCard clears the "card" edge to the FsrsCard entity.
 func (m *AttemptMutation) ClearCard() {
 	m.clearedcard = true
@@ -689,7 +739,7 @@ func (m *AttemptMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AttemptMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.rating != nil {
 		fields = append(fields, attempt.FieldRating)
 	}
@@ -717,6 +767,9 @@ func (m *AttemptMutation) Fields() []string {
 	if m.error_definition != nil {
 		fields = append(fields, attempt.FieldErrorTypeID)
 	}
+	if m.user_answer != nil {
+		fields = append(fields, attempt.FieldUserAnswer)
+	}
 	return fields
 }
 
@@ -743,6 +796,8 @@ func (m *AttemptMutation) Field(name string) (ent.Value, bool) {
 		return m.IsCorrect()
 	case attempt.FieldErrorTypeID:
 		return m.ErrorTypeID()
+	case attempt.FieldUserAnswer:
+		return m.UserAnswer()
 	}
 	return nil, false
 }
@@ -770,6 +825,8 @@ func (m *AttemptMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldIsCorrect(ctx)
 	case attempt.FieldErrorTypeID:
 		return m.OldErrorTypeID(ctx)
+	case attempt.FieldUserAnswer:
+		return m.OldUserAnswer(ctx)
 	}
 	return nil, fmt.Errorf("unknown Attempt field %s", name)
 }
@@ -841,6 +898,13 @@ func (m *AttemptMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetErrorTypeID(v)
+		return nil
+	case attempt.FieldUserAnswer:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserAnswer(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Attempt field %s", name)
@@ -926,6 +990,9 @@ func (m *AttemptMutation) ClearedFields() []string {
 	if m.FieldCleared(attempt.FieldErrorTypeID) {
 		fields = append(fields, attempt.FieldErrorTypeID)
 	}
+	if m.FieldCleared(attempt.FieldUserAnswer) {
+		fields = append(fields, attempt.FieldUserAnswer)
+	}
 	return fields
 }
 
@@ -942,6 +1009,9 @@ func (m *AttemptMutation) ClearField(name string) error {
 	switch name {
 	case attempt.FieldErrorTypeID:
 		m.ClearErrorTypeID()
+		return nil
+	case attempt.FieldUserAnswer:
+		m.ClearUserAnswer()
 		return nil
 	}
 	return fmt.Errorf("unknown Attempt nullable field %s", name)
@@ -977,6 +1047,9 @@ func (m *AttemptMutation) ResetField(name string) error {
 		return nil
 	case attempt.FieldErrorTypeID:
 		m.ResetErrorTypeID()
+		return nil
+	case attempt.FieldUserAnswer:
+		m.ResetUserAnswer()
 		return nil
 	}
 	return fmt.Errorf("unknown Attempt field %s", name)
@@ -1653,6 +1726,7 @@ type ErrorResolutionMutation struct {
 	weight_impact    *float64
 	addweight_impact *float64
 	is_resolved      *bool
+	resolution_notes *string
 	created_at       *time.Time
 	resolved_at      *time.Time
 	clearedFields    map[string]struct{}
@@ -1931,6 +2005,55 @@ func (m *ErrorResolutionMutation) ResetIsResolved() {
 	m.is_resolved = nil
 }
 
+// SetResolutionNotes sets the "resolution_notes" field.
+func (m *ErrorResolutionMutation) SetResolutionNotes(s string) {
+	m.resolution_notes = &s
+}
+
+// ResolutionNotes returns the value of the "resolution_notes" field in the mutation.
+func (m *ErrorResolutionMutation) ResolutionNotes() (r string, exists bool) {
+	v := m.resolution_notes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResolutionNotes returns the old "resolution_notes" field's value of the ErrorResolution entity.
+// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorResolutionMutation) OldResolutionNotes(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResolutionNotes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResolutionNotes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResolutionNotes: %w", err)
+	}
+	return oldValue.ResolutionNotes, nil
+}
+
+// ClearResolutionNotes clears the value of the "resolution_notes" field.
+func (m *ErrorResolutionMutation) ClearResolutionNotes() {
+	m.resolution_notes = nil
+	m.clearedFields[errorresolution.FieldResolutionNotes] = struct{}{}
+}
+
+// ResolutionNotesCleared returns if the "resolution_notes" field was cleared in this mutation.
+func (m *ErrorResolutionMutation) ResolutionNotesCleared() bool {
+	_, ok := m.clearedFields[errorresolution.FieldResolutionNotes]
+	return ok
+}
+
+// ResetResolutionNotes resets all changes to the "resolution_notes" field.
+func (m *ErrorResolutionMutation) ResetResolutionNotes() {
+	m.resolution_notes = nil
+	delete(m.clearedFields, errorresolution.FieldResolutionNotes)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *ErrorResolutionMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -2077,7 +2200,7 @@ func (m *ErrorResolutionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ErrorResolutionMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.node != nil {
 		fields = append(fields, errorresolution.FieldNodeID)
 	}
@@ -2089,6 +2212,9 @@ func (m *ErrorResolutionMutation) Fields() []string {
 	}
 	if m.is_resolved != nil {
 		fields = append(fields, errorresolution.FieldIsResolved)
+	}
+	if m.resolution_notes != nil {
+		fields = append(fields, errorresolution.FieldResolutionNotes)
 	}
 	if m.created_at != nil {
 		fields = append(fields, errorresolution.FieldCreatedAt)
@@ -2112,6 +2238,8 @@ func (m *ErrorResolutionMutation) Field(name string) (ent.Value, bool) {
 		return m.WeightImpact()
 	case errorresolution.FieldIsResolved:
 		return m.IsResolved()
+	case errorresolution.FieldResolutionNotes:
+		return m.ResolutionNotes()
 	case errorresolution.FieldCreatedAt:
 		return m.CreatedAt()
 	case errorresolution.FieldResolvedAt:
@@ -2133,6 +2261,8 @@ func (m *ErrorResolutionMutation) OldField(ctx context.Context, name string) (en
 		return m.OldWeightImpact(ctx)
 	case errorresolution.FieldIsResolved:
 		return m.OldIsResolved(ctx)
+	case errorresolution.FieldResolutionNotes:
+		return m.OldResolutionNotes(ctx)
 	case errorresolution.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case errorresolution.FieldResolvedAt:
@@ -2173,6 +2303,13 @@ func (m *ErrorResolutionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIsResolved(v)
+		return nil
+	case errorresolution.FieldResolutionNotes:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResolutionNotes(v)
 		return nil
 	case errorresolution.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -2233,6 +2370,9 @@ func (m *ErrorResolutionMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ErrorResolutionMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(errorresolution.FieldResolutionNotes) {
+		fields = append(fields, errorresolution.FieldResolutionNotes)
+	}
 	if m.FieldCleared(errorresolution.FieldResolvedAt) {
 		fields = append(fields, errorresolution.FieldResolvedAt)
 	}
@@ -2250,6 +2390,9 @@ func (m *ErrorResolutionMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ErrorResolutionMutation) ClearField(name string) error {
 	switch name {
+	case errorresolution.FieldResolutionNotes:
+		m.ClearResolutionNotes()
+		return nil
 	case errorresolution.FieldResolvedAt:
 		m.ClearResolvedAt()
 		return nil
@@ -2272,6 +2415,9 @@ func (m *ErrorResolutionMutation) ResetField(name string) error {
 		return nil
 	case errorresolution.FieldIsResolved:
 		m.ResetIsResolved()
+		return nil
+	case errorresolution.FieldResolutionNotes:
+		m.ResetResolutionNotes()
 		return nil
 	case errorresolution.FieldCreatedAt:
 		m.ResetCreatedAt()

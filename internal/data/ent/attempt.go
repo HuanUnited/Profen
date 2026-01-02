@@ -38,6 +38,8 @@ type Attempt struct {
 	IsCorrect bool `json:"is_correct,omitempty"`
 	// ErrorTypeID holds the value of the "error_type_id" field.
 	ErrorTypeID *uuid.UUID `json:"error_type_id,omitempty"`
+	// Snapshot of what the user typed
+	UserAnswer string `json:"user_answer,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AttemptQuery when eager-loading is set.
 	Edges        AttemptEdges `json:"edges"`
@@ -90,7 +92,7 @@ func (*Attempt) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case attempt.FieldRating, attempt.FieldDurationMs:
 			values[i] = new(sql.NullInt64)
-		case attempt.FieldState:
+		case attempt.FieldState, attempt.FieldUserAnswer:
 			values[i] = new(sql.NullString)
 		case attempt.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -172,6 +174,12 @@ func (_m *Attempt) assignValues(columns []string, values []any) error {
 				_m.ErrorTypeID = new(uuid.UUID)
 				*_m.ErrorTypeID = *value.S.(*uuid.UUID)
 			}
+		case attempt.FieldUserAnswer:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field user_answer", values[i])
+			} else if value.Valid {
+				_m.UserAnswer = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -246,6 +254,9 @@ func (_m *Attempt) String() string {
 		builder.WriteString("error_type_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("user_answer=")
+	builder.WriteString(_m.UserAnswer)
 	builder.WriteByte(')')
 	return builder.String()
 }

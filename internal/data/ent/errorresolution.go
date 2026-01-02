@@ -27,6 +27,8 @@ type ErrorResolution struct {
 	WeightImpact float64 `json:"weight_impact,omitempty"`
 	// False = Active Gap. True = History.
 	IsResolved bool `json:"is_resolved,omitempty"`
+	// User explanation of the fix
+	ResolutionNotes string `json:"resolution_notes,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// ResolvedAt holds the value of the "resolved_at" field.
@@ -66,6 +68,8 @@ func (*ErrorResolution) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case errorresolution.FieldWeightImpact:
 			values[i] = new(sql.NullFloat64)
+		case errorresolution.FieldResolutionNotes:
+			values[i] = new(sql.NullString)
 		case errorresolution.FieldCreatedAt, errorresolution.FieldResolvedAt:
 			values[i] = new(sql.NullTime)
 		case errorresolution.FieldID, errorresolution.FieldNodeID, errorresolution.FieldErrorTypeID:
@@ -114,6 +118,12 @@ func (_m *ErrorResolution) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field is_resolved", values[i])
 			} else if value.Valid {
 				_m.IsResolved = value.Bool
+			}
+		case errorresolution.FieldResolutionNotes:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field resolution_notes", values[i])
+			} else if value.Valid {
+				_m.ResolutionNotes = value.String
 			}
 		case errorresolution.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -180,6 +190,9 @@ func (_m *ErrorResolution) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("is_resolved=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsResolved))
+	builder.WriteString(", ")
+	builder.WriteString("resolution_notes=")
+	builder.WriteString(_m.ResolutionNotes)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

@@ -177,6 +177,26 @@ func (_u *AttemptUpdate) ClearErrorTypeID() *AttemptUpdate {
 	return _u
 }
 
+// SetUserAnswer sets the "user_answer" field.
+func (_u *AttemptUpdate) SetUserAnswer(v string) *AttemptUpdate {
+	_u.mutation.SetUserAnswer(v)
+	return _u
+}
+
+// SetNillableUserAnswer sets the "user_answer" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableUserAnswer(v *string) *AttemptUpdate {
+	if v != nil {
+		_u.SetUserAnswer(*v)
+	}
+	return _u
+}
+
+// ClearUserAnswer clears the value of the "user_answer" field.
+func (_u *AttemptUpdate) ClearUserAnswer() *AttemptUpdate {
+	_u.mutation.ClearUserAnswer()
+	return _u
+}
+
 // SetCard sets the "card" edge to the FsrsCard entity.
 func (_u *AttemptUpdate) SetCard(v *FsrsCard) *AttemptUpdate {
 	return _u.SetCardID(v.ID)
@@ -305,6 +325,12 @@ func (_u *AttemptUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.IsCorrect(); ok {
 		_spec.SetField(attempt.FieldIsCorrect, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.UserAnswer(); ok {
+		_spec.SetField(attempt.FieldUserAnswer, field.TypeString, value)
+	}
+	if _u.mutation.UserAnswerCleared() {
+		_spec.ClearField(attempt.FieldUserAnswer, field.TypeString)
 	}
 	if _u.mutation.CardCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -532,6 +558,26 @@ func (_u *AttemptUpdateOne) ClearErrorTypeID() *AttemptUpdateOne {
 	return _u
 }
 
+// SetUserAnswer sets the "user_answer" field.
+func (_u *AttemptUpdateOne) SetUserAnswer(v string) *AttemptUpdateOne {
+	_u.mutation.SetUserAnswer(v)
+	return _u
+}
+
+// SetNillableUserAnswer sets the "user_answer" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableUserAnswer(v *string) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetUserAnswer(*v)
+	}
+	return _u
+}
+
+// ClearUserAnswer clears the value of the "user_answer" field.
+func (_u *AttemptUpdateOne) ClearUserAnswer() *AttemptUpdateOne {
+	_u.mutation.ClearUserAnswer()
+	return _u
+}
+
 // SetCard sets the "card" edge to the FsrsCard entity.
 func (_u *AttemptUpdateOne) SetCard(v *FsrsCard) *AttemptUpdateOne {
 	return _u.SetCardID(v.ID)
@@ -690,6 +736,12 @@ func (_u *AttemptUpdateOne) sqlSave(ctx context.Context) (_node *Attempt, err er
 	}
 	if value, ok := _u.mutation.IsCorrect(); ok {
 		_spec.SetField(attempt.FieldIsCorrect, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.UserAnswer(); ok {
+		_spec.SetField(attempt.FieldUserAnswer, field.TypeString, value)
+	}
+	if _u.mutation.UserAnswerCleared() {
+		_spec.ClearField(attempt.FieldUserAnswer, field.TypeString)
 	}
 	if _u.mutation.CardCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -1,15 +1,26 @@
 @import "tailwindcss";
 
-/* 
-   Tailwind v4 uses CSS variables for theme overrides.
-   We can add custom colors from the SDLC here later. 
-*/
+/* WebTUI Layers - Must be defined first */
+@layer base, utils, components;
+
+/* Import WebTUI modules */
+@import "@webtui/css/base.css";
+@import "@webtui/css/utils/box.css";
+@import "@webtui/css/components/button.css";
+@import "@webtui/css/components/typography.css";
+@import "@webtui/css/components/badge.css";
+@import "@webtui/css/components/input.css";
+
+/* Custom Theme Overrides (Catppuccin-ish) */
 :root {
-  --color-brand-dark: #1b2636;
-  --color-brand-primary: #00d1b2;
+  --tui-bg: #1e1e2e;
+  --tui-fg: #cdd6f4;
+  --tui-border: #313244;
+  --tui-primary: #89b4fa;
 }
 
 body {
-  @apply bg-slate-900 text-slate-100; /* Dark mode default */
-  font-family: 'Inter', sans-serif;
+  background-color: var(--tui-bg);
+  color: var(--tui-fg);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace; /* Terminal Font */
 }

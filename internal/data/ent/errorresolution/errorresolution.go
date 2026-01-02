@@ -23,6 +23,8 @@ const (
 	FieldWeightImpact = "weight_impact"
 	// FieldIsResolved holds the string denoting the is_resolved field in the database.
 	FieldIsResolved = "is_resolved"
+	// FieldResolutionNotes holds the string denoting the resolution_notes field in the database.
+	FieldResolutionNotes = "resolution_notes"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldResolvedAt holds the string denoting the resolved_at field in the database.
@@ -49,6 +51,7 @@ var Columns = []string{
 	FieldErrorTypeID,
 	FieldWeightImpact,
 	FieldIsResolved,
+	FieldResolutionNotes,
 	FieldCreatedAt,
 	FieldResolvedAt,
 }
@@ -100,6 +103,11 @@ func ByWeightImpact(opts ...sql.OrderTermOption) OrderOption {
 // ByIsResolved orders the results by the is_resolved field.
 func ByIsResolved(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsResolved, opts...).ToFunc()
+}
+
+// ByResolutionNotes orders the results by the resolution_notes field.
+func ByResolutionNotes(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResolutionNotes, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

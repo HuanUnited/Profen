@@ -96,6 +96,11 @@ func ErrorTypeID(v uuid.UUID) predicate.Attempt {
 	return predicate.Attempt(sql.FieldEQ(FieldErrorTypeID, v))
 }
 
+// UserAnswer applies equality check predicate on the "user_answer" field. It's identical to UserAnswerEQ.
+func UserAnswer(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldEQ(FieldUserAnswer, v))
+}
+
 // RatingEQ applies the EQ predicate on the "rating" field.
 func RatingEQ(v int) predicate.Attempt {
 	return predicate.Attempt(sql.FieldEQ(FieldRating, v))
@@ -374,6 +379,81 @@ func ErrorTypeIDIsNil() predicate.Attempt {
 // ErrorTypeIDNotNil applies the NotNil predicate on the "error_type_id" field.
 func ErrorTypeIDNotNil() predicate.Attempt {
 	return predicate.Attempt(sql.FieldNotNull(FieldErrorTypeID))
+}
+
+// UserAnswerEQ applies the EQ predicate on the "user_answer" field.
+func UserAnswerEQ(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldEQ(FieldUserAnswer, v))
+}
+
+// UserAnswerNEQ applies the NEQ predicate on the "user_answer" field.
+func UserAnswerNEQ(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldNEQ(FieldUserAnswer, v))
+}
+
+// UserAnswerIn applies the In predicate on the "user_answer" field.
+func UserAnswerIn(vs ...string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldIn(FieldUserAnswer, vs...))
+}
+
+// UserAnswerNotIn applies the NotIn predicate on the "user_answer" field.
+func UserAnswerNotIn(vs ...string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldNotIn(FieldUserAnswer, vs...))
+}
+
+// UserAnswerGT applies the GT predicate on the "user_answer" field.
+func UserAnswerGT(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldGT(FieldUserAnswer, v))
+}
+
+// UserAnswerGTE applies the GTE predicate on the "user_answer" field.
+func UserAnswerGTE(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldGTE(FieldUserAnswer, v))
+}
+
+// UserAnswerLT applies the LT predicate on the "user_answer" field.
+func UserAnswerLT(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldLT(FieldUserAnswer, v))
+}
+
+// UserAnswerLTE applies the LTE predicate on the "user_answer" field.
+func UserAnswerLTE(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldLTE(FieldUserAnswer, v))
+}
+
+// UserAnswerContains applies the Contains predicate on the "user_answer" field.
+func UserAnswerContains(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldContains(FieldUserAnswer, v))
+}
+
+// UserAnswerHasPrefix applies the HasPrefix predicate on the "user_answer" field.
+func UserAnswerHasPrefix(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldHasPrefix(FieldUserAnswer, v))
+}
+
+// UserAnswerHasSuffix applies the HasSuffix predicate on the "user_answer" field.
+func UserAnswerHasSuffix(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldHasSuffix(FieldUserAnswer, v))
+}
+
+// UserAnswerIsNil applies the IsNil predicate on the "user_answer" field.
+func UserAnswerIsNil() predicate.Attempt {
+	return predicate.Attempt(sql.FieldIsNull(FieldUserAnswer))
+}
+
+// UserAnswerNotNil applies the NotNil predicate on the "user_answer" field.
+func UserAnswerNotNil() predicate.Attempt {
+	return predicate.Attempt(sql.FieldNotNull(FieldUserAnswer))
+}
+
+// UserAnswerEqualFold applies the EqualFold predicate on the "user_answer" field.
+func UserAnswerEqualFold(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldEqualFold(FieldUserAnswer, v))
+}
+
+// UserAnswerContainsFold applies the ContainsFold predicate on the "user_answer" field.
+func UserAnswerContainsFold(v string) predicate.Attempt {
+	return predicate.Attempt(sql.FieldContainsFold(FieldUserAnswer, v))
 }
 
 // HasCard applies the HasEdge predicate on the "card" edge.

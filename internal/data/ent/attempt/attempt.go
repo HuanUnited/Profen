@@ -34,6 +34,8 @@ const (
 	FieldIsCorrect = "is_correct"
 	// FieldErrorTypeID holds the string denoting the error_type_id field in the database.
 	FieldErrorTypeID = "error_type_id"
+	// FieldUserAnswer holds the string denoting the user_answer field in the database.
+	FieldUserAnswer = "user_answer"
 	// EdgeCard holds the string denoting the card edge name in mutations.
 	EdgeCard = "card"
 	// EdgeErrorDefinition holds the string denoting the error_definition edge name in mutations.
@@ -72,6 +74,7 @@ var Columns = []string{
 	FieldCardID,
 	FieldIsCorrect,
 	FieldErrorTypeID,
+	FieldUserAnswer,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -169,6 +172,11 @@ func ByIsCorrect(opts ...sql.OrderTermOption) OrderOption {
 // ByErrorTypeID orders the results by the error_type_id field.
 func ByErrorTypeID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldErrorTypeID, opts...).ToFunc()
+}
+
+// ByUserAnswer orders the results by the user_answer field.
+func ByUserAnswer(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUserAnswer, opts...).ToFunc()
 }
 
 // ByCardField orders the results by card field.

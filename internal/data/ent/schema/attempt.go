@@ -10,7 +10,6 @@ import (
 )
 
 // Attempt (Revlog) records a single review event.
-// This data is immutable history used for the FSRS Optimizer.
 type Attempt struct {
 	ent.Schema
 }
@@ -29,16 +28,13 @@ func (Attempt) Fields() []ent.Field {
 			Default(0).
 			Comment("Time taken to answer in milliseconds"),
 
-		// 2. FSRS Context (State *before* the review)
-		// We record this to reconstruct the history if needed.
+		// 2. FSRS Context
 		field.Enum("state").
 			Values("new", "learning", "review", "relearning").
 			Comment("State of the card before this attempt"),
 
-		field.Float("stability").
-			Comment("Stability before this attempt"),
-		field.Float("difficulty").
-			Comment("Difficulty before this attempt"),
+		field.Float("stability").Comment("Stability before this attempt"),
+		field.Float("difficulty").Comment("Difficulty before this attempt"),
 
 		// 3. Metadata
 		field.Time("created_at").
@@ -48,17 +44,19 @@ func (Attempt) Fields() []ent.Field {
 		// Foreign Keys
 		field.UUID("card_id", uuid.UUID{}),
 
-		// NEW: Solved/Mastered Boolean
-		// "Solved" usually means "Got it right this time" (Grade >= 3).
-		// "Mastered" means "Is now mature" (Stability > 21 days?).
-		// Let's call it 'is_correct' for the attempt itself.
+		// Solved/Mastered Boolean
 		field.Bool("is_correct").
 			Comment("Derived from rating. True if Grade >= 3"),
 
-		// NEW: Optional Error Type ID (Foreign Key)
+		// Optional Error Type ID
 		field.UUID("error_type_id", uuid.UUID{}).
 			Optional().
 			Nillable(),
+
+		// --- NEW FIELD ---
+		field.String("user_answer").
+			Optional().
+			Comment("Snapshot of what the user typed"),
 	}
 }
 
@@ -70,7 +68,6 @@ func (Attempt) Edges() []ent.Edge {
 			Unique().
 			Required(),
 
-		// NEW: Link to Error Definition
 		edge.From("error_definition", ErrorDefinition.Type).
 			Ref("attempts").
 			Field("error_type_id").

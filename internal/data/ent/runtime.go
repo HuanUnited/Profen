@@ -61,7 +61,7 @@ func init() {
 	// errorresolution.DefaultIsResolved holds the default value on creation for the is_resolved field.
 	errorresolution.DefaultIsResolved = errorresolutionDescIsResolved.Default.(bool)
 	// errorresolutionDescCreatedAt is the schema descriptor for created_at field.
-	errorresolutionDescCreatedAt := errorresolutionFields[5].Descriptor()
+	errorresolutionDescCreatedAt := errorresolutionFields[6].Descriptor()
 	// errorresolution.DefaultCreatedAt holds the default value on creation for the created_at field.
 	errorresolution.DefaultCreatedAt = errorresolutionDescCreatedAt.Default.(func() time.Time)
 	// errorresolutionDescID is the schema descriptor for id field.

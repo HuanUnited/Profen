@@ -101,6 +101,20 @@ func (_c *AttemptCreate) SetNillableErrorTypeID(v *uuid.UUID) *AttemptCreate {
 	return _c
 }
 
+// SetUserAnswer sets the "user_answer" field.
+func (_c *AttemptCreate) SetUserAnswer(v string) *AttemptCreate {
+	_c.mutation.SetUserAnswer(v)
+	return _c
+}
+
+// SetNillableUserAnswer sets the "user_answer" field if the given value is not nil.
+func (_c *AttemptCreate) SetNillableUserAnswer(v *string) *AttemptCreate {
+	if v != nil {
+		_c.SetUserAnswer(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *AttemptCreate) SetID(v uuid.UUID) *AttemptCreate {
 	_c.mutation.SetID(v)
@@ -284,6 +298,10 @@ func (_c *AttemptCreate) createSpec() (*Attempt, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.IsCorrect(); ok {
 		_spec.SetField(attempt.FieldIsCorrect, field.TypeBool, value)
 		_node.IsCorrect = value
+	}
+	if value, ok := _c.mutation.UserAnswer(); ok {
+		_spec.SetField(attempt.FieldUserAnswer, field.TypeString, value)
+		_node.UserAnswer = value
 	}
 	if nodes := _c.mutation.CardIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
