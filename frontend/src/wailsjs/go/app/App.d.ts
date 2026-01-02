@@ -6,6 +6,8 @@ export function CreateAssociation(arg1:string,arg2:string,arg3:string):Promise<v
 
 export function CreateNode(arg1:string,arg2:string,arg3:string):Promise<ent.Node>;
 
+export function GetAttemptHistory(arg1:string):Promise<Array<ent.Attempt>>;
+
 export function GetChildren(arg1:string):Promise<Array<ent.Node>>;
 
 export function GetDueCards(arg1:number):Promise<Array<ent.Node>>;

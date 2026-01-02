@@ -10,6 +10,10 @@ export function CreateNode(arg1, arg2, arg3) {
   return window['go']['app']['App']['CreateNode'](arg1, arg2, arg3);
 }
 
+export function GetAttemptHistory(arg1) {
+  return window['go']['app']['App']['GetAttemptHistory'](arg1);
+}
+
 export function GetChildren(arg1) {
   return window['go']['app']['App']['GetChildren'](arg1);
 }

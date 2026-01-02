@@ -20,6 +20,7 @@ type App struct {
 	snapshotService *service.SnapshotService
 	nodeRepo        *data.NodeRepository
 	suggestionRepo  *data.SuggestionRepository
+	attemptRepo     *data.AttemptRepository
 }
 
 // NewApp creates a new App application struct
@@ -30,6 +31,7 @@ func NewApp(client *ent.Client) *App {
 		snapshotService: service.NewSnapshotService(client),
 		nodeRepo:        data.NewNodeRepository(client),
 		suggestionRepo:  data.NewSuggestionRepository(client),
+		attemptRepo:     data.NewAttemptRepository(client),
 	}
 }
 
@@ -185,4 +187,14 @@ func (a *App) CreateAssociation(sourceIDStr, targetIDStr, relTypeStr string) err
 func (a *App) SearchNodes(query string) ([]*ent.Node, error) {
 	// We need to implement SearchNodes in NodeRepository first
 	return a.nodeRepo.SearchNodes(a.ctx, query)
+}
+
+// GetAttemptHistory retrieves attempts for a node
+func (a *App) GetAttemptHistory(nodeIDStr string) ([]*ent.Attempt, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid node UUID: %w", err)
+	}
+	// Now a.attemptRepo exists!
+	return a.attemptRepo.GetAttemptsByNode(a.ctx, id)
 }

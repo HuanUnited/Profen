@@ -12,6 +12,8 @@ import {
 } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
 import { createPortal } from "react-dom";
+import NodeEditor from "../smart/NodeEditor";
+
 
 // Define Debounce Hook inline or import it
 function useDebounce<T>(value: T, delay: number): T {
@@ -70,6 +72,8 @@ export default function NodeModal({
     null
   );
 
+  const [body, setBody] = useState("");
+
   // Debounce search
   const debouncedSearch = useDebounce(targetSearchQuery, 500);
 
@@ -97,11 +101,13 @@ export default function NodeModal({
     if (isOpen) {
       if (mode === "edit" && initialNode) {
         setTitle(initialNode.title || "");
+        setBody(initialNode.body || "");
         setSelectedType(initialNode.type || "subject");
         setParentId(String(initialNode.parent_id || ""));
         setRelations([]);
       } else {
         setTitle("");
+        setBody("");
         setSelectedType("subject");
         setRelations([]);
         setSelectedSubjectId("");
@@ -145,7 +151,7 @@ export default function NodeModal({
         const updated = await UpdateNode(
           String(initialNode.id),
           title,
-          initialNode.body || ""
+          body,
         );
         nodeId = String(updated.id);
       }
@@ -293,6 +299,21 @@ export default function NodeModal({
                   autoFocus
                 />
               </div>
+
+              {/* Description/Body */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Description
+                </label>
+                <div className="border border-[#2f334d] rounded-lg overflow-hidden bg-[#16161e] shadow-inner">
+                  <NodeEditor
+                    initialContent={body}
+                    onChange={setBody}
+                    readOnly={false}
+                  />
+                </div>
+              </div>
+
 
               {/* Relationships */}
               <div className="space-y-4">
