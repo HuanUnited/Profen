@@ -31,6 +31,15 @@ func TestSuggestionEngine_DiagnosticGaps(t *testing.T) {
 	client.NodeClosure.Delete().Exec(ctx)
 	client.Node.Delete().Exec(ctx)
 
+	// Cleanup: Add ErrorDefinition delete
+	client.ErrorResolution.Delete().Exec(ctx)
+	client.ErrorDefinition.Delete().Exec(ctx)
+
+	// Create Error Definitions for testing
+	defCalc, _ := client.ErrorDefinition.Create().SetLabel("Calc").Save(ctx)
+	defConcept, _ := client.ErrorDefinition.Create().SetLabel("Concept").Save(ctx)
+	defTypo, _ := client.ErrorDefinition.Create().SetLabel("Typo").Save(ctx)
+
 	repo := data.NewSuggestionRepository(client)
 
 	// 1. Setup Hierarchy
@@ -61,29 +70,29 @@ func TestSuggestionEngine_DiagnosticGaps(t *testing.T) {
 		SetBody("Problem C").
 		Save(ctx)
 
-	// 2. Inject Errors
-	// Error on A: Weight 1.0
+		// 2. Inject Errors
+		// Error on A: Weight 1.0
 	client.ErrorResolution.Create().
 		SetNodeID(probA.ID).
-		SetErrorType("calc").
+		SetErrorTypeID(defCalc.ID). // FIXED
 		SetWeightImpact(1.0).
 		SetIsResolved(false).
 		Save(ctx)
 
-	// Error on B: Weight 5.0 (Critical)
+	// Error on B: Weight 5.0
 	client.ErrorResolution.Create().
 		SetNodeID(probB.ID).
-		SetErrorType("concept").
+		SetErrorTypeID(defConcept.ID). // FIXED
 		SetWeightImpact(5.0).
 		SetIsResolved(false).
 		Save(ctx)
 
-	// Resolved Error on B (Should be ignored)
+	// Resolved Error on B
 	client.ErrorResolution.Create().
 		SetNodeID(probB.ID).
-		SetErrorType("typo").
+		SetErrorTypeID(defTypo.ID). // FIXED
 		SetWeightImpact(10.0).
-		SetIsResolved(true). // <--- Resolved!
+		SetIsResolved(true).
 		Save(ctx)
 
 	// 3. Run Query
