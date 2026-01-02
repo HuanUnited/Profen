@@ -82,7 +82,7 @@ export default function SidebarFrame({
     <div
       style={{ width }}
       className={clsx(
-        "flex flex-col h-full ...",
+        "flex flex-col h-full bg-[#16161e] border-r border-[#2f334d] shrink-0 relative select-none",
         // This class is the magic. It ensures any change to 'width' is animated.
         // When this component mounts, if it started at a different width (e.g. from a cached state) it would animate.
         // BUT, since it's a fresh mount, it pops to 'initialWidth'.
