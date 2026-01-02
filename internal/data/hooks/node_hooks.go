@@ -1,8 +1,9 @@
-package schema
+package hooks
 
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"profen/internal/data/ent"
 	"profen/internal/data/ent/node"
@@ -17,7 +18,7 @@ func NodeClosureHook(c *ent.Client) ent.Hook {
 	return func(next ent.Mutator) ent.Mutator {
 		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
 			// Filter: Execute only on Node creation
-			if m.Op() != ent.OpCreate || m.Type() != node.Table {
+			if m.Op() != ent.OpCreate || !strings.EqualFold(m.Type(), node.Label) {
 				return next.Mutate(ctx, m)
 			}
 
@@ -56,7 +57,7 @@ func NodeClosureHook(c *ent.Client) ent.Hook {
 				ancestors, err := c.NodeClosure.Query().
 					Where(nodeclosure.DescendantID(parentID)).
 					All(ctx)
-				
+
 				if err != nil {
 					return nil, fmt.Errorf("failed to query parent ancestors for closure: %w", err)
 				}
@@ -66,7 +67,7 @@ func NodeClosureHook(c *ent.Client) ent.Hook {
 					closureCreates = append(closureCreates, c.NodeClosure.Create().
 						SetAncestorID(closure.AncestorID).
 						SetDescendantID(newNode.ID).
-						SetDepth(closure.Depth + 1),
+						SetDepth(closure.Depth+1),
 					)
 				}
 			}
