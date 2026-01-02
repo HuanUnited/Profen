@@ -1,6 +1,7 @@
 import { useState, useEffect, ReactNode } from "react";
 import clsx from "clsx";
 import { SidebarState } from "../../lib/store";
+import { motion } from "framer-motion";
 
 interface SidebarFrameProps {
   header: ReactNode;
@@ -81,16 +82,19 @@ export default function SidebarFrame({
   }, [isResizing, resizable, minWidth, maxWidth]);
 
   return (
-    <div
-      style={{ width }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       className={clsx(
-        "flex flex-col h-full bg-[#16161e] border-r border-[#2f334d] shrink-0 relative select-none",
-        // This class is the magic. It ensures any change to 'width' is animated.
-        // When this component mounts, if it started at a different width (e.g. from a cached state) it would animate.
-        // BUT, since it's a fresh mount, it pops to 'initialWidth'.
-        // To fix the "pop", we need the Shell to help us or use a global store.
+        "flex flex-col h-full w-72 backdrop-blur-xl bg-[#16161e]/90 border-r border-[#2f334d]/60 shadow-2xl shrink-0 relative select-none",
         !isResizing && "transition-[width] duration-300 ease-in-out"
       )}
+      style={{
+        width,
+        background: "rgba(22, 22, 30, 0.95)", // Semi-transparent dark
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)"
+      }}
     >
       {/* Header Slot */}
       <div className="h-14 flex items-center px-4 border-b border-[#2f334d] bg-[#16161e] shrink-0">
@@ -130,6 +134,6 @@ export default function SidebarFrame({
           className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize hover:bg-[#89b4fa]/50 transition-colors z-50 opacity-0 hover:opacity-100 active:opacity-100 active:bg-[#89b4fa]"
         />
       )}
-    </div>
+    </motion.div>
   );
 }

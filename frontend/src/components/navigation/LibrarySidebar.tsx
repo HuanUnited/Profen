@@ -6,6 +6,7 @@ import { GetNode } from "../../wailsjs/go/app/App";
 import SidebarFrame from "./SidebarFrame";
 import SubjectList from "../layouts/SubjectList";
 import NodeModal from "../smart/NodeModal";
+import StyledButton from "../atomic/StylizedButton";
 
 export default function LibrarySidebar() {
   const navigate = useNavigate();
@@ -77,13 +78,15 @@ export default function LibrarySidebar() {
 
         // 3. Footer (New Home for Create Button)
         footer={
-          <button
+          <StyledButton
+            variant="primary"
+            size="md"
+            icon={<Plus size={14} />}
             onClick={() => setIsModalOpen(true)}
-            className="w-full py-2 bg-[#1f2335] border border-[#2f334d] rounded text-[#89b4fa] text-xs font-bold hover:bg-[#89b4fa] hover:text-black transition-all flex items-center justify-center gap-2 group"
+            className="w-full"
           >
-            <Plus size={14} className="group-hover:scale-110 transition-transform" />
-            <span>NEW NODE</span>
-          </button>
+            NEW NODE
+          </StyledButton>
         }
       >
         <SubjectList />

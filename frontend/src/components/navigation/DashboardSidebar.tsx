@@ -1,9 +1,16 @@
-import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Library, BookOpen, Terminal } from "lucide-react";
-import clsx from "clsx";
+import { LayoutDashboard, Library, BookOpen, Terminal, Wrench } from "lucide-react";
 import SidebarFrame from "./SidebarFrame";
+import ThemeToggle from "../atomic/ThemeToggle";
+import { useNavigate } from "react-router-dom";
+import StyledButton from "../atomic/StylizedButton";
+import { useState } from "react";
+
 
 export default function DashboardSidebar() {
+
+  const navigate = useNavigate();
+  const [setupOpen, setSetupOpen] = useState(false);
+
   return (
     <SidebarFrame
       resizable={false} // Fixed width
@@ -18,31 +25,52 @@ export default function DashboardSidebar() {
     >
       {/* Slot 4: Content (Nav Links) */}
       <nav className="space-y-1 mt-2">
-        <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Dashboard" />
-        <NavItem to="/library" icon={<Library size={18} />} label="Library" />
-        <NavItem to="/review" icon={<BookOpen size={18} />} label="Study Session" />
+        <StyledButton
+          variant="ghost"
+          size="md"
+          className="justify-start w-full px-4 py-3"
+          icon={<LayoutDashboard size={18} />}
+          onClick={() => navigate('/')}
+        >
+          Dashboard
+        </StyledButton>
+        <StyledButton
+          variant="ghost"
+          size="md"
+          className="justify-start w-full px-4 py-3"
+          icon={<Library size={18} />}
+          onClick={() => navigate('/library')}
+        >
+          Library
+        </StyledButton>
+        <StyledButton
+          variant="ghost"
+          size="md"
+          className="justify-start w-full px-4 py-3"
+          icon={<BookOpen size={18} />}
+          onClick={() => navigate('/review')}
+        >
+          Study Session
+        </StyledButton>
       </nav>
+
+      <div className="flex items-center gap-2 ml-auto">
+        <ThemeToggle />
+      </div>
+
+      <StyledButton
+        variant="ghost"
+        size="sm"
+        icon={<Wrench size={16} />}
+        onClick={() => setSetupOpen(!setupOpen)}
+      >
+        Setup
+      </StyledButton>
 
       <div className="mt-auto pt-4 border-t border-[#2f334d] absolute bottom-4 left-0 right-0 px-4">
         <div className="text-xs text-gray-600 font-mono text-center">v0.1.0-alpha</div>
       </div>
+
     </SidebarFrame>
   );
 }
-
-const NavItem = ({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) =>
-      clsx(
-        "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 group",
-        isActive
-          ? "bg-[#89b4fa]/10 text-[#89b4fa] border-l-2 border-[#89b4fa]"
-          : "text-gray-400 hover:bg-white/5 hover:text-white border-l-2 border-transparent"
-      )
-    }
-  >
-    <span className="mr-3 opacity-70 group-hover:opacity-100">{icon}</span>
-    {label}
-  </NavLink>
-);
