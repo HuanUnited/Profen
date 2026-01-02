@@ -77,7 +77,7 @@ var (
 				Symbol:     "error_resolutions_nodes_error_resolutions",
 				Columns:    []*schema.Column{ErrorResolutionsColumns[7]},
 				RefColumns: []*schema.Column{NodesColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -105,7 +105,7 @@ var (
 				Symbol:     "fsrs_cards_nodes_fsrs_card",
 				Columns:    []*schema.Column{FsrsCardsColumns[10]},
 				RefColumns: []*schema.Column{NodesColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}

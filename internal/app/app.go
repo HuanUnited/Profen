@@ -95,3 +95,20 @@ func (a *App) ReviewCard(cardIDStr string, grade int, durationMs int, userAnswer
 		nil,        // <--- errorDefID (Optional, currently nil)
 	)
 }
+
+func (a *App) UpdateNode(idStr string, body string) (*ent.Node, error) {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return nil, err
+	}
+	// Pass empty metadata for now, or fetch existing and merge?
+	// For MVP, just updating body is fine.
+	return a.nodeRepo.UpdateNode(a.ctx, id, body, map[string]interface{}{})
+}
+
+func (a *App) CreateNode(typeStr string, parentIDStr string, body string) (*ent.Node, error) {
+	// Convert strings to types...
+	// Implementation needed here to map string "topic" -> node.TypeTopic
+	// ...
+	return nil, fmt.Errorf("impl pending")
+}

@@ -102,3 +102,21 @@ func (r *NodeRepository) GetChildren(ctx context.Context, parentID uuid.UUID) ([
 func (r *NodeRepository) GetNode(ctx context.Context, id uuid.UUID) (*ent.Node, error) {
 	return r.client.Node.Get(ctx, id)
 }
+
+// UpdateNode updates body and metadata.
+func (r *NodeRepository) UpdateNode(
+	ctx context.Context,
+	id uuid.UUID,
+	body string,
+	metadata map[string]interface{},
+) (*ent.Node, error) {
+	return r.client.Node.UpdateOneID(id).
+		SetBody(body).
+		SetMetadata(metadata).
+		Save(ctx)
+}
+
+// DeleteNode deletes a node (and cascades via DB constraints).
+func (r *NodeRepository) DeleteNode(ctx context.Context, id uuid.UUID) error {
+	return r.client.Node.DeleteOneID(id).Exec(ctx)
+}

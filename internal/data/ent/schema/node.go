@@ -4,8 +4,10 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+
 	"github.com/google/uuid"
 )
 
@@ -50,7 +52,8 @@ func (Node) Edges() []ent.Edge {
 		edge.To("children", Node.Type).
 			From("parent").
 			Field("parent_id").
-			Unique(),
+			Unique().
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 
 		// 2. Closure Table Relationships
 		// REMOVE StorageKey here. NodeClosure.Field("ancestor_id") handles this.
@@ -64,12 +67,13 @@ func (Node) Edges() []ent.Edge {
 
 		edge.To("incoming_associations", NodeAssociation.Type),
 
-		// 4. FSRS Card Relationship
+		// 4. FSRS Card Relationship (CASCADE DELETE)
 		edge.To("fsrs_card", FsrsCard.Type).
-			Unique(), // Enforces 1:1
-		// TODO: IMPLEMENT .CascadeDelete(),
+			Unique().
+			Annotations(entsql.OnDelete(entsql.Cascade)), // <--- ADDS ON DELETE CASCADE
 
-		// 5. Block 4: Error Tracking
-		edge.To("error_resolutions", ErrorResolution.Type),
+		// 5. Error Resolutions (CASCADE DELETE)
+		edge.To("error_resolutions", ErrorResolution.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
