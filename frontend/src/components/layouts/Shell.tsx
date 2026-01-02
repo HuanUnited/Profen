@@ -23,8 +23,8 @@ export default function Shell({ sidebar }: { sidebar: React.ReactNode }) {
       */}
       <aside
         className={clsx(
-          "h-full shrink-0 flex transition-all duration-300 ease-in-out transform",
-          isSidebarVisible ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+          "h-full shrink-0 flex transform",
+          isSidebarVisible ? "translate-x-0 opacity-100 transition-all duration-300 ease-out" : "-translate-x-full opacity-0"
         )}
       >
         {sidebar}
