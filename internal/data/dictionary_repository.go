@@ -88,15 +88,17 @@ func (r *DictionaryRepository) GetTranslation(ctx context.Context, nodeID uuid.U
 	return r.client.Node.Query().
 		Where(
 			node.Or(
-				// Look for partners where I am the Source
-				node.HasOutgoingAssociationsWith(
+				// Case 1: I am looking for targets where Source = nodeID
+				node.HasIncomingAssociationsWith(
+					nodeassociation.SourceID(nodeID), // "Incoming" to the result node means "Outgoing" from nodeID
 					nodeassociation.RelTypeIn(
 						nodeassociation.RelTypeTranslatedFrom,
 						nodeassociation.RelTypeTranslationOf,
 					),
 				),
-				// Look for partners where I am the Target
-				node.HasIncomingAssociationsWith(
+				// Case 2: I am looking for sources where Target = nodeID
+				node.HasOutgoingAssociationsWith(
+					nodeassociation.TargetID(nodeID), // "Outgoing" from the result node means "Incoming" to nodeID
 					nodeassociation.RelTypeIn(
 						nodeassociation.RelTypeTranslatedFrom,
 						nodeassociation.RelTypeTranslationOf,
