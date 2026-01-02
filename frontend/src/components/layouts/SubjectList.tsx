@@ -7,36 +7,45 @@ import clsx from 'clsx';
 import { ent } from '../../wailsjs/go/models';
 
 export default function SubjectList() {
-  const { data: subjects } = useQuery({
+  const { data: subjects, isLoading, error } = useQuery({
     queryKey: ['subjects'],
     queryFn: GetSubjects,
+    retry: false, // Don't retry if it's a code/DB error
   });
 
-  if (!subjects) return <div className="p-4 text-xs text-gray-500">Loading hierarchy...</div>;
+  if (isLoading) return <div className="p-4 text-xs text-gray-500 animate-pulse">Loading hierarchy...</div>;
+
+  // DEBUG: Display the actual error message
+  if (error) {
+    console.error("GetSubjects Error:", error);
+    return (
+      <div className="p-4 text-xs text-red-400 border border-red-900 bg-red-950/30 rounded m-2">
+        <p className="font-bold mb-1">Error Loading Subjects:</p>
+        <p className="font-mono break-all">{String(error)}</p>
+      </div>
+    );
+  }
+
+  if (!subjects || subjects.length === 0) return <div className="p-4 text-xs text-gray-500">No subjects found.</div>;
 
   return (
     <div className="space-y-1">
-      {subjects.map(sub => (
-        <TreeNode
-          key={JSON.stringify(sub.id)}
-          node={sub}
-        />
+      {subjects.map((sub) => (
+        <TreeNode key={String(sub.id)} node={sub} />
       ))}
     </div>
   );
 }
 
-// --- Recursive Node ---
 function TreeNode({ node }: { node: ent.Node }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Check if selected via URL
   const selectedId = searchParams.get('nodeId');
-  const nodeIdStr = JSON.stringify(node.id);
+  // Ensure ID is a clean string (handling potential Wails/JSON inconsistencies)
+  const nodeIdStr = String(node.id).replace(/"/g, '');
   const isSelected = selectedId === nodeIdStr;
 
-  // Fetch children on expand
   const { data: children, isLoading } = useQuery({
     queryKey: ['children', nodeIdStr],
     queryFn: () => GetChildren(nodeIdStr),
@@ -45,19 +54,16 @@ function TreeNode({ node }: { node: ent.Node }) {
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    // If it's a folder (Subject/Topic), toggle expansion
     if (node.type === 'subject' || node.type === 'topic') {
       setIsOpen(!isOpen);
     }
-
-    // Update URL selection
     setSearchParams({ nodeId: nodeIdStr });
   };
 
-  const Icon = node.type === 'subject' ? Book :
-    node.type === 'topic' ? Folder :
-      node.type === 'problem' ? Hash : FileText;
+  let Icon = FileText;
+  if (node.type === 'subject') Icon = Book;
+  if (node.type === 'topic') Icon = Folder;
+  if (node.type === 'problem') Icon = Hash;
 
   return (
     <div className="pl-2">
@@ -65,7 +71,9 @@ function TreeNode({ node }: { node: ent.Node }) {
         onClick={handleToggle}
         className={clsx(
           "flex items-center py-1.5 px-2 rounded cursor-pointer transition-colors text-sm select-none",
-          isSelected ? "bg-(--tui-primary) text-black font-bold" : "text-gray-400 hover:text-white hover:bg-white/5"
+          isSelected
+            ? "bg-[#89b4fa] text-black font-bold" // Using fixed color if css var fails
+            : "text-gray-400 hover:text-white hover:bg-white/5"
         )}
       >
         <span className="mr-1 opacity-50 w-4 flex justify-center">
@@ -74,19 +82,21 @@ function TreeNode({ node }: { node: ent.Node }) {
           )}
         </span>
         <Icon size={14} className="mr-2 shrink-0" />
-        <span className="truncate">{node.body}</span>
+        <span className="truncate">{node.body || "Untitled"}</span>
       </div>
 
       {isOpen && (
         <div className="border-l border-gray-800 ml-3">
-          {isLoading && <div className="pl-6 py-1 text-xs text-gray-600">Loading...</div>}
-          {children?.map(child => (
-            <TreeNode
-              key={JSON.stringify(child.id)}
-              node={child}
-            />
-          ))}
-          {children?.length === 0 && <div className="pl-6 py-1 text-xs text-gray-700 italic">Empty</div>}
+          {isLoading ? (
+            <div className="pl-6 py-1 text-xs text-gray-600">Loading...</div>
+          ) : (
+            children?.map((child) => (
+              <TreeNode key={String(child.id)} node={child} />
+            ))
+          )}
+          {children?.length === 0 && (
+            <div className="pl-6 py-1 text-xs text-gray-700 italic">Empty</div>
+          )}
         </div>
       )}
     </div>
