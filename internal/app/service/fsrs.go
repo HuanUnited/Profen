@@ -30,7 +30,7 @@ type FSRSService struct {
 }
 
 func NewFSRSService(client *ent.Client) *FSRSService {
-	// Initialize with default parameters (can be loaded from DB/JSON later)
+	// TODO: Initialize with default parameters (can be loaded from DB/JSON later)
 	params := fsrs.DefaultParam()
 	return &FSRSService{
 		client: client,
@@ -40,7 +40,7 @@ func NewFSRSService(client *ent.Client) *FSRSService {
 }
 
 // ReviewCard processes a user's attempt and updates the database.
-func (s *FSRSService) ReviewCard(ctx context.Context, cardID string, grade FSRSGrade) (*ent.FsrsCard, error) {
+func (s *FSRSService) ReviewCard(ctx context.Context, cardID uuid.UUID, grade FSRSGrade) (*ent.FsrsCard, error) {
 	// 1. Fetch the current card from DB
 	// Note: We need the ID to be a UUID, assuming cardID is a string.
 	// If your service uses uuid.UUID directly, adjust signature.
@@ -48,13 +48,8 @@ func (s *FSRSService) ReviewCard(ctx context.Context, cardID string, grade FSRSG
 	// Convert ID if necessary, or pass uuid.UUID
 	// id, _ := uuid.Parse(cardID)
 
-	parsedID, err := uuid.Parse(cardID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid card ID format: %w", err)
-	}
-
 	currentEntCard, err := s.client.FsrsCard.Query().
-		Where(fsrscard.IDEQ(parsedID)).
+		Where(fsrscard.IDEQ(cardID)).
 		Only(ctx)
 
 	if err != nil {
