@@ -115,6 +115,7 @@ Topic (Calculus)
 ### 2.1 Data Model Overview
 
 **Core Entities**:
+
 - `nodes` – The universal container (Subject, Topic, Problem, Theory, Term)
 - `node_closure` – Ancestor-descendant paths for hierarchical queries
 - `node_associations` – Graph links (prerequisites, examples, translations)
@@ -235,12 +236,14 @@ error_types (1) ──→ (N) error_resolutions (categorization)
 **Strategy**: Dual-library approach for scheduling vs. optimization.
 
 #### Scheduling (Block 2/4): `go-fsrs` Library
+
 - **Role**: Daily scheduling logic (calculating next Stability, Difficulty, Interval)
 - **Input**: grade (1–4), current card state
 - **Output**: new stability, difficulty, scheduled_days
 - **Limitation**: Cannot optimize weights; only applies them
 
 #### Optimization (Block 7): `fsrs-rs-c` via CGO
+
 - **Role**: Background worker optimizes FSRS parameters every 1,000 reviews
 - **Input**: Entire revlog (attempt history)
 - **Output**: New weights (w0–w19)
@@ -293,6 +296,7 @@ LIMIT 10;
 **Priority**: Keep mastered nodes "fresh" (prevent decay).
 
 **Merge Logic**: Return up to 5 problems:
+
 1. First priority: Unresolved errors (Stream 2)
 2. Second: Overdue reviews (Stream 1)
 3. Third: Mastery refreshers (Stream 3)
@@ -329,6 +333,7 @@ LIMIT 5;
 
 **Inbound**: Markdown content, parent Topic ID, optional source URL  
 **Process**:
+
 1. Create `nodes` entry (type='theory')
 2. Update `node_closure` with hierarchy path
 3. Create `node_associations` for source links
@@ -340,6 +345,7 @@ LIMIT 5;
 
 **Inbound**: Word, definition, origin node_id  
 **Process**:
+
 1. Create `nodes` entry (type='term')
 2. Create `node_associations` (rel_type='defines')
 3. If translation provided, create second term node + link
@@ -351,6 +357,7 @@ LIMIT 5;
 
 **Inbound**: User input, node_id, mode (retell/translate/solve)  
 **Process**:
+
 1. Log attempt with `snapshot_json`
 2. Run FSRS update (via `go-fsrs`)
 3. Penalize if `is_timed_out` (see Timing Specification)
@@ -362,6 +369,7 @@ LIMIT 5;
 
 **Inbound**: Scope filter (e.g., "Russian History" topic)  
 **Process**:
+
 1. Query `node_closure` for all descendants
 2. Join with `fsrs_cards` for scheduling data
 3. Join with `error_resolutions` for diagnostics
@@ -373,6 +381,7 @@ LIMIT 5;
 
 **Inbound**: Problem statement, reference theory, validation logic, difficulty seed  
 **Process**:
+
 1. Create `nodes` entry (type='problem')
 2. Create `node_associations` (rel_type='tests' → Theory)
 3. Initialize `fsrs_cards`
@@ -383,6 +392,7 @@ LIMIT 5;
 
 **Inbound**: User solution, error type selection (if failed)  
 **Process**:
+
 1. Grade assignment (1–4)
 2. FSRS update
 3. Error logging → `error_resolutions`
@@ -394,6 +404,7 @@ LIMIT 5;
 
 **Inbound**: Filter: `is_resolved = FALSE`  
 **Process**:
+
 1. Suggestion Engine surfaces problems with unresolved errors
 2. User re-solves
 3. On success, toggle `is_resolved = TRUE`
@@ -545,6 +556,7 @@ LIMIT 5;
 **Objective**: Establish the node hierarchy and closure table.
 
 **Deliverables**:
+
 - PostgreSQL schema (nodes, node_closure, node_associations)
 - Ent ORM code generation
 - Go functions:
@@ -554,6 +566,7 @@ LIMIT 5;
   - `ClosureTableInsert()` – trigger on node creation
 
 **Validation**:
+
 - Script creates 5-level hierarchy (5–10 nodes per level)
 - Retrieves all 1,024 descendants in < 10ms (warm cache)
 - Unit tests: 80% coverage
@@ -567,6 +580,7 @@ LIMIT 5;
 **Objective**: Integrate FSRS v6 scheduling.
 
 **Deliverables**:
+
 - Integration with `go-fsrs`
 - `fsrs_cards` table + Ent schema
 - Go functions:
@@ -575,6 +589,7 @@ LIMIT 5;
   - `GetNextReview(card) → time.Time`
 
 **Validation**:
+
 - Unit test: Grade 1 (Again) → Stability halves, interval < 1 day
 - Unit test: Grade 4 (Easy) → Stability increases, interval > 3 days
 - Benchmark: 1,000 review simulation matches FSRS predicted retention
@@ -588,6 +603,7 @@ LIMIT 5;
 **Objective**: Support dual-card system for language learning.
 
 **Deliverables**:
+
 - `term` node type
 - Go functions:
   - `CreateTermNode(word, definition, language) → UUID`
@@ -595,6 +611,7 @@ LIMIT 5;
   - `InitializeDualCards(term_id) → (card_ru→en, card_en→ru)`
 
 **Validation**:
+
 - Test: Create Russian term, verify two FSRS cards (Recognition + Production)
 - Test: Link term to multiple theories
 
@@ -607,6 +624,7 @@ LIMIT 5;
 **Objective**: Implement three-stream priority queue.
 
 **Deliverables**:
+
 - Go functions:
   - `GetDueCards() → []Node` (FSRS-led)
   - `GetUnresolvedErrors() → []Node` (Diagnostic-led)
@@ -614,6 +632,7 @@ LIMIT 5;
   - `MergeSuggestions(s1, s2, s3) → []Node` (Priority: S2 > S1 > S3)
 
 **Validation**:
+
 - Test: Unresolved errors appear before due dates
 - Test: Mastered nodes refresh after 30 days
 - Benchmark: Suggestion query < 50ms for 5,000 nodes
@@ -627,6 +646,7 @@ LIMIT 5;
 **Objective**: Build study UI (reading/solving) + grading.
 
 **Deliverables**:
+
 - **React Components**:
   - `StudyController.tsx` (Go-bound smart component)
   - `<TheoryAttemptCard>` (Theory + Timer + GradeSelector)
@@ -636,6 +656,7 @@ LIMIT 5;
   - `SubmitAttempt(node_id, grade, duration, snapshot) → (feedback, next_node)`
 
 **Validation**:
+
 - Test: Grade submission updates fsrs_cards
 - Test: Timeout penalty applied (Grade capped at 2)
 - UI test: Timer syncs with backend
@@ -649,12 +670,14 @@ LIMIT 5;
 **Objective**: Export snapshot_json for local LLM analysis.
 
 **Deliverables**:
+
 - Go function:
   - `ExportAttemptForLLM(attempt_id) → JSON` (returns context path, body, snapshot, errors)
 - Frontend button: "Export for Analysis"
 - Documentation: Prompt template for local Ollama
 
 **Validation**:
+
 - Test: Exported JSON is valid and parseable
 - Manual test: Feed to local Ollama, verify feedback quality
 
@@ -667,6 +690,7 @@ LIMIT 5;
 **Objective**: Periodically optimize FSRS weights via fsrs-rs-c.
 
 **Deliverables**:
+
 - Background goroutine triggered every 1,000 attempts
 - Go functions:
   - `OptimizeWeights() → ([]float32, error)` (calls fsrs-rs-c via CGO)
@@ -674,6 +698,7 @@ LIMIT 5;
   - `ApplyNewWeights(weights) → nil` (for future cards)
 
 **Validation**:
+
 - Test: Optimizer runs without crashing
 - Benchmark: Optimization time for 1,000 reviews < 5 seconds
 
@@ -720,10 +745,12 @@ We will maintain the `source_id < target_id` constraint for database integrity. 
 #### Consequences
 
 - Any query fetching related nodes must use:
+
   ```sql
   WHERE (source_id = :id AND rel_type = 'defines')
      OR (target_id = :id AND rel_type = 'tests')
   ```
+
 - Frontend team must understand this bidirectionality when displaying "Related Content"
 - Schema validation rules (e.g., "a Problem cannot test another Problem") must be enforced in application code
 
@@ -748,6 +775,7 @@ Users need to adjust how much weight different error types have in the suggestio
 **Error weights affect the Suggestion Engine in real-time but have zero retroactive impact on `fsrs_cards` or previous attempts.**
 
 When a user changes the `base_weight` of an error type:
+
 1. The change applies immediately to future suggestion queries
 2. Past attempts remain unchanged
 3. Past `fsrs_cards` Stability/Difficulty remain unchanged
@@ -786,12 +814,14 @@ Wails auto-generates TypeScript from Go structs, creating one TypeScript type pe
 Only **Feature-Level (Smart) Components** will be bound to Go via Wails. All child components are **Pure React (Dumb)** and receive data as props.
 
 **Smart Components** (Go-bound):
+
 - `StudyController.tsx` → `study.go`
 - `NodeEditor.tsx` → `node.go`
 - `DictionaryManager.tsx` → `dictionary.go`
 - `Analytics.tsx` → `analyzer.go`
 
 **Dumb Components** (Pure React):
+
 - `<GradeSelector>` (props: onGrade, disabled)
 - `<Timer>` (props: limit, onTick)
 - `<MarkdownRenderer>` (props: markdown)
@@ -1010,7 +1040,7 @@ These are the FSRS v6 default parameters used as the "seed" for all new cards:
 - [ ] Node 18+ installed
 - [ ] Wails CLI installed (`go install github.com/wailsapp/wails/v2/cmd/wails@latest`)
 - [ ] Repository initialized with `wails create -n profen`
-- [ ] Read Ent documentation: https://entgo.io/docs
+- [ ] Read Ent documentation: <https://entgo.io/docs>
 
 ### Block 1 Checklist
 
@@ -1039,6 +1069,7 @@ This SDLC document represents **complete planning** with zero ambiguity. Every d
 You are **ready to code**.
 
 The following sections should not require re-planning:
+
 - ✅ Data model is locked
 - ✅ API contracts are defined
 - ✅ Implementation order is clear
