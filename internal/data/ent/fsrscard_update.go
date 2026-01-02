@@ -20,8 +20,9 @@ import (
 // FsrsCardUpdate is the builder for updating FsrsCard entities.
 type FsrsCardUpdate struct {
 	config
-	hooks    []Hook
-	mutation *FsrsCardMutation
+	hooks     []Hook
+	mutation  *FsrsCardMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the FsrsCardUpdate builder.
@@ -274,6 +275,12 @@ func (_u *FsrsCardUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *FsrsCardUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FsrsCardUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *FsrsCardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -363,6 +370,7 @@ func (_u *FsrsCardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{fsrscard.Label}
@@ -378,9 +386,10 @@ func (_u *FsrsCardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // FsrsCardUpdateOne is the builder for updating a single FsrsCard entity.
 type FsrsCardUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *FsrsCardMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *FsrsCardMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetStability sets the "stability" field.
@@ -640,6 +649,12 @@ func (_u *FsrsCardUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *FsrsCardUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FsrsCardUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *FsrsCardUpdateOne) sqlSave(ctx context.Context) (_node *FsrsCard, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -746,6 +761,7 @@ func (_u *FsrsCardUpdateOne) sqlSave(ctx context.Context) (_node *FsrsCard, err 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &FsrsCard{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

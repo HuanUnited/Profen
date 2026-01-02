@@ -19,8 +19,9 @@ import (
 // NodeClosureUpdate is the builder for updating NodeClosure entities.
 type NodeClosureUpdate struct {
 	config
-	hooks    []Hook
-	mutation *NodeClosureMutation
+	hooks     []Hook
+	mutation  *NodeClosureMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the NodeClosureUpdate builder.
@@ -143,6 +144,12 @@ func (_u *NodeClosureUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *NodeClosureUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NodeClosureUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *NodeClosureUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -219,6 +226,7 @@ func (_u *NodeClosureUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{nodeclosure.Label}
@@ -234,9 +242,10 @@ func (_u *NodeClosureUpdate) sqlSave(ctx context.Context) (_node int, err error)
 // NodeClosureUpdateOne is the builder for updating a single NodeClosure entity.
 type NodeClosureUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *NodeClosureMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *NodeClosureMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetAncestorID sets the "ancestor_id" field.
@@ -366,6 +375,12 @@ func (_u *NodeClosureUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *NodeClosureUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NodeClosureUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *NodeClosureUpdateOne) sqlSave(ctx context.Context) (_node *NodeClosure, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -459,6 +474,7 @@ func (_u *NodeClosureUpdateOne) sqlSave(ctx context.Context) (_node *NodeClosure
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &NodeClosure{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

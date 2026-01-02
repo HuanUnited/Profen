@@ -17,8 +17,9 @@ import (
 // AttemptUpdate is the builder for updating Attempt entities.
 type AttemptUpdate struct {
 	config
-	hooks    []Hook
-	mutation *AttemptMutation
+	hooks     []Hook
+	mutation  *AttemptMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the AttemptUpdate builder.
@@ -59,6 +60,12 @@ func (_u *AttemptUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *AttemptUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AttemptUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *AttemptUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	_spec := sqlgraph.NewUpdateSpec(attempt.Table, attempt.Columns, sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
@@ -68,6 +75,7 @@ func (_u *AttemptUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{attempt.Label}
@@ -83,9 +91,10 @@ func (_u *AttemptUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // AttemptUpdateOne is the builder for updating a single Attempt entity.
 type AttemptUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *AttemptMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *AttemptMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Mutation returns the AttemptMutation object of the builder.
@@ -133,6 +142,12 @@ func (_u *AttemptUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *AttemptUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AttemptUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *AttemptUpdateOne) sqlSave(ctx context.Context) (_node *Attempt, err error) {
 	_spec := sqlgraph.NewUpdateSpec(attempt.Table, attempt.Columns, sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
@@ -159,6 +174,7 @@ func (_u *AttemptUpdateOne) sqlSave(ctx context.Context) (_node *Attempt, err er
 			}
 		}
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &Attempt{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

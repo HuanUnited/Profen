@@ -20,8 +20,9 @@ import (
 // ErrorResolutionUpdate is the builder for updating ErrorResolution entities.
 type ErrorResolutionUpdate struct {
 	config
-	hooks    []Hook
-	mutation *ErrorResolutionMutation
+	hooks     []Hook
+	mutation  *ErrorResolutionMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the ErrorResolutionUpdate builder.
@@ -183,6 +184,12 @@ func (_u *ErrorResolutionUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *ErrorResolutionUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ErrorResolutionUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *ErrorResolutionUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -245,6 +252,7 @@ func (_u *ErrorResolutionUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{errorresolution.Label}
@@ -260,9 +268,10 @@ func (_u *ErrorResolutionUpdate) sqlSave(ctx context.Context) (_node int, err er
 // ErrorResolutionUpdateOne is the builder for updating a single ErrorResolution entity.
 type ErrorResolutionUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *ErrorResolutionMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *ErrorResolutionMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetNodeID sets the "node_id" field.
@@ -431,6 +440,12 @@ func (_u *ErrorResolutionUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *ErrorResolutionUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ErrorResolutionUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *ErrorResolutionUpdateOne) sqlSave(ctx context.Context) (_node *ErrorResolution, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -510,6 +525,7 @@ func (_u *ErrorResolutionUpdateOne) sqlSave(ctx context.Context) (_node *ErrorRe
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &ErrorResolution{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

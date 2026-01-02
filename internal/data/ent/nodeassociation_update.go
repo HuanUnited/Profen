@@ -19,8 +19,9 @@ import (
 // NodeAssociationUpdate is the builder for updating NodeAssociation entities.
 type NodeAssociationUpdate struct {
 	config
-	hooks    []Hook
-	mutation *NodeAssociationMutation
+	hooks     []Hook
+	mutation  *NodeAssociationMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the NodeAssociationUpdate builder.
@@ -141,6 +142,12 @@ func (_u *NodeAssociationUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *NodeAssociationUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NodeAssociationUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *NodeAssociationUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -214,6 +221,7 @@ func (_u *NodeAssociationUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{nodeassociation.Label}
@@ -229,9 +237,10 @@ func (_u *NodeAssociationUpdate) sqlSave(ctx context.Context) (_node int, err er
 // NodeAssociationUpdateOne is the builder for updating a single NodeAssociation entity.
 type NodeAssociationUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *NodeAssociationMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *NodeAssociationMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetSourceID sets the "source_id" field.
@@ -359,6 +368,12 @@ func (_u *NodeAssociationUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *NodeAssociationUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NodeAssociationUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *NodeAssociationUpdateOne) sqlSave(ctx context.Context) (_node *NodeAssociation, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -449,6 +464,7 @@ func (_u *NodeAssociationUpdateOne) sqlSave(ctx context.Context) (_node *NodeAss
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &NodeAssociation{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

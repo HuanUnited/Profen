@@ -17,8 +17,9 @@ import (
 // ErrorTypeUpdate is the builder for updating ErrorType entities.
 type ErrorTypeUpdate struct {
 	config
-	hooks    []Hook
-	mutation *ErrorTypeMutation
+	hooks     []Hook
+	mutation  *ErrorTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the ErrorTypeUpdate builder.
@@ -59,6 +60,12 @@ func (_u *ErrorTypeUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *ErrorTypeUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ErrorTypeUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *ErrorTypeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	_spec := sqlgraph.NewUpdateSpec(errortype.Table, errortype.Columns, sqlgraph.NewFieldSpec(errortype.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
@@ -68,6 +75,7 @@ func (_u *ErrorTypeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{errortype.Label}
@@ -83,9 +91,10 @@ func (_u *ErrorTypeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // ErrorTypeUpdateOne is the builder for updating a single ErrorType entity.
 type ErrorTypeUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *ErrorTypeMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *ErrorTypeMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Mutation returns the ErrorTypeMutation object of the builder.
@@ -133,6 +142,12 @@ func (_u *ErrorTypeUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (_u *ErrorTypeUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ErrorTypeUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
+}
+
 func (_u *ErrorTypeUpdateOne) sqlSave(ctx context.Context) (_node *ErrorType, err error) {
 	_spec := sqlgraph.NewUpdateSpec(errortype.Table, errortype.Columns, sqlgraph.NewFieldSpec(errortype.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
@@ -159,6 +174,7 @@ func (_u *ErrorTypeUpdateOne) sqlSave(ctx context.Context) (_node *ErrorType, er
 			}
 		}
 	}
+	_spec.AddModifiers(_u.modifiers...)
 	_node = &ErrorType{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
