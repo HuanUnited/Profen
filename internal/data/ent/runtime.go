@@ -104,8 +104,12 @@ func init() {
 	fsrscard.DefaultID = fsrscardDescID.Default.(func() uuid.UUID)
 	nodeFields := schema.Node{}.Fields()
 	_ = nodeFields
+	// nodeDescTitle is the schema descriptor for title field.
+	nodeDescTitle := nodeFields[1].Descriptor()
+	// node.DefaultTitle holds the default value on creation for the title field.
+	node.DefaultTitle = nodeDescTitle.Default.(string)
 	// nodeDescCreatedAt is the schema descriptor for created_at field.
-	nodeDescCreatedAt := nodeFields[4].Descriptor()
+	nodeDescCreatedAt := nodeFields[5].Descriptor()
 	// node.DefaultCreatedAt holds the default value on creation for the created_at field.
 	node.DefaultCreatedAt = nodeDescCreatedAt.Default.(func() time.Time)
 	// nodeDescID is the schema descriptor for id field.

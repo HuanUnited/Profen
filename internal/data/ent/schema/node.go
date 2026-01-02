@@ -23,6 +23,11 @@ func (Node) Fields() []ent.Field {
 			Default(uuid.New).
 			StorageKey("node_id"), // Maps to 'node_id' in DB [cite: 21]
 
+		// NEW FIELD: Title
+		field.String("title").
+			Default("Untitled Node").
+			Comment("The display title of the node"),
+
 		field.Enum("type").
 			Values("subject", "topic", "problem", "theory", "term"), // [cite: 22]
 

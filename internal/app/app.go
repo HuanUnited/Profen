@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 	"fmt"
-
-	"profen/internal/app/service" // Ensure this import exists
+	"profen/internal/app/service"
 	"profen/internal/data"
 	"profen/internal/data/ent"
+	"profen/internal/data/ent/node"
 
 	"github.com/google/uuid"
 )
@@ -71,44 +71,65 @@ func (a *App) GetDueCards(limit int) ([]*ent.Node, error) {
 
 // ReviewCard processes a user answer
 func (a *App) ReviewCard(cardIDStr string, grade int, durationMs int, userAnswer string) (*ent.FsrsCard, error) {
-	// 1. Parse ID
 	cardID, err := uuid.Parse(cardIDStr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid card UUID: %w", err)
 	}
 
-	// 2. Validate Grade (1-4)
 	if grade < 1 || grade > 4 {
 		return nil, fmt.Errorf("grade must be between 1 and 4")
 	}
 
-	// 3. Call Service
-	// Note: We pass 'nil' for errorDefID for now, because the basic flow doesn't prompt for specific errors yet.
-	// In Phase 5.3 (Study Session), if the user selects "Again", we might call a separate API to log the error,
-	// OR we update this method to accept an optional error ID.
 	return a.fsrsService.ReviewCard(
 		a.ctx,
 		cardID,
 		service.FSRSGrade(grade),
 		int64(durationMs),
-		userAnswer, // <--- Passed Correctly
-		nil,        // <--- errorDefID (Optional, currently nil)
+		userAnswer,
+		nil,
 	)
 }
 
-func (a *App) UpdateNode(idStr string, body string) (*ent.Node, error) {
+// UpdateNode updates the node's title and body.
+func (a *App) UpdateNode(idStr string, title string, body string) (*ent.Node, error) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return nil, err
 	}
-	// Pass empty metadata for now, or fetch existing and merge?
-	// For MVP, just updating body is fine.
-	return a.nodeRepo.UpdateNode(a.ctx, id, body, map[string]interface{}{})
+	// Pass empty metadata for now
+	return a.nodeRepo.UpdateNode(a.ctx, id, title, body, map[string]interface{}{})
 }
 
-func (a *App) CreateNode(typeStr string, parentIDStr string, body string) (*ent.Node, error) {
-	// Convert strings to types...
-	// Implementation needed here to map string "topic" -> node.TypeTopic
-	// ...
-	return nil, fmt.Errorf("impl pending")
+// CreateNode creates a new node with the specified type, parent, and title.
+func (a *App) CreateNode(typeStr string, parentIDStr string, title string) (*ent.Node, error) {
+	// 1. Map String to Enum
+	var nodeType node.Type
+	switch typeStr {
+	case "subject":
+		nodeType = node.TypeSubject
+	case "topic":
+		nodeType = node.TypeTopic
+	case "problem":
+		nodeType = node.TypeProblem
+	case "theory":
+		nodeType = node.TypeTheory
+	case "term":
+		nodeType = node.TypeTerm
+	default:
+		return nil, fmt.Errorf("invalid node type: %s", typeStr)
+	}
+
+	// 2. Parse Parent ID (Optional)
+	var parentID uuid.UUID
+	var err error
+	if parentIDStr != "" {
+		parentID, err = uuid.Parse(parentIDStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid parent UUID: %w", err)
+		}
+	}
+
+	// 3. Call Repo
+	// We pass empty string for body initially.
+	return a.nodeRepo.CreateNode(a.ctx, nodeType, parentID, title, "", map[string]interface{}{})
 }

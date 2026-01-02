@@ -112,6 +112,7 @@ var (
 	// NodesColumns holds the columns for the "nodes" table.
 	NodesColumns = []*schema.Column{
 		{Name: "node_id", Type: field.TypeUUID},
+		{Name: "title", Type: field.TypeString, Default: "Untitled Node"},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"subject", "topic", "problem", "theory", "term"}},
 		{Name: "body", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
@@ -126,7 +127,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "nodes_nodes_children",
-				Columns:    []*schema.Column{NodesColumns[5]},
+				Columns:    []*schema.Column{NodesColumns[6]},
 				RefColumns: []*schema.Column{NodesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -135,7 +136,7 @@ var (
 	// NodeAssociationsColumns holds the columns for the "node_associations" table.
 	NodeAssociationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "rel_type", Type: field.TypeEnum, Enums: []string{"prerequisite", "example", "tests", "similar_to", "defines", "translation_of", "translated_from", "variant_of", "source_variant"}},
+		{Name: "rel_type", Type: field.TypeEnum, Enums: []string{"comes_before", "comes_after", "similar_to", "tests", "defines", "translation_of", "translated_from", "variant_of", "source_variant"}},
 		{Name: "source_id", Type: field.TypeUUID},
 		{Name: "target_id", Type: field.TypeUUID},
 	}

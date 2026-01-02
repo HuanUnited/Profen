@@ -3,13 +3,10 @@ package data
 import (
 	"context"
 	"fmt"
-
 	"profen/internal/data/ent"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
 	"profen/internal/data/ent/nodeclosure"
-
-	// Import your hooks package
 
 	"github.com/google/uuid"
 )
@@ -22,23 +19,21 @@ func NewNodeRepository(client *ent.Client) *NodeRepository {
 	return &NodeRepository{client: client}
 }
 
-// 1. CreateNode
-// The Hook we wrote handles the Closure Table complexity automatically.
-// We just need to map the inputs to the Ent builder.
+// CreateNode creates a new node with Title.
 func (r *NodeRepository) CreateNode(
 	ctx context.Context,
 	nodeType node.Type,
 	parentID uuid.UUID,
+	title string, // <--- ADDED
 	body string,
 	metadata map[string]interface{},
 ) (*ent.Node, error) {
-
 	builder := r.client.Node.Create().
 		SetType(nodeType).
+		SetTitle(title). // <--- ADDED
 		SetBody(body).
 		SetMetadata(metadata)
 
-	// Only set ParentID if it's not nil (Root nodes have no parent)
 	if parentID != uuid.Nil {
 		builder.SetParentID(parentID)
 	}
@@ -46,35 +41,32 @@ func (r *NodeRepository) CreateNode(
 	return builder.Save(ctx)
 }
 
-// 2. GetDescendants (< 10ms Goal)
-// Utilizes the NodeClosure table to fetch the entire subtree in a single query.
+// UpdateNode updates title, body and metadata.
+func (r *NodeRepository) UpdateNode(
+	ctx context.Context,
+	id uuid.UUID,
+	title string, // <--- ADDED
+	body string,
+	metadata map[string]interface{},
+) (*ent.Node, error) {
+	return r.client.Node.UpdateOneID(id).
+		SetTitle(title). // <--- ADDED
+		SetBody(body).
+		SetMetadata(metadata).
+		Save(ctx)
+}
+
+// ... (Rest of the file remains the same: GetDescendants, CreateAssociation, GetSubjects, GetChildren, GetNode, DeleteNode)
 func (r *NodeRepository) GetDescendants(ctx context.Context, ancestorID uuid.UUID) ([]*ent.Node, error) {
-	// Logic: Find all Nodes that have a "ParentClosure" (incoming closure edge)
-	// where the "Ancestor" is our target ID.
 	return r.client.Node.Query().
-		Where(
-			node.HasParentClosuresWith(
-				nodeclosure.AncestorID(ancestorID),
-			),
-		).
-		// Optional: Order by Depth so the tree structure is easier to reconstruct
-		// You would need to add .Order(...) but raw nodes are fine for now.
+		Where(node.HasParentClosuresWith(nodeclosure.AncestorID(ancestorID))).
 		All(ctx)
 }
 
-// 3. CreateAssociation
-// Creates a lateral link (e.g., Problem -> tests -> Theory)
-func (r *NodeRepository) CreateAssociation(
-	ctx context.Context,
-	sourceID, targetID uuid.UUID,
-	relType nodeassociation.RelType,
-) error {
-
-	// Validation: Prevent self-loops if needed, though DB might allow it
+func (r *NodeRepository) CreateAssociation(ctx context.Context, sourceID, targetID uuid.UUID, relType nodeassociation.RelType) error {
 	if sourceID == targetID {
 		return fmt.Errorf("cannot associate node with itself")
 	}
-
 	return r.client.NodeAssociation.Create().
 		SetSourceID(sourceID).
 		SetTargetID(targetID).
@@ -82,41 +74,24 @@ func (r *NodeRepository) CreateAssociation(
 		Exec(ctx)
 }
 
-// GetSubjects returns all nodes with type="subject" (The Roots)
 func (r *NodeRepository) GetSubjects(ctx context.Context) ([]*ent.Node, error) {
 	return r.client.Node.Query().
 		Where(node.TypeEQ(node.TypeSubject)).
-		Order(ent.Asc(node.FieldBody)). // Alphabetical
+		Order(ent.Asc(node.FieldTitle)). // UPDATED: Sort by Title now, not Body
 		All(ctx)
 }
 
-// GetChildren returns direct children of a parent (Lazy Load)
 func (r *NodeRepository) GetChildren(ctx context.Context, parentID uuid.UUID) ([]*ent.Node, error) {
 	return r.client.Node.Query().
 		Where(node.ParentIDEQ(parentID)).
-		Order(ent.Asc(node.FieldType), ent.Asc(node.FieldBody)). // Subjects first, then alphabetical
+		Order(ent.Asc(node.FieldType), ent.Asc(node.FieldTitle)). // UPDATED: Sort by Title
 		All(ctx)
 }
 
-// GetNode returns a single node's details
 func (r *NodeRepository) GetNode(ctx context.Context, id uuid.UUID) (*ent.Node, error) {
 	return r.client.Node.Get(ctx, id)
 }
 
-// UpdateNode updates body and metadata.
-func (r *NodeRepository) UpdateNode(
-	ctx context.Context,
-	id uuid.UUID,
-	body string,
-	metadata map[string]interface{},
-) (*ent.Node, error) {
-	return r.client.Node.UpdateOneID(id).
-		SetBody(body).
-		SetMetadata(metadata).
-		Save(ctx)
-}
-
-// DeleteNode deletes a node (and cascades via DB constraints).
 func (r *NodeRepository) DeleteNode(ctx context.Context, id uuid.UUID) error {
 	return r.client.Node.DeleteOneID(id).Exec(ctx)
 }
