@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+/* 
+   Tailwind v4 uses CSS variables for theme overrides.
+   We can add custom colors from the SDLC here later. 
+*/
+:root {
+  --color-brand-dark: #1b2636;
+  --color-brand-primary: #00d1b2;
+}
+
+body {
+  @apply bg-slate-900 text-slate-100; /* Dark mode default */
+  font-family: 'Inter', sans-serif;
+}

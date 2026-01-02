@@ -1,14 +1,14 @@
-import React from 'react'
-import {createRoot} from 'react-dom/client'
-import './style.css'
-import App from './App'
+import Dashboard from "./components/layouts/Dashboard";
+import { AppProviders } from "./providers/AppProviders";
 
-const container = document.getElementById('root')
+function App() {
+    return (
+        <AppProviders>
+            <div className="min-h-screen bg-slate-900 text-slate-100">
+                <Dashboard />
+            </div>
+        </AppProviders>
+    );
+}
 
-const root = createRoot(container!)
-
-root.render(
-    <React.StrictMode>
-        <App/>
-    </React.StrictMode>
-)
+export default App;

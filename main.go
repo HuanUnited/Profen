@@ -22,7 +22,7 @@ func main() {
 		Port:     5173,
 		User:     "postgres",
 		Password: "054625565", // Consider env vars for prod
-		DBName:   "profen",
+		DBName:   "profen_test",
 		SSLMode:  "disable",
 	}
 
