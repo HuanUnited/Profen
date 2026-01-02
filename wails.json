@@ -11,5 +11,5 @@
   },
   "wailsjsdir": "./frontend/src",
   "outputfilename": "profen",
-  "main": "./cmd/profen/"
+  "main": "."
 }
