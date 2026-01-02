@@ -1,154 +1,42 @@
-import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { GetNode, UpdateNode } from "../../wailsjs/go/app/App";
-import { Save, Eye, Code, FileText } from "lucide-react";
-import NodeEditor from "../smart/NodeEditor";
-import MarkdownRenderer from "../atomic/MarkdownRenderer";
-import clsx from "clsx";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { GetNode } from "../../wailsjs/go/app/App";
+import { FileText } from "lucide-react"; // Removed Layers, BookOpen
 
-type ViewMode = 'edit' | 'preview';
+// Import Sub-Views
+import RootView from "../views/RootView";
+import ContainerView from "../views/ContainerView";
+import LeafView from "../views/LeafView";
 
 export default function Library() {
-  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const nodeId = searchParams.get('nodeId');
 
-  // Fetch
-  const { data: node, isLoading } = useQuery({
+  // ... (rest of logic same as previous response) ...
+  const { data: node, isLoading, error } = useQuery({
     queryKey: ['node', nodeId],
     queryFn: () => GetNode(nodeId!),
     enabled: !!nodeId,
+    retry: false
   });
 
-  // Local State
-  const [body, setBody] = useState("");
-  // We need local state for title if we want to edit it here, but for now let's just use the fetched one
-  // or default to what's in the DB.
-  const [viewMode, setViewMode] = useState<ViewMode>('edit');
-  const [isDirty, setIsDirty] = useState(false);
+  if (!nodeId) return <RootView />;
 
-  const safeBody = node?.body || "";
-  const safeTitle = node?.title || "Untitled Node"; // Use new title field
-
-  // Sync
-  useEffect(() => {
-    if (node) {
-      setBody(node.body || "");
-      setIsDirty(false);
-    }
-  }, [node]);
-
-  // Mutation
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      if (!nodeId) throw new Error("No node");
-      // FIXED: Passing 3 arguments: ID, Title, Body
-      // We pass the EXISTING title back because this specific view doesn't edit titles yet.
-      return UpdateNode(nodeId, safeTitle, safeBody);
-    },
-    onSuccess: (updated) => {
-      setIsDirty(false);
-      queryClient.setQueryData(['node', nodeId], updated);
-      toast.success("Changes saved to disk");
-    }
-  });
-
-  const handleBodyChange = (val: string) => {
-    setBody(val);
-    if (node && val !== node.body) setIsDirty(true);
-  };
-
-  if (!nodeId) return <EmptyState />;
-  if (isLoading) return <div className="p-8 text-gray-500 font-mono">Loading...</div>;
-  if (!node) return <div>Error</div>;
-
-  return (
-    <div className="h-full flex flex-col p-6 animate-in fade-in">
-
-      {/* 1. Meta Header (Always Visible) */}
-      <div className="mb-6 flex justify-between items-start border-b border-[#2f334d] pb-4">
-        <div className="flex-1 mr-8">
-          <div className="flex items-center gap-3 mb-2">
-            <span className={clsx(
-              "text-[10px] font-mono uppercase px-2 py-0.5 border rounded bg-opacity-10",
-              node.type === 'problem' ? "border-blue-500 text-blue-400" : "border-purple-500 text-purple-400"
-            )}>
-              {node.type}
-            </span>
-            <span className="text-xs font-mono text-gray-600">ID: {String(node.id).split('-')[0]}</span>
-          </div>
-
-          {/* Title Display */}
-          <h1 className="text-3xl font-bold text-white tracking-tight">
-            {safeTitle}
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* View Toggles */}
-          <div className="flex bg-[#16161e] p-1 rounded border border-gray-700 mr-4">
-            <button
-              onClick={() => setViewMode('edit')}
-              className={clsx("p-1.5 rounded transition-all", viewMode === 'edit' ? "bg-gray-700 text-white" : "text-gray-500 hover:text-white")}
-              title="Edit Code"
-            >
-              <Code size={16} className="bg-transparent" />
-            </button>
-            <button
-              onClick={() => setViewMode('preview')}
-              className={clsx("p-1.5 rounded transition-all", viewMode === 'preview' ? "bg-gray-700 text-white" : "text-gray-500 hover:text-white")}
-              title="Preview"
-            >
-              <Eye size={16} className="bg-transparent" />
-            </button>
-          </div>
-
-          <button
-            onClick={() => saveMutation.mutate()}
-            disabled={!isDirty || saveMutation.isPending}
-            className={clsx(
-              "flex items-center gap-2 px-4 py-2 text-xs font-bold rounded transition-all",
-              isDirty ? "bg-[#89b4fa] text-black" : "bg-gray-800 text-gray-500 opacity-50"
-            )}
-          >
-            <Save size={14} className="bg-transparent" />
-            {saveMutation.isPending ? "SAVING..." : "SAVE"}
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Editor / Preview Area */}
-      <div className="flex-1 min-h-0 relative border border-[#2f334d] rounded-md overflow-hidden bg-[#1e1e2e]">
-        {viewMode === 'edit' ? (
-          <NodeEditor
-            initialContent={body}
-            onChange={handleBodyChange}
-          />
-        ) : (
-          <div className="h-full overflow-auto p-8 bg-[#1e1e2e]">
-            <MarkdownRenderer content={body} />
-          </div>
-        )}
-      </div>
-
-      {/* 3. Footer */}
-      <div className="mt-2 text-[10px] text-gray-500 font-mono flex justify-between">
-        <span>{viewMode === 'edit' ? "INSERT MODE" : "READ MODE"}</span>
-        <span>{body.length} chars</span>
-      </div>
+  if (isLoading) return <div className="p-8 text-gray-500 font-mono animate-pulse">Loading Knowledge Graph...</div>;
+  if (error || !node) return (
+    <div className="h-full flex flex-col items-center justify-center text-red-400">
+      <FileText size={48} className="mb-4 opacity-50" />
+      <p>Node not found or access denied.</p>
     </div>
   );
-}
 
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-gray-600 space-y-4">
-      <div className="p-6 bg-[#16161e] rounded-full border border-[#2f334d]">
-        <FileText size={48} className="opacity-50 text-[#89b4fa]" />
-      </div>
-      <p>Select a node to edit.</p>
-    </div>
-  )
+  if (node.type === 'subject' || node.type === 'topic') {
+    return <ContainerView node={node} />;
+  }
+
+  if (node.type === 'problem' || node.type === 'theory' || node.type === 'term') {
+    return <LeafView node={node} />;
+  }
+
+  return <div>Unknown Node Type: {node.type}</div>;
 }
