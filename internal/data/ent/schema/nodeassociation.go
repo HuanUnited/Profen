@@ -23,10 +23,10 @@ func (NodeAssociation) Fields() []ent.Field {
 
 		field.Enum("rel_type").
 			Values(
-				"prerequisite",
-				"example",
-				"tests",
+				"comes_before",
+				"comes_after",
 				"similar_to",
+				"tests",
 				"defines",
 				"translation_of",
 				"translated_from",

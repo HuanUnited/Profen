@@ -91,14 +91,14 @@ export default function Library() {
               className={clsx("p-1.5 rounded transition-all", viewMode === 'edit' ? "bg-gray-700 text-white" : "text-gray-500 hover:text-white")}
               title="Edit Code"
             >
-              <Code size={16} />
+              <Code size={16} className="bg-transparent" />
             </button>
             <button
               onClick={() => setViewMode('preview')}
               className={clsx("p-1.5 rounded transition-all", viewMode === 'preview' ? "bg-gray-700 text-white" : "text-gray-500 hover:text-white")}
               title="Preview"
             >
-              <Eye size={16} />
+              <Eye size={16} className="bg-transparent" />
             </button>
           </div>
 
@@ -110,7 +110,7 @@ export default function Library() {
               isDirty ? "bg-(--tui-primary) text-black" : "bg-gray-800 text-gray-500 opacity-50"
             )}
           >
-            <Save size={14} />
+            <Save size={14} className="bg-transparent" />
             {saveMutation.isPending ? "SAVING..." : "SAVE"}
           </button>
         </div>

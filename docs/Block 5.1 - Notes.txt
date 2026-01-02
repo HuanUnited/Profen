@@ -55,3 +55,109 @@ C:.
             package.json
             runtime.d.ts
             runtime.js
+
+
+this is awesome, lets now move to cutting up the library view.
+
+Take note that I quite like the way it looks currently with how the meta header looks. and how it is separated with a small line between the header and the preview / editor area.
+
+So the changes we'll be making will be to the editor / preview area.
++ Customized Preview Area for node type.
++ Having the Preview Area appear first always (not starting in edit mode)
+
+Adding in nodes is also one of the most essential parts of the library. Therefore we must also prioritize this.
+
+This will be by
+1. Having a unified node editor (for adding and modifying nodes). This can be a modal (smooth pop up animation) instead of having it be view. That can be accessed through an edit button or shortkey.
+2. The unified node editor with essentially replace the editor view. Having explicit fields for each field of the node. I'll provide the node schema. As well as the ability to link nodes (make changes to the node associations table, conjunction table and adjacency list.)
+
+For a the customized preview or in this case view area. We will prioritize the following functions for each type.
+
+0. Root view
+// The header displays root for the root view. With no extra crumbs
+
+- Implementing a grid view for all the subjects within the database.
+- Each subject has their own mastery bar, and changes color when they're fully mastered.
++ Subject mastery logic: If all topics linked to said subject are mastered then it is mastered.
++ The color of the subject in the grid view (as well as tree view on the sidebar) changes to a mythical red orange when it is mastered.
+
+1. Subject / Topic node type
+// The header displays the topic / subject name along with its context field.
+
+// Most essential
+- Implement a grid view for the topics within a subject.
+- Implement a separated (theory/problems) view for the theories and problems within a subject.
+- Implement a search bar that allows to search for the items within the grid by title (string) or context (string).
+
+-- I've just noticed that for whatever reason we do not have a title field for our node. (we need to add this quickly)
+
+- Being able to press on a topic / problem / theory and dynamically switching to it in the library view (this can be a state management thing)
+
+// Nice to haves
+
+-  Each topic has their own mastery bar, and changes color when they're fully mastered.
++ Topic mastery logic: If all problems and theories linked to said topic are mastered then it is mastered.
++ The color of the subject in the grid view (as well as tree view on the sidebar) changes to a golden firery sunset yellow when it is mastered.
+
+-  Each problem / theory has their own mastery bar, and changes color when they're fully mastered.
++ Subject / Theory mastery logic: If said problem / theory is solved three times in a row and does not have any unresolved errors then it is considered mastered.
++ The mastery bar only has three notches representative of the three times it takes to master a problem / theory.
++ The color of the subject in the grid view (as well as tree view on the sidebar) changes to a golden firery sunset yellow when it is mastered.
+
+// Nice to haves 2
+- Sorting problems / theories / topics by mastery (asc, desc)
+- Sorting problems / theories / topics by difficulty
++ calculating diff for topics can be done by taking the average of all of its theories and problems difficulty values.
++ calculating diff for problems and subjects can be done by taking the average of all of its difficulties through all of its attempts (evolving diff system)
+-- Note: we need to then make some changes to the backend logic, including adding a difficulty field to the attempt table. as well as make updates to our suggestion engine (since the suggestion engine right now is hooking onto the fsrs cards but its not supposed to be doing that, instead should be reading only the cards scheduled for super long and then returning it them, or cards with unresolved errors and low attempts
+
+// Nice to haves 3
+- Red badges on problems, theories, topics for unsolved errors.
+- Funny looking badges for each successful solving attempt. 
+
+2. Problem / Theory node type
+- Header displays the name of the problem / theory as well as the crumbs (its correlating subject and topic (show it in the form or ~path/to/problem)
+- The middle and main viewing displays the problem's description.
+- Viewing the problem / theory context formatted in proper latex.
+- Having a list of related problems / theories (as of now this will be added manually in the node creation / edit modal - later we will implement a similar problem / theory suggestion system based on it's connections - using the conjunction table)
+- Having a list of all of its attempts. (Attempt history) with a small bar on top displaying how many total attempts have been made and the average solution time.
+- A list of all unresolved errors ( // Nice to have: does not show up when there aren't any errors)
+- An attempt button that opens up an the attempt view (to be implemented in the next subblocks) for this problem / theory
+
+// All of these will have an edit button that allows for us to open the node editing modal
+
+// Node editing modal
+- The modal shows first the field (type) allows us to select from a list of enums
+- If the enum has an ancestor type (for example we select problem, it has the ancestors subject and topic) then we will need to select or create as well.
++ This can be done by only allowing the user to select the enum subject first or the enum term first. If subject is selected the user has the option to go further down the tree (say we have a box that allows us to select either enum, if subject is selected the box is expanded to show all the availible subjects or a plus to create a new one.)
+++ If the user chooses to create a new one they will be locked in that option (basically they cannot go further down the tree with this yet-to-be-created subject)
+++ the same applies for topics
+++ If the user chooses an available subject then they have the ability to edit it's fields and press save, or move further down the tree until it is a problem or a theory.
+
+- Pressing the edit button (or shortkey ctrl+e) while in the node views above (expect for root view) opens the node editing modal based on the corresponding node being opened in the view.
+- Pressing the edit button (or shortkey ctrl + e) in root view opens an empty node edit modal (essentially creating a new node)
+- Pressing ctrl + n or pressing on the new node button on the library sidebar also opens an empty node modal.
+
+- After selecting their chosen node, the user has two main fields (title) and (body) that they can edit - has live markdown preview for the body field. (no livemd on title field)
+
+- Underneath the user can choose to add connections to this node (hooking into the node associations table).
++ We'll be limited the types of relationships that can be added for each node type, and which ones they can add connections with.
+// I don't think anything really uses the 'example' rel_type so i deleted it.
+// I've replaced the 'prerequisite' rel_type with 'comes_before' and 'comes_after' for multidirectional support and clarity. 
+++ problems can only connect with theory, or with other problems{
+    problem_A similar_to problem_B
+    problem_B similar_to problem_A
+
+    problem_A comes_before problem_B //prereq
+    problem_A comes_after problem_B // dependency
+
+    problem_A tests theory_A
+    theory_A defines problem_A
+}
+++ theories can only connect with problems, or with other theories exactly like how the problem enum connects.
+++ explicit for the theory enum type we have "variant_of" and "source_variant" relationship.
+++ for the term enum type, there will only be the "translated_from" - "translation_of" relationship.
+// We will need to implement this logic later (either as soft logic local to the front end, or hard conditions on the backend)
+- We will have a thing with a text field and a dropdown (to choose the relevant rel_types) that has autocomplete based on the title of the nodes something like title_a rel_type title_b. And a plus button to add the relation next to the input fields.
+- Adding a relation will push it down to the list below the relations adding thing. An 'x' button can be found next to that to remove the relationship.
+- And then there is a save button.
