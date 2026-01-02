@@ -46,28 +46,22 @@ func (Node) Fields() []ent.Field {
 // Edges of the Node.
 func (Node) Edges() []ent.Edge {
 	return []ent.Edge{
-		// 1. Adjacency List Relationship (Parent <-> Children)
+		// 1. Adjacency List Relationship (Keep as is)
 		edge.To("children", Node.Type).
 			From("parent").
 			Field("parent_id").
 			Unique(),
 
-		// 2. Closure Table Relationships (Explicit Edge Schema)
-		// Nodes acting as Ancestors in the closure table
-		edge.To("child_closures", NodeClosure.Type).
-			StorageKey(edge.Column("ancestor_id")), 
+		// 2. Closure Table Relationships
+		// REMOVE StorageKey here. NodeClosure.Field("ancestor_id") handles this.
+		edge.To("child_closures", NodeClosure.Type), 
 		
-		// Nodes acting as Descendants in the closure table
-		edge.To("parent_closures", NodeClosure.Type).
-			StorageKey(edge.Column("descendant_id")),
+		edge.To("parent_closures", NodeClosure.Type),
 
-		// 3. Graph Association Relationships (Explicit Edge Schema)
-		// Nodes acting as the Source of a link
-		edge.To("outgoing_associations", NodeAssociation.Type).
-			StorageKey(edge.Column("source_id")),
+		// 3. Graph Association Relationships
+		// REMOVE StorageKey here. NodeAssociation.Field("source_id") handles this.
+		edge.To("outgoing_associations", NodeAssociation.Type),
 		
-		// Nodes acting as the Target of a link
-		edge.To("incoming_associations", NodeAssociation.Type).
-			StorageKey(edge.Column("target_id")),
+		edge.To("incoming_associations", NodeAssociation.Type),
 	}
 }

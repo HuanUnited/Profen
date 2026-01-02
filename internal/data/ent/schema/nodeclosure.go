@@ -28,18 +28,19 @@ func (NodeClosure) Fields() []ent.Field {
 func (NodeClosure) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("ancestor", Node.Type).
-			Ref("child_closures").
+			Ref("child_closures").   // This name MUST exist in Node.go
 			Field("ancestor_id").
 			Unique().
 			Required(),
 		
 		edge.From("descendant", Node.Type).
-			Ref("parent_closures").
+			Ref("parent_closures").  // This name MUST exist in Node.go
 			Field("descendant_id").
 			Unique().
 			Required(),
 	}
 }
+
 
 // Indexes ensure uniqueness of paths
 func (NodeClosure) Indexes() []ent.Index {
