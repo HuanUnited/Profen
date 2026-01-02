@@ -15,7 +15,7 @@ import (
 )
 
 func TestSuggestionEngine_DiagnosticGaps(t *testing.T) {
-	dsn := "host=localhost port=5432 user=postgres dbname=profen_test sslmode=disable"
+	dsn := "host=localhost port=5173 user=postgres password=054625565 dbname=profen_test sslmode=disable"
 	client := enttest.Open(t, "postgres", dsn)
 	defer client.Close()
 
