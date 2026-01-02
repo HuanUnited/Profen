@@ -61,9 +61,9 @@ func NodeID(v uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldEQ(FieldNodeID, v))
 }
 
-// ErrorType applies equality check predicate on the "error_type" field. It's identical to ErrorTypeEQ.
-func ErrorType(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldEQ(FieldErrorType, v))
+// ErrorTypeID applies equality check predicate on the "error_type_id" field. It's identical to ErrorTypeIDEQ.
+func ErrorTypeID(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldErrorTypeID, v))
 }
 
 // WeightImpact applies equality check predicate on the "weight_impact" field. It's identical to WeightImpactEQ.
@@ -86,11 +86,6 @@ func ResolvedAt(v time.Time) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldEQ(FieldResolvedAt, v))
 }
 
-// ErrorTypeID applies equality check predicate on the "error_type_id" field. It's identical to ErrorTypeIDEQ.
-func ErrorTypeID(v uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldEQ(FieldErrorTypeID, v))
-}
-
 // NodeIDEQ applies the EQ predicate on the "node_id" field.
 func NodeIDEQ(v uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldEQ(FieldNodeID, v))
@@ -111,69 +106,44 @@ func NodeIDNotIn(vs ...uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldNotIn(FieldNodeID, vs...))
 }
 
-// ErrorTypeEQ applies the EQ predicate on the "error_type" field.
-func ErrorTypeEQ(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldEQ(FieldErrorType, v))
+// ErrorTypeIDEQ applies the EQ predicate on the "error_type_id" field.
+func ErrorTypeIDEQ(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldErrorTypeID, v))
 }
 
-// ErrorTypeNEQ applies the NEQ predicate on the "error_type" field.
-func ErrorTypeNEQ(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldNEQ(FieldErrorType, v))
+// ErrorTypeIDNEQ applies the NEQ predicate on the "error_type_id" field.
+func ErrorTypeIDNEQ(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNEQ(FieldErrorTypeID, v))
 }
 
-// ErrorTypeIn applies the In predicate on the "error_type" field.
-func ErrorTypeIn(vs ...string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldIn(FieldErrorType, vs...))
+// ErrorTypeIDIn applies the In predicate on the "error_type_id" field.
+func ErrorTypeIDIn(vs ...uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIn(FieldErrorTypeID, vs...))
 }
 
-// ErrorTypeNotIn applies the NotIn predicate on the "error_type" field.
-func ErrorTypeNotIn(vs ...string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldNotIn(FieldErrorType, vs...))
+// ErrorTypeIDNotIn applies the NotIn predicate on the "error_type_id" field.
+func ErrorTypeIDNotIn(vs ...uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotIn(FieldErrorTypeID, vs...))
 }
 
-// ErrorTypeGT applies the GT predicate on the "error_type" field.
-func ErrorTypeGT(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldGT(FieldErrorType, v))
+// ErrorTypeIDGT applies the GT predicate on the "error_type_id" field.
+func ErrorTypeIDGT(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGT(FieldErrorTypeID, v))
 }
 
-// ErrorTypeGTE applies the GTE predicate on the "error_type" field.
-func ErrorTypeGTE(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldGTE(FieldErrorType, v))
+// ErrorTypeIDGTE applies the GTE predicate on the "error_type_id" field.
+func ErrorTypeIDGTE(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGTE(FieldErrorTypeID, v))
 }
 
-// ErrorTypeLT applies the LT predicate on the "error_type" field.
-func ErrorTypeLT(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldLT(FieldErrorType, v))
+// ErrorTypeIDLT applies the LT predicate on the "error_type_id" field.
+func ErrorTypeIDLT(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLT(FieldErrorTypeID, v))
 }
 
-// ErrorTypeLTE applies the LTE predicate on the "error_type" field.
-func ErrorTypeLTE(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldLTE(FieldErrorType, v))
-}
-
-// ErrorTypeContains applies the Contains predicate on the "error_type" field.
-func ErrorTypeContains(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldContains(FieldErrorType, v))
-}
-
-// ErrorTypeHasPrefix applies the HasPrefix predicate on the "error_type" field.
-func ErrorTypeHasPrefix(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldHasPrefix(FieldErrorType, v))
-}
-
-// ErrorTypeHasSuffix applies the HasSuffix predicate on the "error_type" field.
-func ErrorTypeHasSuffix(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldHasSuffix(FieldErrorType, v))
-}
-
-// ErrorTypeEqualFold applies the EqualFold predicate on the "error_type" field.
-func ErrorTypeEqualFold(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldEqualFold(FieldErrorType, v))
-}
-
-// ErrorTypeContainsFold applies the ContainsFold predicate on the "error_type" field.
-func ErrorTypeContainsFold(v string) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldContainsFold(FieldErrorType, v))
+// ErrorTypeIDLTE applies the LTE predicate on the "error_type_id" field.
+func ErrorTypeIDLTE(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLTE(FieldErrorTypeID, v))
 }
 
 // WeightImpactEQ applies the EQ predicate on the "weight_impact" field.
@@ -314,46 +284,6 @@ func ResolvedAtIsNil() predicate.ErrorResolution {
 // ResolvedAtNotNil applies the NotNil predicate on the "resolved_at" field.
 func ResolvedAtNotNil() predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldNotNull(FieldResolvedAt))
-}
-
-// ErrorTypeIDEQ applies the EQ predicate on the "error_type_id" field.
-func ErrorTypeIDEQ(v uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldEQ(FieldErrorTypeID, v))
-}
-
-// ErrorTypeIDNEQ applies the NEQ predicate on the "error_type_id" field.
-func ErrorTypeIDNEQ(v uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldNEQ(FieldErrorTypeID, v))
-}
-
-// ErrorTypeIDIn applies the In predicate on the "error_type_id" field.
-func ErrorTypeIDIn(vs ...uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldIn(FieldErrorTypeID, vs...))
-}
-
-// ErrorTypeIDNotIn applies the NotIn predicate on the "error_type_id" field.
-func ErrorTypeIDNotIn(vs ...uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldNotIn(FieldErrorTypeID, vs...))
-}
-
-// ErrorTypeIDGT applies the GT predicate on the "error_type_id" field.
-func ErrorTypeIDGT(v uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldGT(FieldErrorTypeID, v))
-}
-
-// ErrorTypeIDGTE applies the GTE predicate on the "error_type_id" field.
-func ErrorTypeIDGTE(v uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldGTE(FieldErrorTypeID, v))
-}
-
-// ErrorTypeIDLT applies the LT predicate on the "error_type_id" field.
-func ErrorTypeIDLT(v uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldLT(FieldErrorTypeID, v))
-}
-
-// ErrorTypeIDLTE applies the LTE predicate on the "error_type_id" field.
-func ErrorTypeIDLTE(v uuid.UUID) predicate.ErrorResolution {
-	return predicate.ErrorResolution(sql.FieldLTE(FieldErrorTypeID, v))
 }
 
 // HasNode applies the HasEdge predicate on the "node" edge.

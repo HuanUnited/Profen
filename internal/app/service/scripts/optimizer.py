@@ -1,7 +1,7 @@
 import sys
 import json
 import pandas as pd
-from FSRS_Optimizer import Optimizer
+from fsrs_optimizer import Optimizer
 
 def optimize(data_path):
     # 1. Load Data
@@ -24,17 +24,18 @@ def optimize(data_path):
 
     # 3. Run Optimization
     optimizer = Optimizer()
+    optimizer.dataset = df 
     try:
         optimizer.define_model()
         # timezone handling might be needed depending on how Go exports time
-        df['review_date'] = pd.to_datetime(df['review_date']).astype(int) // 10**6 # pyright: ignore[reportAttributeAccessIssue] # ms timestamp?
+        df['review_date'] = pd.to_datetime(df['review_date']).astype(int) // 10**6 # ms timestamp?
         
         # Note: Actual fsrs-optimizer API might vary slightly by version.
         # This is a conceptual implementation. 
         # Usually: optimizer.S_t = ...
         # For simple use, we might just train on the dataset.
         
-        optimizer.train(df)
+        optimizer.train()
         
         # 4. Output Weights
         print(json.dumps({

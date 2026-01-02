@@ -21,8 +21,8 @@ type ErrorResolution struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// NodeID holds the value of the "node_id" field.
 	NodeID uuid.UUID `json:"node_id,omitempty"`
-	// Category: 'calc', 'concept', 'memory'
-	ErrorType string `json:"error_type,omitempty"`
+	// ErrorTypeID holds the value of the "error_type_id" field.
+	ErrorTypeID uuid.UUID `json:"error_type_id,omitempty"`
 	// Higher value = higher priority to fix
 	WeightImpact float64 `json:"weight_impact,omitempty"`
 	// False = Active Gap. True = History.
@@ -31,8 +31,6 @@ type ErrorResolution struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// ResolvedAt holds the value of the "resolved_at" field.
 	ResolvedAt *time.Time `json:"resolved_at,omitempty"`
-	// ErrorTypeID holds the value of the "error_type_id" field.
-	ErrorTypeID uuid.UUID `json:"error_type_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ErrorResolutionQuery when eager-loading is set.
 	Edges        ErrorResolutionEdges `json:"edges"`
@@ -68,8 +66,6 @@ func (*ErrorResolution) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case errorresolution.FieldWeightImpact:
 			values[i] = new(sql.NullFloat64)
-		case errorresolution.FieldErrorType:
-			values[i] = new(sql.NullString)
 		case errorresolution.FieldCreatedAt, errorresolution.FieldResolvedAt:
 			values[i] = new(sql.NullTime)
 		case errorresolution.FieldID, errorresolution.FieldNodeID, errorresolution.FieldErrorTypeID:
@@ -101,11 +97,11 @@ func (_m *ErrorResolution) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				_m.NodeID = *value
 			}
-		case errorresolution.FieldErrorType:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field error_type", values[i])
-			} else if value.Valid {
-				_m.ErrorType = value.String
+		case errorresolution.FieldErrorTypeID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field error_type_id", values[i])
+			} else if value != nil {
+				_m.ErrorTypeID = *value
 			}
 		case errorresolution.FieldWeightImpact:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -131,12 +127,6 @@ func (_m *ErrorResolution) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ResolvedAt = new(time.Time)
 				*_m.ResolvedAt = value.Time
-			}
-		case errorresolution.FieldErrorTypeID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field error_type_id", values[i])
-			} else if value != nil {
-				_m.ErrorTypeID = *value
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -182,8 +172,8 @@ func (_m *ErrorResolution) String() string {
 	builder.WriteString("node_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.NodeID))
 	builder.WriteString(", ")
-	builder.WriteString("error_type=")
-	builder.WriteString(_m.ErrorType)
+	builder.WriteString("error_type_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ErrorTypeID))
 	builder.WriteString(", ")
 	builder.WriteString("weight_impact=")
 	builder.WriteString(fmt.Sprintf("%v", _m.WeightImpact))
@@ -198,9 +188,6 @@ func (_m *ErrorResolution) String() string {
 		builder.WriteString("resolved_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
-	builder.WriteString(", ")
-	builder.WriteString("error_type_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ErrorTypeID))
 	builder.WriteByte(')')
 	return builder.String()
 }

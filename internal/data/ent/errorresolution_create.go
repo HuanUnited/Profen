@@ -28,9 +28,9 @@ func (_c *ErrorResolutionCreate) SetNodeID(v uuid.UUID) *ErrorResolutionCreate {
 	return _c
 }
 
-// SetErrorType sets the "error_type" field.
-func (_c *ErrorResolutionCreate) SetErrorType(v string) *ErrorResolutionCreate {
-	_c.mutation.SetErrorType(v)
+// SetErrorTypeID sets the "error_type_id" field.
+func (_c *ErrorResolutionCreate) SetErrorTypeID(v uuid.UUID) *ErrorResolutionCreate {
+	_c.mutation.SetErrorTypeID(v)
 	return _c
 }
 
@@ -87,12 +87,6 @@ func (_c *ErrorResolutionCreate) SetNillableResolvedAt(v *time.Time) *ErrorResol
 	if v != nil {
 		_c.SetResolvedAt(*v)
 	}
-	return _c
-}
-
-// SetErrorTypeID sets the "error_type_id" field.
-func (_c *ErrorResolutionCreate) SetErrorTypeID(v uuid.UUID) *ErrorResolutionCreate {
-	_c.mutation.SetErrorTypeID(v)
 	return _c
 }
 
@@ -173,13 +167,8 @@ func (_c *ErrorResolutionCreate) check() error {
 	if _, ok := _c.mutation.NodeID(); !ok {
 		return &ValidationError{Name: "node_id", err: errors.New(`ent: missing required field "ErrorResolution.node_id"`)}
 	}
-	if _, ok := _c.mutation.ErrorType(); !ok {
-		return &ValidationError{Name: "error_type", err: errors.New(`ent: missing required field "ErrorResolution.error_type"`)}
-	}
-	if v, ok := _c.mutation.ErrorType(); ok {
-		if err := errorresolution.ErrorTypeValidator(v); err != nil {
-			return &ValidationError{Name: "error_type", err: fmt.Errorf(`ent: validator failed for field "ErrorResolution.error_type": %w`, err)}
-		}
+	if _, ok := _c.mutation.ErrorTypeID(); !ok {
+		return &ValidationError{Name: "error_type_id", err: errors.New(`ent: missing required field "ErrorResolution.error_type_id"`)}
 	}
 	if _, ok := _c.mutation.WeightImpact(); !ok {
 		return &ValidationError{Name: "weight_impact", err: errors.New(`ent: missing required field "ErrorResolution.weight_impact"`)}
@@ -189,9 +178,6 @@ func (_c *ErrorResolutionCreate) check() error {
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "ErrorResolution.created_at"`)}
-	}
-	if _, ok := _c.mutation.ErrorTypeID(); !ok {
-		return &ValidationError{Name: "error_type_id", err: errors.New(`ent: missing required field "ErrorResolution.error_type_id"`)}
 	}
 	if len(_c.mutation.NodeIDs()) == 0 {
 		return &ValidationError{Name: "node", err: errors.New(`ent: missing required edge "ErrorResolution.node"`)}
@@ -231,9 +217,9 @@ func (_c *ErrorResolutionCreate) createSpec() (*ErrorResolution, *sqlgraph.Creat
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := _c.mutation.ErrorType(); ok {
-		_spec.SetField(errorresolution.FieldErrorType, field.TypeString, value)
-		_node.ErrorType = value
+	if value, ok := _c.mutation.ErrorTypeID(); ok {
+		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
+		_node.ErrorTypeID = value
 	}
 	if value, ok := _c.mutation.WeightImpact(); ok {
 		_spec.SetField(errorresolution.FieldWeightImpact, field.TypeFloat64, value)
@@ -250,10 +236,6 @@ func (_c *ErrorResolutionCreate) createSpec() (*ErrorResolution, *sqlgraph.Creat
 	if value, ok := _c.mutation.ResolvedAt(); ok {
 		_spec.SetField(errorresolution.FieldResolvedAt, field.TypeTime, value)
 		_node.ResolvedAt = &value
-	}
-	if value, ok := _c.mutation.ErrorTypeID(); ok {
-		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
-		_node.ErrorTypeID = value
 	}
 	if nodes := _c.mutation.NodeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

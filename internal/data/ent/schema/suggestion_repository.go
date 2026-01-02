@@ -26,11 +26,7 @@ func (ErrorResolution) Fields() []ent.Field {
 		// Who: The node where the error happened (e.g., the Problem)
 		field.UUID("node_id", uuid.UUID{}),
 
-		// What: The type of error (e.g., "Calculation", "Syntax")
-		// For simplicity, we can use a string or Enum. Let's use string for flexibility now.
-		field.String("error_type").
-			NotEmpty().
-			Comment("Category: 'calc', 'concept', 'memory'"),
+		field.UUID("error_type_id", uuid.UUID{}),
 
 		// Impact: How much this error weighs in the algorithm
 		field.Float("weight_impact").
@@ -48,8 +44,6 @@ func (ErrorResolution) Fields() []ent.Field {
 		field.Time("resolved_at").
 			Optional().
 			Nillable(),
-
-		field.UUID("error_type_id", uuid.UUID{}),
 	}
 }
 

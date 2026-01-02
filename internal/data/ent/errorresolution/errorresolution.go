@@ -17,8 +17,8 @@ const (
 	FieldID = "resolution_id"
 	// FieldNodeID holds the string denoting the node_id field in the database.
 	FieldNodeID = "node_id"
-	// FieldErrorType holds the string denoting the error_type field in the database.
-	FieldErrorType = "error_type"
+	// FieldErrorTypeID holds the string denoting the error_type_id field in the database.
+	FieldErrorTypeID = "error_type_id"
 	// FieldWeightImpact holds the string denoting the weight_impact field in the database.
 	FieldWeightImpact = "weight_impact"
 	// FieldIsResolved holds the string denoting the is_resolved field in the database.
@@ -27,8 +27,6 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldResolvedAt holds the string denoting the resolved_at field in the database.
 	FieldResolvedAt = "resolved_at"
-	// FieldErrorTypeID holds the string denoting the error_type_id field in the database.
-	FieldErrorTypeID = "error_type_id"
 	// EdgeNode holds the string denoting the node edge name in mutations.
 	EdgeNode = "node"
 	// NodeFieldID holds the string denoting the ID field of the Node.
@@ -48,12 +46,11 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldNodeID,
-	FieldErrorType,
+	FieldErrorTypeID,
 	FieldWeightImpact,
 	FieldIsResolved,
 	FieldCreatedAt,
 	FieldResolvedAt,
-	FieldErrorTypeID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -67,8 +64,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// ErrorTypeValidator is a validator for the "error_type" field. It is called by the builders before save.
-	ErrorTypeValidator func(string) error
 	// DefaultWeightImpact holds the default value on creation for the "weight_impact" field.
 	DefaultWeightImpact float64
 	// DefaultIsResolved holds the default value on creation for the "is_resolved" field.
@@ -92,9 +87,9 @@ func ByNodeID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNodeID, opts...).ToFunc()
 }
 
-// ByErrorType orders the results by the error_type field.
-func ByErrorType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldErrorType, opts...).ToFunc()
+// ByErrorTypeID orders the results by the error_type_id field.
+func ByErrorTypeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldErrorTypeID, opts...).ToFunc()
 }
 
 // ByWeightImpact orders the results by the weight_impact field.
@@ -115,11 +110,6 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByResolvedAt orders the results by the resolved_at field.
 func ByResolvedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldResolvedAt, opts...).ToFunc()
-}
-
-// ByErrorTypeID orders the results by the error_type_id field.
-func ByErrorTypeID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldErrorTypeID, opts...).ToFunc()
 }
 
 // ByNodeField orders the results by node field.

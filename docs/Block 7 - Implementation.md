@@ -24,7 +24,7 @@ The goal of Block 7 is to personalize the memory algorithm for the user. We have
     2. Exports data to `revlog_export.json` (Temp file).
     3. Executes `python scripts/optimizer.py revlog_export.json`.
     4. Parses the JSON output (New Weights) and returns them.
-* **Environment**: Requires a local python environment (`.venv`) with `fsrs-optimizer` installed.
+* **Environment**: Requires a local python environment (`.conda`) with `fsrs-optimizer` installed.
 
 ## 3. Artifacts Created
 
@@ -34,3 +34,5 @@ The goal of Block 7 is to personalize the memory algorithm for the user. We have
 | `internal/app/service/optimizer.go` | Go service handling data export and script execution. |
 | `scripts/optimizer.py` | Python script wrapping the FSRS optimizer. |
 | `requirements.txt` | Python dependencies. |
+
+⚠️ Environment Note: The Python optimizer requires a stable Python version (3.10/3.11) with pre-built wheels for SciPy. Building from source on Windows/Python 3.14 is currently failing. Installation is deferred until the runtime environment is standardized.

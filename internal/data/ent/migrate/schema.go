@@ -58,12 +58,11 @@ var (
 	// ErrorResolutionsColumns holds the columns for the "error_resolutions" table.
 	ErrorResolutionsColumns = []*schema.Column{
 		{Name: "resolution_id", Type: field.TypeUUID},
-		{Name: "error_type", Type: field.TypeString},
+		{Name: "error_type_id", Type: field.TypeUUID},
 		{Name: "weight_impact", Type: field.TypeFloat64, Default: 1},
 		{Name: "is_resolved", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "resolved_at", Type: field.TypeTime, Nullable: true},
-		{Name: "error_type_id", Type: field.TypeUUID},
 		{Name: "node_id", Type: field.TypeUUID},
 	}
 	// ErrorResolutionsTable holds the schema information for the "error_resolutions" table.
@@ -74,7 +73,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "error_resolutions_nodes_error_resolutions",
-				Columns:    []*schema.Column{ErrorResolutionsColumns[7]},
+				Columns:    []*schema.Column{ErrorResolutionsColumns[6]},
 				RefColumns: []*schema.Column{NodesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

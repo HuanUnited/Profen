@@ -1649,13 +1649,12 @@ type ErrorResolutionMutation struct {
 	op               Op
 	typ              string
 	id               *uuid.UUID
-	error_type       *string
+	error_type_id    *uuid.UUID
 	weight_impact    *float64
 	addweight_impact *float64
 	is_resolved      *bool
 	created_at       *time.Time
 	resolved_at      *time.Time
-	error_type_id    *uuid.UUID
 	clearedFields    map[string]struct{}
 	node             *uuid.UUID
 	clearednode      bool
@@ -1804,40 +1803,40 @@ func (m *ErrorResolutionMutation) ResetNodeID() {
 	m.node = nil
 }
 
-// SetErrorType sets the "error_type" field.
-func (m *ErrorResolutionMutation) SetErrorType(s string) {
-	m.error_type = &s
+// SetErrorTypeID sets the "error_type_id" field.
+func (m *ErrorResolutionMutation) SetErrorTypeID(u uuid.UUID) {
+	m.error_type_id = &u
 }
 
-// ErrorType returns the value of the "error_type" field in the mutation.
-func (m *ErrorResolutionMutation) ErrorType() (r string, exists bool) {
-	v := m.error_type
+// ErrorTypeID returns the value of the "error_type_id" field in the mutation.
+func (m *ErrorResolutionMutation) ErrorTypeID() (r uuid.UUID, exists bool) {
+	v := m.error_type_id
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldErrorType returns the old "error_type" field's value of the ErrorResolution entity.
+// OldErrorTypeID returns the old "error_type_id" field's value of the ErrorResolution entity.
 // If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ErrorResolutionMutation) OldErrorType(ctx context.Context) (v string, err error) {
+func (m *ErrorResolutionMutation) OldErrorTypeID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldErrorType is only allowed on UpdateOne operations")
+		return v, errors.New("OldErrorTypeID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldErrorType requires an ID field in the mutation")
+		return v, errors.New("OldErrorTypeID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldErrorType: %w", err)
+		return v, fmt.Errorf("querying old value for OldErrorTypeID: %w", err)
 	}
-	return oldValue.ErrorType, nil
+	return oldValue.ErrorTypeID, nil
 }
 
-// ResetErrorType resets all changes to the "error_type" field.
-func (m *ErrorResolutionMutation) ResetErrorType() {
-	m.error_type = nil
+// ResetErrorTypeID resets all changes to the "error_type_id" field.
+func (m *ErrorResolutionMutation) ResetErrorTypeID() {
+	m.error_type_id = nil
 }
 
 // SetWeightImpact sets the "weight_impact" field.
@@ -2017,42 +2016,6 @@ func (m *ErrorResolutionMutation) ResetResolvedAt() {
 	delete(m.clearedFields, errorresolution.FieldResolvedAt)
 }
 
-// SetErrorTypeID sets the "error_type_id" field.
-func (m *ErrorResolutionMutation) SetErrorTypeID(u uuid.UUID) {
-	m.error_type_id = &u
-}
-
-// ErrorTypeID returns the value of the "error_type_id" field in the mutation.
-func (m *ErrorResolutionMutation) ErrorTypeID() (r uuid.UUID, exists bool) {
-	v := m.error_type_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldErrorTypeID returns the old "error_type_id" field's value of the ErrorResolution entity.
-// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ErrorResolutionMutation) OldErrorTypeID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldErrorTypeID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldErrorTypeID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldErrorTypeID: %w", err)
-	}
-	return oldValue.ErrorTypeID, nil
-}
-
-// ResetErrorTypeID resets all changes to the "error_type_id" field.
-func (m *ErrorResolutionMutation) ResetErrorTypeID() {
-	m.error_type_id = nil
-}
-
 // ClearNode clears the "node" edge to the Node entity.
 func (m *ErrorResolutionMutation) ClearNode() {
 	m.clearednode = true
@@ -2114,12 +2077,12 @@ func (m *ErrorResolutionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ErrorResolutionMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 6)
 	if m.node != nil {
 		fields = append(fields, errorresolution.FieldNodeID)
 	}
-	if m.error_type != nil {
-		fields = append(fields, errorresolution.FieldErrorType)
+	if m.error_type_id != nil {
+		fields = append(fields, errorresolution.FieldErrorTypeID)
 	}
 	if m.weight_impact != nil {
 		fields = append(fields, errorresolution.FieldWeightImpact)
@@ -2133,9 +2096,6 @@ func (m *ErrorResolutionMutation) Fields() []string {
 	if m.resolved_at != nil {
 		fields = append(fields, errorresolution.FieldResolvedAt)
 	}
-	if m.error_type_id != nil {
-		fields = append(fields, errorresolution.FieldErrorTypeID)
-	}
 	return fields
 }
 
@@ -2146,8 +2106,8 @@ func (m *ErrorResolutionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case errorresolution.FieldNodeID:
 		return m.NodeID()
-	case errorresolution.FieldErrorType:
-		return m.ErrorType()
+	case errorresolution.FieldErrorTypeID:
+		return m.ErrorTypeID()
 	case errorresolution.FieldWeightImpact:
 		return m.WeightImpact()
 	case errorresolution.FieldIsResolved:
@@ -2156,8 +2116,6 @@ func (m *ErrorResolutionMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case errorresolution.FieldResolvedAt:
 		return m.ResolvedAt()
-	case errorresolution.FieldErrorTypeID:
-		return m.ErrorTypeID()
 	}
 	return nil, false
 }
@@ -2169,8 +2127,8 @@ func (m *ErrorResolutionMutation) OldField(ctx context.Context, name string) (en
 	switch name {
 	case errorresolution.FieldNodeID:
 		return m.OldNodeID(ctx)
-	case errorresolution.FieldErrorType:
-		return m.OldErrorType(ctx)
+	case errorresolution.FieldErrorTypeID:
+		return m.OldErrorTypeID(ctx)
 	case errorresolution.FieldWeightImpact:
 		return m.OldWeightImpact(ctx)
 	case errorresolution.FieldIsResolved:
@@ -2179,8 +2137,6 @@ func (m *ErrorResolutionMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCreatedAt(ctx)
 	case errorresolution.FieldResolvedAt:
 		return m.OldResolvedAt(ctx)
-	case errorresolution.FieldErrorTypeID:
-		return m.OldErrorTypeID(ctx)
 	}
 	return nil, fmt.Errorf("unknown ErrorResolution field %s", name)
 }
@@ -2197,12 +2153,12 @@ func (m *ErrorResolutionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetNodeID(v)
 		return nil
-	case errorresolution.FieldErrorType:
-		v, ok := value.(string)
+	case errorresolution.FieldErrorTypeID:
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetErrorType(v)
+		m.SetErrorTypeID(v)
 		return nil
 	case errorresolution.FieldWeightImpact:
 		v, ok := value.(float64)
@@ -2231,13 +2187,6 @@ func (m *ErrorResolutionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetResolvedAt(v)
-		return nil
-	case errorresolution.FieldErrorTypeID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetErrorTypeID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown ErrorResolution field %s", name)
@@ -2315,8 +2264,8 @@ func (m *ErrorResolutionMutation) ResetField(name string) error {
 	case errorresolution.FieldNodeID:
 		m.ResetNodeID()
 		return nil
-	case errorresolution.FieldErrorType:
-		m.ResetErrorType()
+	case errorresolution.FieldErrorTypeID:
+		m.ResetErrorTypeID()
 		return nil
 	case errorresolution.FieldWeightImpact:
 		m.ResetWeightImpact()
@@ -2329,9 +2278,6 @@ func (m *ErrorResolutionMutation) ResetField(name string) error {
 		return nil
 	case errorresolution.FieldResolvedAt:
 		m.ResetResolvedAt()
-		return nil
-	case errorresolution.FieldErrorTypeID:
-		m.ResetErrorTypeID()
 		return nil
 	}
 	return fmt.Errorf("unknown ErrorResolution field %s", name)

@@ -52,10 +52,6 @@ func init() {
 	errordefinition.DefaultID = errordefinitionDescID.Default.(func() uuid.UUID)
 	errorresolutionFields := schema.ErrorResolution{}.Fields()
 	_ = errorresolutionFields
-	// errorresolutionDescErrorType is the schema descriptor for error_type field.
-	errorresolutionDescErrorType := errorresolutionFields[2].Descriptor()
-	// errorresolution.ErrorTypeValidator is a validator for the "error_type" field. It is called by the builders before save.
-	errorresolution.ErrorTypeValidator = errorresolutionDescErrorType.Validators[0].(func(string) error)
 	// errorresolutionDescWeightImpact is the schema descriptor for weight_impact field.
 	errorresolutionDescWeightImpact := errorresolutionFields[3].Descriptor()
 	// errorresolution.DefaultWeightImpact holds the default value on creation for the weight_impact field.

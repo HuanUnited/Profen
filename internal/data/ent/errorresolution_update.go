@@ -45,16 +45,16 @@ func (_u *ErrorResolutionUpdate) SetNillableNodeID(v *uuid.UUID) *ErrorResolutio
 	return _u
 }
 
-// SetErrorType sets the "error_type" field.
-func (_u *ErrorResolutionUpdate) SetErrorType(v string) *ErrorResolutionUpdate {
-	_u.mutation.SetErrorType(v)
+// SetErrorTypeID sets the "error_type_id" field.
+func (_u *ErrorResolutionUpdate) SetErrorTypeID(v uuid.UUID) *ErrorResolutionUpdate {
+	_u.mutation.SetErrorTypeID(v)
 	return _u
 }
 
-// SetNillableErrorType sets the "error_type" field if the given value is not nil.
-func (_u *ErrorResolutionUpdate) SetNillableErrorType(v *string) *ErrorResolutionUpdate {
+// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableErrorTypeID(v *uuid.UUID) *ErrorResolutionUpdate {
 	if v != nil {
-		_u.SetErrorType(*v)
+		_u.SetErrorTypeID(*v)
 	}
 	return _u
 }
@@ -128,20 +128,6 @@ func (_u *ErrorResolutionUpdate) ClearResolvedAt() *ErrorResolutionUpdate {
 	return _u
 }
 
-// SetErrorTypeID sets the "error_type_id" field.
-func (_u *ErrorResolutionUpdate) SetErrorTypeID(v uuid.UUID) *ErrorResolutionUpdate {
-	_u.mutation.SetErrorTypeID(v)
-	return _u
-}
-
-// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
-func (_u *ErrorResolutionUpdate) SetNillableErrorTypeID(v *uuid.UUID) *ErrorResolutionUpdate {
-	if v != nil {
-		_u.SetErrorTypeID(*v)
-	}
-	return _u
-}
-
 // SetNode sets the "node" edge to the Node entity.
 func (_u *ErrorResolutionUpdate) SetNode(v *Node) *ErrorResolutionUpdate {
 	return _u.SetNodeID(v.ID)
@@ -187,11 +173,6 @@ func (_u *ErrorResolutionUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ErrorResolutionUpdate) check() error {
-	if v, ok := _u.mutation.ErrorType(); ok {
-		if err := errorresolution.ErrorTypeValidator(v); err != nil {
-			return &ValidationError{Name: "error_type", err: fmt.Errorf(`ent: validator failed for field "ErrorResolution.error_type": %w`, err)}
-		}
-	}
 	if _u.mutation.NodeCleared() && len(_u.mutation.NodeIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ErrorResolution.node"`)
 	}
@@ -216,8 +197,8 @@ func (_u *ErrorResolutionUpdate) sqlSave(ctx context.Context) (_node int, err er
 			}
 		}
 	}
-	if value, ok := _u.mutation.ErrorType(); ok {
-		_spec.SetField(errorresolution.FieldErrorType, field.TypeString, value)
+	if value, ok := _u.mutation.ErrorTypeID(); ok {
+		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
 	}
 	if value, ok := _u.mutation.WeightImpact(); ok {
 		_spec.SetField(errorresolution.FieldWeightImpact, field.TypeFloat64, value)
@@ -236,9 +217,6 @@ func (_u *ErrorResolutionUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if _u.mutation.ResolvedAtCleared() {
 		_spec.ClearField(errorresolution.FieldResolvedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.ErrorTypeID(); ok {
-		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
 	}
 	if _u.mutation.NodeCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -305,16 +283,16 @@ func (_u *ErrorResolutionUpdateOne) SetNillableNodeID(v *uuid.UUID) *ErrorResolu
 	return _u
 }
 
-// SetErrorType sets the "error_type" field.
-func (_u *ErrorResolutionUpdateOne) SetErrorType(v string) *ErrorResolutionUpdateOne {
-	_u.mutation.SetErrorType(v)
+// SetErrorTypeID sets the "error_type_id" field.
+func (_u *ErrorResolutionUpdateOne) SetErrorTypeID(v uuid.UUID) *ErrorResolutionUpdateOne {
+	_u.mutation.SetErrorTypeID(v)
 	return _u
 }
 
-// SetNillableErrorType sets the "error_type" field if the given value is not nil.
-func (_u *ErrorResolutionUpdateOne) SetNillableErrorType(v *string) *ErrorResolutionUpdateOne {
+// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableErrorTypeID(v *uuid.UUID) *ErrorResolutionUpdateOne {
 	if v != nil {
-		_u.SetErrorType(*v)
+		_u.SetErrorTypeID(*v)
 	}
 	return _u
 }
@@ -388,20 +366,6 @@ func (_u *ErrorResolutionUpdateOne) ClearResolvedAt() *ErrorResolutionUpdateOne 
 	return _u
 }
 
-// SetErrorTypeID sets the "error_type_id" field.
-func (_u *ErrorResolutionUpdateOne) SetErrorTypeID(v uuid.UUID) *ErrorResolutionUpdateOne {
-	_u.mutation.SetErrorTypeID(v)
-	return _u
-}
-
-// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
-func (_u *ErrorResolutionUpdateOne) SetNillableErrorTypeID(v *uuid.UUID) *ErrorResolutionUpdateOne {
-	if v != nil {
-		_u.SetErrorTypeID(*v)
-	}
-	return _u
-}
-
 // SetNode sets the "node" edge to the Node entity.
 func (_u *ErrorResolutionUpdateOne) SetNode(v *Node) *ErrorResolutionUpdateOne {
 	return _u.SetNodeID(v.ID)
@@ -460,11 +424,6 @@ func (_u *ErrorResolutionUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ErrorResolutionUpdateOne) check() error {
-	if v, ok := _u.mutation.ErrorType(); ok {
-		if err := errorresolution.ErrorTypeValidator(v); err != nil {
-			return &ValidationError{Name: "error_type", err: fmt.Errorf(`ent: validator failed for field "ErrorResolution.error_type": %w`, err)}
-		}
-	}
 	if _u.mutation.NodeCleared() && len(_u.mutation.NodeIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ErrorResolution.node"`)
 	}
@@ -506,8 +465,8 @@ func (_u *ErrorResolutionUpdateOne) sqlSave(ctx context.Context) (_node *ErrorRe
 			}
 		}
 	}
-	if value, ok := _u.mutation.ErrorType(); ok {
-		_spec.SetField(errorresolution.FieldErrorType, field.TypeString, value)
+	if value, ok := _u.mutation.ErrorTypeID(); ok {
+		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
 	}
 	if value, ok := _u.mutation.WeightImpact(); ok {
 		_spec.SetField(errorresolution.FieldWeightImpact, field.TypeFloat64, value)
@@ -526,9 +485,6 @@ func (_u *ErrorResolutionUpdateOne) sqlSave(ctx context.Context) (_node *ErrorRe
 	}
 	if _u.mutation.ResolvedAtCleared() {
 		_spec.ClearField(errorresolution.FieldResolvedAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.ErrorTypeID(); ok {
-		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
 	}
 	if _u.mutation.NodeCleared() {
 		edge := &sqlgraph.EdgeSpec{
