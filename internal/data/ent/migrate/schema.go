@@ -107,7 +107,7 @@ var (
 	// NodeAssociationsColumns holds the columns for the "node_associations" table.
 	NodeAssociationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "rel_type", Type: field.TypeEnum, Enums: []string{"prerequisite", "example", "tests", "similar_to", "defines", "translation", "translated_from", "variant_of", "source_variant"}},
+		{Name: "rel_type", Type: field.TypeEnum, Enums: []string{"prerequisite", "example", "tests", "similar_to", "defines", "translation_of", "translated_from", "variant_of", "source_variant"}},
 		{Name: "source_id", Type: field.TypeUUID},
 		{Name: "target_id", Type: field.TypeUUID},
 	}

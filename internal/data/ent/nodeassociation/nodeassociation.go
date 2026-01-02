@@ -72,7 +72,7 @@ const (
 	RelTypeTests          RelType = "tests"
 	RelTypeSimilarTo      RelType = "similar_to"
 	RelTypeDefines        RelType = "defines"
-	RelTypeTranslation    RelType = "translation"
+	RelTypeTranslationOf  RelType = "translation_of"
 	RelTypeTranslatedFrom RelType = "translated_from"
 	RelTypeVariantOf      RelType = "variant_of"
 	RelTypeSourceVariant  RelType = "source_variant"
@@ -85,7 +85,7 @@ func (rt RelType) String() string {
 // RelTypeValidator is a validator for the "rel_type" field enum values. It is called by the builders before save.
 func RelTypeValidator(rt RelType) error {
 	switch rt {
-	case RelTypePrerequisite, RelTypeExample, RelTypeTests, RelTypeSimilarTo, RelTypeDefines, RelTypeTranslation, RelTypeTranslatedFrom, RelTypeVariantOf, RelTypeSourceVariant:
+	case RelTypePrerequisite, RelTypeExample, RelTypeTests, RelTypeSimilarTo, RelTypeDefines, RelTypeTranslationOf, RelTypeTranslatedFrom, RelTypeVariantOf, RelTypeSourceVariant:
 		return nil
 	default:
 		return fmt.Errorf("nodeassociation: invalid enum value for rel_type field: %q", rt)

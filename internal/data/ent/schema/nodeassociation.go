@@ -23,14 +23,14 @@ func (NodeAssociation) Fields() []ent.Field {
 
 		field.Enum("rel_type").
 			Values(
-				"prerequisite", 
-				"example", 
-				"tests", 
-				"similar_to", 
-				"defines", 
-				"translation", 
-				"translated_from", 
-				"variant_of", 
+				"prerequisite",
+				"example",
+				"tests",
+				"similar_to",
+				"defines",
+				"translation_of",
+				"translated_from",
+				"variant_of",
 				"source_variant",
 			), // [cite: 27, 238]
 	}
@@ -44,7 +44,7 @@ func (NodeAssociation) Edges() []ent.Edge {
 			Field("source_id").
 			Unique().
 			Required(),
-		
+
 		edge.From("target", Node.Type).
 			Ref("incoming_associations").
 			Field("target_id").
