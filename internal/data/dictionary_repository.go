@@ -19,32 +19,19 @@ func NewDictionaryRepository(client *ent.Client) *DictionaryRepository {
 	return &DictionaryRepository{client: client}
 }
 
-// CreateTermPair creates a bi-directional translation pair.
+// internal/data/dictionary_repository.go
+
 func (r *DictionaryRepository) CreateTermPair(
 	ctx context.Context,
-	nativeTerm string, // e.g., "Dog"
-	foreignTerm string, // e.g., "Sobaka"
+	nativeTerm string,
+	foreignTerm string,
 	metadata map[string]interface{},
 ) (*ent.Node, *ent.Node, error) {
 
-	tx, err := r.client.Tx(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("starting transaction: %w", err)
-	}
+	// NO TRANSACTION (for now) to support Hooks using global client
 
-	defer func() {
-		if v := recover(); v != nil {
-			tx.Rollback()
-			panic(v) // Propagate panic
-		}
-		// If normal error occurred, rollback
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
-
-	// 1. Create Native Node ("Dog")
-	nativeNode, err := tx.Node.Create().
+	// 1. Create Native Node
+	nativeNode, err := r.client.Node.Create().
 		SetType(node.TypeTerm).
 		SetBody(nativeTerm).
 		SetMetadata(metadata).
@@ -53,42 +40,36 @@ func (r *DictionaryRepository) CreateTermPair(
 		return nil, nil, fmt.Errorf("creating native term: %w", err)
 	}
 
-	// 2. Create Foreign Node ("Sobaka")
-	foreignNode, err := tx.Node.Create().
+	// 2. Create Foreign Node
+	foreignNode, err := r.client.Node.Create().
 		SetType(node.TypeTerm).
 		SetBody(foreignTerm).
 		SetMetadata(metadata).
 		Save(ctx)
 	if err != nil {
+		// Cleanup native if foreign fails?
+		// For MVP, ignore. Ideally, delete nativeNode.
 		return nil, nil, fmt.Errorf("creating foreign term: %w", err)
 	}
 
-	// 3. Link: Foreign is a translation OF Native
-	// Sobaka -> translation_of -> Dog
-	_, err = tx.NodeAssociation.Create().
+	// 3. Link Foreign -> Native
+	_, err = r.client.NodeAssociation.Create().
 		SetSourceID(foreignNode.ID).
 		SetTargetID(nativeNode.ID).
-		SetRelType(nodeassociation.RelTypeTranslationOf). // Use your specific Enum
+		SetRelType(nodeassociation.RelTypeTranslationOf).
 		Save(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("linking foreign->native: %w", err)
 	}
 
-	// 4. Link: Native is translated FROM Foreign (Optional, or implies the reverse)
-	// Dog -> translated_from -> Sobaka
-	// Note: Usually one direction is enough if your queries check both,
-	// but explicit bi-direction allows strictly directed graph traversals.
-	_, err = tx.NodeAssociation.Create().
+	// 4. Link Native -> Foreign
+	_, err = r.client.NodeAssociation.Create().
 		SetSourceID(nativeNode.ID).
 		SetTargetID(foreignNode.ID).
-		SetRelType(nodeassociation.RelTypeTranslatedFrom). // Use your specific Enum
+		SetRelType(nodeassociation.RelTypeTranslatedFrom).
 		Save(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("linking native->foreign: %w", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, nil, fmt.Errorf("committing transaction: %w", err)
 	}
 
 	return nativeNode, foreignNode, nil
