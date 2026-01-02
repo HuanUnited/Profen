@@ -27,10 +27,10 @@ func TestReviewCard_Flow(t *testing.T) {
 	client.Node.Use(hooks.FsrsCardInitHook(client))
 
 	ctx := context.Background()
-	// Clear previous data (ORDER MATTERS due to foreign keys)
-	client.Attempt.Delete().Exec(ctx)         // Depends on Card, ErrorDef
-	client.ErrorResolution.Delete().Exec(ctx) // Depends on Node, ErrorDef
-	client.ErrorDefinition.Delete().Exec(ctx) // <-- CLEANUP THIS
+	// Clear previous data
+	client.Attempt.Delete().Exec(ctx)
+	client.ErrorResolution.Delete().Exec(ctx)
+	client.ErrorDefinition.Delete().Exec(ctx)
 	client.FsrsCard.Delete().Exec(ctx)
 	client.Node.Delete().Exec(ctx)
 
@@ -49,20 +49,23 @@ func TestReviewCard_Flow(t *testing.T) {
 		Only(ctx)
 	require.NoError(t, err)
 
-	// Test Case 1: Good
-	updatedCard, err := fsrsService.ReviewCard(ctx, card.ID, service.GradeGood, 1000, nil)
+	// Test Case 1: Good (Grade 3)
+	// New Argument: userAnswer = "Correct Answer"
+	updatedCard, err := fsrsService.ReviewCard(ctx, card.ID, service.GradeGood, 1000, "Correct Answer", nil)
 	require.NoError(t, err)
 	assert.Equal(t, 1, updatedCard.Reps)
 
-	// Test Case 2: Bad
-	// Create Definition safely
+	// Test Case 2: Bad (Grade 1 - Again)
+	// New Argument: userAnswer = "Wrong Answer"
+
+	// Create Definition
 	errDef, err := client.ErrorDefinition.Create().
 		SetLabel("Test Error").
 		SetBaseWeight(2.5).
 		Save(ctx)
-	require.NoError(t, err, "Failed to create error definition") // This catches the nil pointer cause!
+	require.NoError(t, err, "Failed to create error definition")
 
-	failedCard, err := fsrsService.ReviewCard(ctx, card.ID, service.GradeAgain, 5000, &errDef.ID)
+	failedCard, err := fsrsService.ReviewCard(ctx, card.ID, service.GradeAgain, 5000, "Wrong Answer", &errDef.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 2, failedCard.Reps)
 
@@ -75,7 +78,13 @@ func TestReviewCard_Flow(t *testing.T) {
 
 	require.Len(t, attempts, 2)
 
+	// Check First Attempt (Good)
+	firstAttempt := attempts[0]
+	assert.Equal(t, "Correct Answer", firstAttempt.UserAnswer)
+
+	// Check Second Attempt (Bad)
 	lastAttempt := attempts[1]
 	require.NotNil(t, lastAttempt.ErrorTypeID)
 	assert.Equal(t, errDef.ID, *lastAttempt.ErrorTypeID)
+	assert.Equal(t, "Wrong Answer", lastAttempt.UserAnswer) // Verify storage
 }

@@ -17,17 +17,16 @@ import (
 type FSRSGrade int
 
 const (
-	GradeAgain FSRSGrade = 1 // Forgot
-	GradeHard  FSRSGrade = 2 // Remembered, but with difficulty
-	GradeGood  FSRSGrade = 3 // Remembered easily
-	GradeEasy  FSRSGrade = 4 // Remembered instantly
+	GradeAgain FSRSGrade = 1
+	GradeHard  FSRSGrade = 2
+	GradeGood  FSRSGrade = 3
+	GradeEasy  FSRSGrade = 4
 )
 
-// FSRSService handles the spaced repetition logic.
 type FSRSService struct {
 	client *ent.Client
 	params fsrs.Parameters
-	fsrs   *fsrs.FSRS // Changed to pointer to match NewFSRS return type
+	fsrs   *fsrs.FSRS
 }
 
 func NewFSRSService(client *ent.Client) *FSRSService {
@@ -40,11 +39,13 @@ func NewFSRSService(client *ent.Client) *FSRSService {
 }
 
 // ReviewCard processes a user's attempt.
+// UPDATED SIGNATURE: Added userAnswer string
 func (s *FSRSService) ReviewCard(
 	ctx context.Context,
 	cardID uuid.UUID,
 	grade FSRSGrade,
-	durationMs int,
+	durationMs int64, // Changed to int64 to match App
+	userAnswer string, // <--- NEW ARGUMENT
 	errorDefID *uuid.UUID,
 ) (*ent.FsrsCard, error) {
 
@@ -57,17 +58,17 @@ func (s *FSRSService) ReviewCard(
 	}
 
 	// 2. Log Attempt (History)
-	// Convert FsrsCard State to Attempt State (Enum conversion)
 	attemptState := attempt.State(card.State.String())
 
 	attemptBuilder := s.client.Attempt.Create().
 		SetCardID(card.ID).
 		SetRating(int(grade)).
-		SetDurationMs(durationMs).
-		SetState(attemptState). // Fixed Type Mismatch
+		SetDurationMs(int(durationMs)).
+		SetState(attemptState).
 		SetStability(card.Stability).
 		SetDifficulty(card.Difficulty).
-		SetIsCorrect(grade >= GradeGood)
+		SetIsCorrect(grade >= GradeGood).
+		SetUserAnswer(userAnswer) // <--- SAVING THE ANSWER
 
 	if errorDefID != nil {
 		attemptBuilder.SetErrorTypeID(*errorDefID)
@@ -93,6 +94,7 @@ func (s *FSRSService) ReviewCard(
 			SetIsResolved(false).
 			Save(ctx)
 		if err != nil {
+			// Non-fatal, just log it? For now return error
 			return nil, fmt.Errorf("failed to record error resolution: %w", err)
 		}
 	}

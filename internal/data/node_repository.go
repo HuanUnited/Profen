@@ -81,3 +81,24 @@ func (r *NodeRepository) CreateAssociation(
 		SetRelType(relType).
 		Exec(ctx)
 }
+
+// GetSubjects returns all nodes with type="subject" (The Roots)
+func (r *NodeRepository) GetSubjects(ctx context.Context) ([]*ent.Node, error) {
+	return r.client.Node.Query().
+		Where(node.TypeEQ(node.TypeSubject)).
+		Order(ent.Asc(node.FieldBody)). // Alphabetical
+		All(ctx)
+}
+
+// GetChildren returns direct children of a parent (Lazy Load)
+func (r *NodeRepository) GetChildren(ctx context.Context, parentID uuid.UUID) ([]*ent.Node, error) {
+	return r.client.Node.Query().
+		Where(node.ParentIDEQ(parentID)).
+		Order(ent.Asc(node.FieldType), ent.Asc(node.FieldBody)). // Subjects first, then alphabetical
+		All(ctx)
+}
+
+// GetNode returns a single node's details
+func (r *NodeRepository) GetNode(ctx context.Context, id uuid.UUID) (*ent.Node, error) {
+	return r.client.Node.Get(ctx, id)
+}
