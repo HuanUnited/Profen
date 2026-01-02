@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"profen/internal/data/ent/errorresolution"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/schema"
@@ -15,6 +16,28 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	errorresolutionFields := schema.ErrorResolution{}.Fields()
+	_ = errorresolutionFields
+	// errorresolutionDescErrorType is the schema descriptor for error_type field.
+	errorresolutionDescErrorType := errorresolutionFields[2].Descriptor()
+	// errorresolution.ErrorTypeValidator is a validator for the "error_type" field. It is called by the builders before save.
+	errorresolution.ErrorTypeValidator = errorresolutionDescErrorType.Validators[0].(func(string) error)
+	// errorresolutionDescWeightImpact is the schema descriptor for weight_impact field.
+	errorresolutionDescWeightImpact := errorresolutionFields[3].Descriptor()
+	// errorresolution.DefaultWeightImpact holds the default value on creation for the weight_impact field.
+	errorresolution.DefaultWeightImpact = errorresolutionDescWeightImpact.Default.(float64)
+	// errorresolutionDescIsResolved is the schema descriptor for is_resolved field.
+	errorresolutionDescIsResolved := errorresolutionFields[4].Descriptor()
+	// errorresolution.DefaultIsResolved holds the default value on creation for the is_resolved field.
+	errorresolution.DefaultIsResolved = errorresolutionDescIsResolved.Default.(bool)
+	// errorresolutionDescCreatedAt is the schema descriptor for created_at field.
+	errorresolutionDescCreatedAt := errorresolutionFields[5].Descriptor()
+	// errorresolution.DefaultCreatedAt holds the default value on creation for the created_at field.
+	errorresolution.DefaultCreatedAt = errorresolutionDescCreatedAt.Default.(func() time.Time)
+	// errorresolutionDescID is the schema descriptor for id field.
+	errorresolutionDescID := errorresolutionFields[0].Descriptor()
+	// errorresolution.DefaultID holds the default value on creation for the id field.
+	errorresolution.DefaultID = errorresolutionDescID.Default.(func() uuid.UUID)
 	fsrscardFields := schema.FsrsCard{}.Fields()
 	_ = fsrscardFields
 	// fsrscardDescStability is the schema descriptor for stability field.

@@ -407,6 +407,29 @@ func HasFsrsCardWith(preds ...predicate.FsrsCard) predicate.Node {
 	})
 }
 
+// HasErrorResolutions applies the HasEdge predicate on the "error_resolutions" edge.
+func HasErrorResolutions() predicate.Node {
+	return predicate.Node(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ErrorResolutionsTable, ErrorResolutionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasErrorResolutionsWith applies the HasEdge predicate on the "error_resolutions" edge with a given conditions (other predicates).
+func HasErrorResolutionsWith(preds ...predicate.ErrorResolution) predicate.Node {
+	return predicate.Node(func(s *sql.Selector) {
+		step := newErrorResolutionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Node) predicate.Node {
 	return predicate.Node(sql.AndPredicates(predicates...))

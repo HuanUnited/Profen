@@ -451,7 +451,7 @@ func (c *ErrorResolutionClient) UpdateOne(_m *ErrorResolution) *ErrorResolutionU
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ErrorResolutionClient) UpdateOneID(id int) *ErrorResolutionUpdateOne {
+func (c *ErrorResolutionClient) UpdateOneID(id uuid.UUID) *ErrorResolutionUpdateOne {
 	mutation := newErrorResolutionMutation(c.config, OpUpdateOne, withErrorResolutionID(id))
 	return &ErrorResolutionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -468,7 +468,7 @@ func (c *ErrorResolutionClient) DeleteOne(_m *ErrorResolution) *ErrorResolutionD
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ErrorResolutionClient) DeleteOneID(id int) *ErrorResolutionDeleteOne {
+func (c *ErrorResolutionClient) DeleteOneID(id uuid.UUID) *ErrorResolutionDeleteOne {
 	builder := c.Delete().Where(errorresolution.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -485,17 +485,33 @@ func (c *ErrorResolutionClient) Query() *ErrorResolutionQuery {
 }
 
 // Get returns a ErrorResolution entity by its id.
-func (c *ErrorResolutionClient) Get(ctx context.Context, id int) (*ErrorResolution, error) {
+func (c *ErrorResolutionClient) Get(ctx context.Context, id uuid.UUID) (*ErrorResolution, error) {
 	return c.Query().Where(errorresolution.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ErrorResolutionClient) GetX(ctx context.Context, id int) *ErrorResolution {
+func (c *ErrorResolutionClient) GetX(ctx context.Context, id uuid.UUID) *ErrorResolution {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryNode queries the node edge of a ErrorResolution.
+func (c *ErrorResolutionClient) QueryNode(_m *ErrorResolution) *NodeQuery {
+	query := (&NodeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(errorresolution.Table, errorresolution.FieldID, id),
+			sqlgraph.To(node.Table, node.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, errorresolution.NodeTable, errorresolution.NodeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -1018,6 +1034,22 @@ func (c *NodeClient) QueryFsrsCard(_m *Node) *FsrsCardQuery {
 			sqlgraph.From(node.Table, node.FieldID, id),
 			sqlgraph.To(fsrscard.Table, fsrscard.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, node.FsrsCardTable, node.FsrsCardColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryErrorResolutions queries the error_resolutions edge of a Node.
+func (c *NodeClient) QueryErrorResolutions(_m *Node) *ErrorResolutionQuery {
+	query := (&ErrorResolutionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(node.Table, node.FieldID, id),
+			sqlgraph.To(errorresolution.Table, errorresolution.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, node.ErrorResolutionsTable, node.ErrorResolutionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

@@ -7,11 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"profen/internal/data/ent/errorresolution"
+	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // ErrorResolutionUpdate is the builder for updating ErrorResolution entities.
@@ -27,9 +30,117 @@ func (_u *ErrorResolutionUpdate) Where(ps ...predicate.ErrorResolution) *ErrorRe
 	return _u
 }
 
+// SetNodeID sets the "node_id" field.
+func (_u *ErrorResolutionUpdate) SetNodeID(v uuid.UUID) *ErrorResolutionUpdate {
+	_u.mutation.SetNodeID(v)
+	return _u
+}
+
+// SetNillableNodeID sets the "node_id" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableNodeID(v *uuid.UUID) *ErrorResolutionUpdate {
+	if v != nil {
+		_u.SetNodeID(*v)
+	}
+	return _u
+}
+
+// SetErrorType sets the "error_type" field.
+func (_u *ErrorResolutionUpdate) SetErrorType(v string) *ErrorResolutionUpdate {
+	_u.mutation.SetErrorType(v)
+	return _u
+}
+
+// SetNillableErrorType sets the "error_type" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableErrorType(v *string) *ErrorResolutionUpdate {
+	if v != nil {
+		_u.SetErrorType(*v)
+	}
+	return _u
+}
+
+// SetWeightImpact sets the "weight_impact" field.
+func (_u *ErrorResolutionUpdate) SetWeightImpact(v float64) *ErrorResolutionUpdate {
+	_u.mutation.ResetWeightImpact()
+	_u.mutation.SetWeightImpact(v)
+	return _u
+}
+
+// SetNillableWeightImpact sets the "weight_impact" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableWeightImpact(v *float64) *ErrorResolutionUpdate {
+	if v != nil {
+		_u.SetWeightImpact(*v)
+	}
+	return _u
+}
+
+// AddWeightImpact adds value to the "weight_impact" field.
+func (_u *ErrorResolutionUpdate) AddWeightImpact(v float64) *ErrorResolutionUpdate {
+	_u.mutation.AddWeightImpact(v)
+	return _u
+}
+
+// SetIsResolved sets the "is_resolved" field.
+func (_u *ErrorResolutionUpdate) SetIsResolved(v bool) *ErrorResolutionUpdate {
+	_u.mutation.SetIsResolved(v)
+	return _u
+}
+
+// SetNillableIsResolved sets the "is_resolved" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableIsResolved(v *bool) *ErrorResolutionUpdate {
+	if v != nil {
+		_u.SetIsResolved(*v)
+	}
+	return _u
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (_u *ErrorResolutionUpdate) SetCreatedAt(v time.Time) *ErrorResolutionUpdate {
+	_u.mutation.SetCreatedAt(v)
+	return _u
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableCreatedAt(v *time.Time) *ErrorResolutionUpdate {
+	if v != nil {
+		_u.SetCreatedAt(*v)
+	}
+	return _u
+}
+
+// SetResolvedAt sets the "resolved_at" field.
+func (_u *ErrorResolutionUpdate) SetResolvedAt(v time.Time) *ErrorResolutionUpdate {
+	_u.mutation.SetResolvedAt(v)
+	return _u
+}
+
+// SetNillableResolvedAt sets the "resolved_at" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableResolvedAt(v *time.Time) *ErrorResolutionUpdate {
+	if v != nil {
+		_u.SetResolvedAt(*v)
+	}
+	return _u
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (_u *ErrorResolutionUpdate) ClearResolvedAt() *ErrorResolutionUpdate {
+	_u.mutation.ClearResolvedAt()
+	return _u
+}
+
+// SetNode sets the "node" edge to the Node entity.
+func (_u *ErrorResolutionUpdate) SetNode(v *Node) *ErrorResolutionUpdate {
+	return _u.SetNodeID(v.ID)
+}
+
 // Mutation returns the ErrorResolutionMutation object of the builder.
 func (_u *ErrorResolutionUpdate) Mutation() *ErrorResolutionMutation {
 	return _u.mutation
+}
+
+// ClearNode clears the "node" edge to the Node entity.
+func (_u *ErrorResolutionUpdate) ClearNode() *ErrorResolutionUpdate {
+	_u.mutation.ClearNode()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -59,14 +170,80 @@ func (_u *ErrorResolutionUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *ErrorResolutionUpdate) check() error {
+	if v, ok := _u.mutation.ErrorType(); ok {
+		if err := errorresolution.ErrorTypeValidator(v); err != nil {
+			return &ValidationError{Name: "error_type", err: fmt.Errorf(`ent: validator failed for field "ErrorResolution.error_type": %w`, err)}
+		}
+	}
+	if _u.mutation.NodeCleared() && len(_u.mutation.NodeIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "ErrorResolution.node"`)
+	}
+	return nil
+}
+
 func (_u *ErrorResolutionUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(errorresolution.Table, errorresolution.Columns, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(errorresolution.Table, errorresolution.Columns, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.ErrorType(); ok {
+		_spec.SetField(errorresolution.FieldErrorType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.WeightImpact(); ok {
+		_spec.SetField(errorresolution.FieldWeightImpact, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedWeightImpact(); ok {
+		_spec.AddField(errorresolution.FieldWeightImpact, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.IsResolved(); ok {
+		_spec.SetField(errorresolution.FieldIsResolved, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.CreatedAt(); ok {
+		_spec.SetField(errorresolution.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.ResolvedAt(); ok {
+		_spec.SetField(errorresolution.FieldResolvedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ResolvedAtCleared() {
+		_spec.ClearField(errorresolution.FieldResolvedAt, field.TypeTime)
+	}
+	if _u.mutation.NodeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   errorresolution.NodeTable,
+			Columns: []string{errorresolution.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.NodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   errorresolution.NodeTable,
+			Columns: []string{errorresolution.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -88,9 +265,117 @@ type ErrorResolutionUpdateOne struct {
 	mutation *ErrorResolutionMutation
 }
 
+// SetNodeID sets the "node_id" field.
+func (_u *ErrorResolutionUpdateOne) SetNodeID(v uuid.UUID) *ErrorResolutionUpdateOne {
+	_u.mutation.SetNodeID(v)
+	return _u
+}
+
+// SetNillableNodeID sets the "node_id" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableNodeID(v *uuid.UUID) *ErrorResolutionUpdateOne {
+	if v != nil {
+		_u.SetNodeID(*v)
+	}
+	return _u
+}
+
+// SetErrorType sets the "error_type" field.
+func (_u *ErrorResolutionUpdateOne) SetErrorType(v string) *ErrorResolutionUpdateOne {
+	_u.mutation.SetErrorType(v)
+	return _u
+}
+
+// SetNillableErrorType sets the "error_type" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableErrorType(v *string) *ErrorResolutionUpdateOne {
+	if v != nil {
+		_u.SetErrorType(*v)
+	}
+	return _u
+}
+
+// SetWeightImpact sets the "weight_impact" field.
+func (_u *ErrorResolutionUpdateOne) SetWeightImpact(v float64) *ErrorResolutionUpdateOne {
+	_u.mutation.ResetWeightImpact()
+	_u.mutation.SetWeightImpact(v)
+	return _u
+}
+
+// SetNillableWeightImpact sets the "weight_impact" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableWeightImpact(v *float64) *ErrorResolutionUpdateOne {
+	if v != nil {
+		_u.SetWeightImpact(*v)
+	}
+	return _u
+}
+
+// AddWeightImpact adds value to the "weight_impact" field.
+func (_u *ErrorResolutionUpdateOne) AddWeightImpact(v float64) *ErrorResolutionUpdateOne {
+	_u.mutation.AddWeightImpact(v)
+	return _u
+}
+
+// SetIsResolved sets the "is_resolved" field.
+func (_u *ErrorResolutionUpdateOne) SetIsResolved(v bool) *ErrorResolutionUpdateOne {
+	_u.mutation.SetIsResolved(v)
+	return _u
+}
+
+// SetNillableIsResolved sets the "is_resolved" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableIsResolved(v *bool) *ErrorResolutionUpdateOne {
+	if v != nil {
+		_u.SetIsResolved(*v)
+	}
+	return _u
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (_u *ErrorResolutionUpdateOne) SetCreatedAt(v time.Time) *ErrorResolutionUpdateOne {
+	_u.mutation.SetCreatedAt(v)
+	return _u
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableCreatedAt(v *time.Time) *ErrorResolutionUpdateOne {
+	if v != nil {
+		_u.SetCreatedAt(*v)
+	}
+	return _u
+}
+
+// SetResolvedAt sets the "resolved_at" field.
+func (_u *ErrorResolutionUpdateOne) SetResolvedAt(v time.Time) *ErrorResolutionUpdateOne {
+	_u.mutation.SetResolvedAt(v)
+	return _u
+}
+
+// SetNillableResolvedAt sets the "resolved_at" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableResolvedAt(v *time.Time) *ErrorResolutionUpdateOne {
+	if v != nil {
+		_u.SetResolvedAt(*v)
+	}
+	return _u
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (_u *ErrorResolutionUpdateOne) ClearResolvedAt() *ErrorResolutionUpdateOne {
+	_u.mutation.ClearResolvedAt()
+	return _u
+}
+
+// SetNode sets the "node" edge to the Node entity.
+func (_u *ErrorResolutionUpdateOne) SetNode(v *Node) *ErrorResolutionUpdateOne {
+	return _u.SetNodeID(v.ID)
+}
+
 // Mutation returns the ErrorResolutionMutation object of the builder.
 func (_u *ErrorResolutionUpdateOne) Mutation() *ErrorResolutionMutation {
 	return _u.mutation
+}
+
+// ClearNode clears the "node" edge to the Node entity.
+func (_u *ErrorResolutionUpdateOne) ClearNode() *ErrorResolutionUpdateOne {
+	_u.mutation.ClearNode()
+	return _u
 }
 
 // Where appends a list predicates to the ErrorResolutionUpdate builder.
@@ -133,8 +418,24 @@ func (_u *ErrorResolutionUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *ErrorResolutionUpdateOne) check() error {
+	if v, ok := _u.mutation.ErrorType(); ok {
+		if err := errorresolution.ErrorTypeValidator(v); err != nil {
+			return &ValidationError{Name: "error_type", err: fmt.Errorf(`ent: validator failed for field "ErrorResolution.error_type": %w`, err)}
+		}
+	}
+	if _u.mutation.NodeCleared() && len(_u.mutation.NodeIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "ErrorResolution.node"`)
+	}
+	return nil
+}
+
 func (_u *ErrorResolutionUpdateOne) sqlSave(ctx context.Context) (_node *ErrorResolution, err error) {
-	_spec := sqlgraph.NewUpdateSpec(errorresolution.Table, errorresolution.Columns, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(errorresolution.Table, errorresolution.Columns, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID))
 	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "ErrorResolution.id" for update`)}
@@ -158,6 +459,56 @@ func (_u *ErrorResolutionUpdateOne) sqlSave(ctx context.Context) (_node *ErrorRe
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.ErrorType(); ok {
+		_spec.SetField(errorresolution.FieldErrorType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.WeightImpact(); ok {
+		_spec.SetField(errorresolution.FieldWeightImpact, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedWeightImpact(); ok {
+		_spec.AddField(errorresolution.FieldWeightImpact, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.IsResolved(); ok {
+		_spec.SetField(errorresolution.FieldIsResolved, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.CreatedAt(); ok {
+		_spec.SetField(errorresolution.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.ResolvedAt(); ok {
+		_spec.SetField(errorresolution.FieldResolvedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ResolvedAtCleared() {
+		_spec.ClearField(errorresolution.FieldResolvedAt, field.TypeTime)
+	}
+	if _u.mutation.NodeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   errorresolution.NodeTable,
+			Columns: []string{errorresolution.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.NodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   errorresolution.NodeTable,
+			Columns: []string{errorresolution.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &ErrorResolution{config: _u.config}
 	_spec.Assign = _node.assignValues

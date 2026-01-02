@@ -67,7 +67,9 @@ func (Node) Edges() []ent.Edge {
 		// 4. FSRS Card Relationship
 		edge.To("fsrs_card", FsrsCard.Type).
 			Unique(), // Enforces 1:1
-		// .CascadeDelete(), TODO: IMPLEMENT
+		// TODO: IMPLEMENT .CascadeDelete(),
 
+		// 5. Block 4: Error Tracking
+		edge.To("error_resolutions", ErrorResolution.Type),
 	}
 }

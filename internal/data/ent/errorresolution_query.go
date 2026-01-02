@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"math"
 	"profen/internal/data/ent/errorresolution"
+	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/predicate"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // ErrorResolutionQuery is the builder for querying ErrorResolution entities.
@@ -22,6 +24,7 @@ type ErrorResolutionQuery struct {
 	order      []errorresolution.OrderOption
 	inters     []Interceptor
 	predicates []predicate.ErrorResolution
+	withNode   *NodeQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +61,28 @@ func (_q *ErrorResolutionQuery) Order(o ...errorresolution.OrderOption) *ErrorRe
 	return _q
 }
 
+// QueryNode chains the current query on the "node" edge.
+func (_q *ErrorResolutionQuery) QueryNode() *NodeQuery {
+	query := (&NodeClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(errorresolution.Table, errorresolution.FieldID, selector),
+			sqlgraph.To(node.Table, node.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, errorresolution.NodeTable, errorresolution.NodeColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first ErrorResolution entity from the query.
 // Returns a *NotFoundError when no ErrorResolution was found.
 func (_q *ErrorResolutionQuery) First(ctx context.Context) (*ErrorResolution, error) {
@@ -82,8 +107,8 @@ func (_q *ErrorResolutionQuery) FirstX(ctx context.Context) *ErrorResolution {
 
 // FirstID returns the first ErrorResolution ID from the query.
 // Returns a *NotFoundError when no ErrorResolution ID was found.
-func (_q *ErrorResolutionQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (_q *ErrorResolutionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
@@ -95,7 +120,7 @@ func (_q *ErrorResolutionQuery) FirstID(ctx context.Context) (id int, err error)
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *ErrorResolutionQuery) FirstIDX(ctx context.Context) int {
+func (_q *ErrorResolutionQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -133,8 +158,8 @@ func (_q *ErrorResolutionQuery) OnlyX(ctx context.Context) *ErrorResolution {
 // OnlyID is like Only, but returns the only ErrorResolution ID in the query.
 // Returns a *NotSingularError when more than one ErrorResolution ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *ErrorResolutionQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (_q *ErrorResolutionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -150,7 +175,7 @@ func (_q *ErrorResolutionQuery) OnlyID(ctx context.Context) (id int, err error) 
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *ErrorResolutionQuery) OnlyIDX(ctx context.Context) int {
+func (_q *ErrorResolutionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -178,7 +203,7 @@ func (_q *ErrorResolutionQuery) AllX(ctx context.Context) []*ErrorResolution {
 }
 
 // IDs executes the query and returns a list of ErrorResolution IDs.
-func (_q *ErrorResolutionQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (_q *ErrorResolutionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
@@ -190,7 +215,7 @@ func (_q *ErrorResolutionQuery) IDs(ctx context.Context) (ids []int, err error) 
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *ErrorResolutionQuery) IDsX(ctx context.Context) []int {
+func (_q *ErrorResolutionQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -250,14 +275,38 @@ func (_q *ErrorResolutionQuery) Clone() *ErrorResolutionQuery {
 		order:      append([]errorresolution.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
 		predicates: append([]predicate.ErrorResolution{}, _q.predicates...),
+		withNode:   _q.withNode.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
+// WithNode tells the query-builder to eager-load the nodes that are connected to
+// the "node" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ErrorResolutionQuery) WithNode(opts ...func(*NodeQuery)) *ErrorResolutionQuery {
+	query := (&NodeClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withNode = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		NodeID uuid.UUID `json:"node_id,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.ErrorResolution.Query().
+//		GroupBy(errorresolution.FieldNodeID).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (_q *ErrorResolutionQuery) GroupBy(field string, fields ...string) *ErrorResolutionGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &ErrorResolutionGroupBy{build: _q}
@@ -269,6 +318,16 @@ func (_q *ErrorResolutionQuery) GroupBy(field string, fields ...string) *ErrorRe
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		NodeID uuid.UUID `json:"node_id,omitempty"`
+//	}
+//
+//	client.ErrorResolution.Query().
+//		Select(errorresolution.FieldNodeID).
+//		Scan(ctx, &v)
 func (_q *ErrorResolutionQuery) Select(fields ...string) *ErrorResolutionSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
 	sbuild := &ErrorResolutionSelect{ErrorResolutionQuery: _q}
@@ -310,8 +369,11 @@ func (_q *ErrorResolutionQuery) prepareQuery(ctx context.Context) error {
 
 func (_q *ErrorResolutionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ErrorResolution, error) {
 	var (
-		nodes = []*ErrorResolution{}
-		_spec = _q.querySpec()
+		nodes       = []*ErrorResolution{}
+		_spec       = _q.querySpec()
+		loadedTypes = [1]bool{
+			_q.withNode != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*ErrorResolution).scanValues(nil, columns)
@@ -319,6 +381,7 @@ func (_q *ErrorResolutionQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &ErrorResolution{config: _q.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -330,7 +393,43 @@ func (_q *ErrorResolutionQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withNode; query != nil {
+		if err := _q.loadNode(ctx, query, nodes, nil,
+			func(n *ErrorResolution, e *Node) { n.Edges.Node = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (_q *ErrorResolutionQuery) loadNode(ctx context.Context, query *NodeQuery, nodes []*ErrorResolution, init func(*ErrorResolution), assign func(*ErrorResolution, *Node)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*ErrorResolution)
+	for i := range nodes {
+		fk := nodes[i].NodeID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(node.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "node_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (_q *ErrorResolutionQuery) sqlCount(ctx context.Context) (int, error) {
@@ -343,7 +442,7 @@ func (_q *ErrorResolutionQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (_q *ErrorResolutionQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(errorresolution.Table, errorresolution.Columns, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(errorresolution.Table, errorresolution.Columns, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -357,6 +456,9 @@ func (_q *ErrorResolutionQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != errorresolution.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withNode != nil {
+			_spec.Node.AddColumnOnce(errorresolution.FieldNodeID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/errorresolution"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
@@ -196,6 +197,21 @@ func (_u *NodeUpdate) SetFsrsCard(v *FsrsCard) *NodeUpdate {
 	return _u.SetFsrsCardID(v.ID)
 }
 
+// AddErrorResolutionIDs adds the "error_resolutions" edge to the ErrorResolution entity by IDs.
+func (_u *NodeUpdate) AddErrorResolutionIDs(ids ...uuid.UUID) *NodeUpdate {
+	_u.mutation.AddErrorResolutionIDs(ids...)
+	return _u
+}
+
+// AddErrorResolutions adds the "error_resolutions" edges to the ErrorResolution entity.
+func (_u *NodeUpdate) AddErrorResolutions(v ...*ErrorResolution) *NodeUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddErrorResolutionIDs(ids...)
+}
+
 // Mutation returns the NodeMutation object of the builder.
 func (_u *NodeUpdate) Mutation() *NodeMutation {
 	return _u.mutation
@@ -316,6 +332,27 @@ func (_u *NodeUpdate) RemoveIncomingAssociations(v ...*NodeAssociation) *NodeUpd
 func (_u *NodeUpdate) ClearFsrsCard() *NodeUpdate {
 	_u.mutation.ClearFsrsCard()
 	return _u
+}
+
+// ClearErrorResolutions clears all "error_resolutions" edges to the ErrorResolution entity.
+func (_u *NodeUpdate) ClearErrorResolutions() *NodeUpdate {
+	_u.mutation.ClearErrorResolutions()
+	return _u
+}
+
+// RemoveErrorResolutionIDs removes the "error_resolutions" edge to ErrorResolution entities by IDs.
+func (_u *NodeUpdate) RemoveErrorResolutionIDs(ids ...uuid.UUID) *NodeUpdate {
+	_u.mutation.RemoveErrorResolutionIDs(ids...)
+	return _u
+}
+
+// RemoveErrorResolutions removes "error_resolutions" edges to ErrorResolution entities.
+func (_u *NodeUpdate) RemoveErrorResolutions(v ...*ErrorResolution) *NodeUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveErrorResolutionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -665,6 +702,51 @@ func (_u *NodeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.ErrorResolutionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   node.ErrorResolutionsTable,
+			Columns: []string{node.ErrorResolutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedErrorResolutionsIDs(); len(nodes) > 0 && !_u.mutation.ErrorResolutionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   node.ErrorResolutionsTable,
+			Columns: []string{node.ErrorResolutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ErrorResolutionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   node.ErrorResolutionsTable,
+			Columns: []string{node.ErrorResolutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{node.Label}
@@ -850,6 +932,21 @@ func (_u *NodeUpdateOne) SetFsrsCard(v *FsrsCard) *NodeUpdateOne {
 	return _u.SetFsrsCardID(v.ID)
 }
 
+// AddErrorResolutionIDs adds the "error_resolutions" edge to the ErrorResolution entity by IDs.
+func (_u *NodeUpdateOne) AddErrorResolutionIDs(ids ...uuid.UUID) *NodeUpdateOne {
+	_u.mutation.AddErrorResolutionIDs(ids...)
+	return _u
+}
+
+// AddErrorResolutions adds the "error_resolutions" edges to the ErrorResolution entity.
+func (_u *NodeUpdateOne) AddErrorResolutions(v ...*ErrorResolution) *NodeUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddErrorResolutionIDs(ids...)
+}
+
 // Mutation returns the NodeMutation object of the builder.
 func (_u *NodeUpdateOne) Mutation() *NodeMutation {
 	return _u.mutation
@@ -970,6 +1067,27 @@ func (_u *NodeUpdateOne) RemoveIncomingAssociations(v ...*NodeAssociation) *Node
 func (_u *NodeUpdateOne) ClearFsrsCard() *NodeUpdateOne {
 	_u.mutation.ClearFsrsCard()
 	return _u
+}
+
+// ClearErrorResolutions clears all "error_resolutions" edges to the ErrorResolution entity.
+func (_u *NodeUpdateOne) ClearErrorResolutions() *NodeUpdateOne {
+	_u.mutation.ClearErrorResolutions()
+	return _u
+}
+
+// RemoveErrorResolutionIDs removes the "error_resolutions" edge to ErrorResolution entities by IDs.
+func (_u *NodeUpdateOne) RemoveErrorResolutionIDs(ids ...uuid.UUID) *NodeUpdateOne {
+	_u.mutation.RemoveErrorResolutionIDs(ids...)
+	return _u
+}
+
+// RemoveErrorResolutions removes "error_resolutions" edges to ErrorResolution entities.
+func (_u *NodeUpdateOne) RemoveErrorResolutions(v ...*ErrorResolution) *NodeUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveErrorResolutionIDs(ids...)
 }
 
 // Where appends a list predicates to the NodeUpdate builder.
@@ -1342,6 +1460,51 @@ func (_u *NodeUpdateOne) sqlSave(ctx context.Context) (_node *Node, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ErrorResolutionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   node.ErrorResolutionsTable,
+			Columns: []string{node.ErrorResolutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedErrorResolutionsIDs(); len(nodes) > 0 && !_u.mutation.ErrorResolutionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   node.ErrorResolutionsTable,
+			Columns: []string{node.ErrorResolutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ErrorResolutionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   node.ErrorResolutionsTable,
+			Columns: []string{node.ErrorResolutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

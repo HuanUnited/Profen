@@ -40,7 +40,7 @@ func (_d *ErrorResolutionDelete) ExecX(ctx context.Context) int {
 }
 
 func (_d *ErrorResolutionDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(errorresolution.Table, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewDeleteSpec(errorresolution.Table, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {

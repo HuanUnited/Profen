@@ -40,12 +40,16 @@ const (
 	EdgeIncomingAssociations = "incoming_associations"
 	// EdgeFsrsCard holds the string denoting the fsrs_card edge name in mutations.
 	EdgeFsrsCard = "fsrs_card"
+	// EdgeErrorResolutions holds the string denoting the error_resolutions edge name in mutations.
+	EdgeErrorResolutions = "error_resolutions"
 	// NodeClosureFieldID holds the string denoting the ID field of the NodeClosure.
 	NodeClosureFieldID = "id"
 	// NodeAssociationFieldID holds the string denoting the ID field of the NodeAssociation.
 	NodeAssociationFieldID = "id"
 	// FsrsCardFieldID holds the string denoting the ID field of the FsrsCard.
 	FsrsCardFieldID = "card_id"
+	// ErrorResolutionFieldID holds the string denoting the ID field of the ErrorResolution.
+	ErrorResolutionFieldID = "resolution_id"
 	// Table holds the table name of the node in the database.
 	Table = "nodes"
 	// ParentTable is the table that holds the parent relation/edge.
@@ -91,6 +95,13 @@ const (
 	FsrsCardInverseTable = "fsrs_cards"
 	// FsrsCardColumn is the table column denoting the fsrs_card relation/edge.
 	FsrsCardColumn = "node_id"
+	// ErrorResolutionsTable is the table that holds the error_resolutions relation/edge.
+	ErrorResolutionsTable = "error_resolutions"
+	// ErrorResolutionsInverseTable is the table name for the ErrorResolution entity.
+	// It exists in this package in order to avoid circular dependency with the "errorresolution" package.
+	ErrorResolutionsInverseTable = "error_resolutions"
+	// ErrorResolutionsColumn is the table column denoting the error_resolutions relation/edge.
+	ErrorResolutionsColumn = "node_id"
 )
 
 // Columns holds all SQL columns for node fields.
@@ -257,6 +268,20 @@ func ByFsrsCardField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newFsrsCardStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByErrorResolutionsCount orders the results by error_resolutions count.
+func ByErrorResolutionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newErrorResolutionsStep(), opts...)
+	}
+}
+
+// ByErrorResolutions orders the results by error_resolutions terms.
+func ByErrorResolutions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newErrorResolutionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newParentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -304,5 +329,12 @@ func newFsrsCardStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(FsrsCardInverseTable, FsrsCardFieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, FsrsCardTable, FsrsCardColumn),
+	)
+}
+func newErrorResolutionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ErrorResolutionsInverseTable, ErrorResolutionFieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ErrorResolutionsTable, ErrorResolutionsColumn),
 	)
 }

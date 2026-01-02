@@ -4,11 +4,15 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"profen/internal/data/ent/errorresolution"
+	"profen/internal/data/ent/node"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // ErrorResolutionCreate is the builder for creating a ErrorResolution entity.
@@ -18,6 +22,93 @@ type ErrorResolutionCreate struct {
 	hooks    []Hook
 }
 
+// SetNodeID sets the "node_id" field.
+func (_c *ErrorResolutionCreate) SetNodeID(v uuid.UUID) *ErrorResolutionCreate {
+	_c.mutation.SetNodeID(v)
+	return _c
+}
+
+// SetErrorType sets the "error_type" field.
+func (_c *ErrorResolutionCreate) SetErrorType(v string) *ErrorResolutionCreate {
+	_c.mutation.SetErrorType(v)
+	return _c
+}
+
+// SetWeightImpact sets the "weight_impact" field.
+func (_c *ErrorResolutionCreate) SetWeightImpact(v float64) *ErrorResolutionCreate {
+	_c.mutation.SetWeightImpact(v)
+	return _c
+}
+
+// SetNillableWeightImpact sets the "weight_impact" field if the given value is not nil.
+func (_c *ErrorResolutionCreate) SetNillableWeightImpact(v *float64) *ErrorResolutionCreate {
+	if v != nil {
+		_c.SetWeightImpact(*v)
+	}
+	return _c
+}
+
+// SetIsResolved sets the "is_resolved" field.
+func (_c *ErrorResolutionCreate) SetIsResolved(v bool) *ErrorResolutionCreate {
+	_c.mutation.SetIsResolved(v)
+	return _c
+}
+
+// SetNillableIsResolved sets the "is_resolved" field if the given value is not nil.
+func (_c *ErrorResolutionCreate) SetNillableIsResolved(v *bool) *ErrorResolutionCreate {
+	if v != nil {
+		_c.SetIsResolved(*v)
+	}
+	return _c
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (_c *ErrorResolutionCreate) SetCreatedAt(v time.Time) *ErrorResolutionCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *ErrorResolutionCreate) SetNillableCreatedAt(v *time.Time) *ErrorResolutionCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetResolvedAt sets the "resolved_at" field.
+func (_c *ErrorResolutionCreate) SetResolvedAt(v time.Time) *ErrorResolutionCreate {
+	_c.mutation.SetResolvedAt(v)
+	return _c
+}
+
+// SetNillableResolvedAt sets the "resolved_at" field if the given value is not nil.
+func (_c *ErrorResolutionCreate) SetNillableResolvedAt(v *time.Time) *ErrorResolutionCreate {
+	if v != nil {
+		_c.SetResolvedAt(*v)
+	}
+	return _c
+}
+
+// SetID sets the "id" field.
+func (_c *ErrorResolutionCreate) SetID(v uuid.UUID) *ErrorResolutionCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (_c *ErrorResolutionCreate) SetNillableID(v *uuid.UUID) *ErrorResolutionCreate {
+	if v != nil {
+		_c.SetID(*v)
+	}
+	return _c
+}
+
+// SetNode sets the "node" edge to the Node entity.
+func (_c *ErrorResolutionCreate) SetNode(v *Node) *ErrorResolutionCreate {
+	return _c.SetNodeID(v.ID)
+}
+
 // Mutation returns the ErrorResolutionMutation object of the builder.
 func (_c *ErrorResolutionCreate) Mutation() *ErrorResolutionMutation {
 	return _c.mutation
@@ -25,6 +116,7 @@ func (_c *ErrorResolutionCreate) Mutation() *ErrorResolutionMutation {
 
 // Save creates the ErrorResolution in the database.
 func (_c *ErrorResolutionCreate) Save(ctx context.Context) (*ErrorResolution, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -50,8 +142,51 @@ func (_c *ErrorResolutionCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *ErrorResolutionCreate) defaults() {
+	if _, ok := _c.mutation.WeightImpact(); !ok {
+		v := errorresolution.DefaultWeightImpact
+		_c.mutation.SetWeightImpact(v)
+	}
+	if _, ok := _c.mutation.IsResolved(); !ok {
+		v := errorresolution.DefaultIsResolved
+		_c.mutation.SetIsResolved(v)
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := errorresolution.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
+	if _, ok := _c.mutation.ID(); !ok {
+		v := errorresolution.DefaultID()
+		_c.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *ErrorResolutionCreate) check() error {
+	if _, ok := _c.mutation.NodeID(); !ok {
+		return &ValidationError{Name: "node_id", err: errors.New(`ent: missing required field "ErrorResolution.node_id"`)}
+	}
+	if _, ok := _c.mutation.ErrorType(); !ok {
+		return &ValidationError{Name: "error_type", err: errors.New(`ent: missing required field "ErrorResolution.error_type"`)}
+	}
+	if v, ok := _c.mutation.ErrorType(); ok {
+		if err := errorresolution.ErrorTypeValidator(v); err != nil {
+			return &ValidationError{Name: "error_type", err: fmt.Errorf(`ent: validator failed for field "ErrorResolution.error_type": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.WeightImpact(); !ok {
+		return &ValidationError{Name: "weight_impact", err: errors.New(`ent: missing required field "ErrorResolution.weight_impact"`)}
+	}
+	if _, ok := _c.mutation.IsResolved(); !ok {
+		return &ValidationError{Name: "is_resolved", err: errors.New(`ent: missing required field "ErrorResolution.is_resolved"`)}
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "ErrorResolution.created_at"`)}
+	}
+	if len(_c.mutation.NodeIDs()) == 0 {
+		return &ValidationError{Name: "node", err: errors.New(`ent: missing required edge "ErrorResolution.node"`)}
+	}
 	return nil
 }
 
@@ -66,8 +201,13 @@ func (_c *ErrorResolutionCreate) sqlSave(ctx context.Context) (*ErrorResolution,
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -76,8 +216,49 @@ func (_c *ErrorResolutionCreate) sqlSave(ctx context.Context) (*ErrorResolution,
 func (_c *ErrorResolutionCreate) createSpec() (*ErrorResolution, *sqlgraph.CreateSpec) {
 	var (
 		_node = &ErrorResolution{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(errorresolution.Table, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(errorresolution.Table, sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.ErrorType(); ok {
+		_spec.SetField(errorresolution.FieldErrorType, field.TypeString, value)
+		_node.ErrorType = value
+	}
+	if value, ok := _c.mutation.WeightImpact(); ok {
+		_spec.SetField(errorresolution.FieldWeightImpact, field.TypeFloat64, value)
+		_node.WeightImpact = value
+	}
+	if value, ok := _c.mutation.IsResolved(); ok {
+		_spec.SetField(errorresolution.FieldIsResolved, field.TypeBool, value)
+		_node.IsResolved = value
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(errorresolution.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.ResolvedAt(); ok {
+		_spec.SetField(errorresolution.FieldResolvedAt, field.TypeTime, value)
+		_node.ResolvedAt = &value
+	}
+	if nodes := _c.mutation.NodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   errorresolution.NodeTable,
+			Columns: []string{errorresolution.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.NodeID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -99,6 +280,7 @@ func (_c *ErrorResolutionCreateBulk) Save(ctx context.Context) ([]*ErrorResoluti
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*ErrorResolutionMutation)
 				if !ok {
@@ -125,10 +307,6 @@ func (_c *ErrorResolutionCreateBulk) Save(ctx context.Context) ([]*ErrorResoluti
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

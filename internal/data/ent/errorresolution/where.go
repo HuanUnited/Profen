@@ -4,53 +4,334 @@ package errorresolution
 
 import (
 	"profen/internal/data/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.ErrorResolution {
+func ID(id uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.ErrorResolution {
+func IDEQ(id uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.ErrorResolution {
+func IDNEQ(id uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.ErrorResolution {
+func IDIn(ids ...uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.ErrorResolution {
+func IDNotIn(ids ...uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.ErrorResolution {
+func IDGT(id uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.ErrorResolution {
+func IDGTE(id uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.ErrorResolution {
+func IDLT(id uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.ErrorResolution {
+func IDLTE(id uuid.UUID) predicate.ErrorResolution {
 	return predicate.ErrorResolution(sql.FieldLTE(FieldID, id))
+}
+
+// NodeID applies equality check predicate on the "node_id" field. It's identical to NodeIDEQ.
+func NodeID(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldNodeID, v))
+}
+
+// ErrorType applies equality check predicate on the "error_type" field. It's identical to ErrorTypeEQ.
+func ErrorType(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldErrorType, v))
+}
+
+// WeightImpact applies equality check predicate on the "weight_impact" field. It's identical to WeightImpactEQ.
+func WeightImpact(v float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldWeightImpact, v))
+}
+
+// IsResolved applies equality check predicate on the "is_resolved" field. It's identical to IsResolvedEQ.
+func IsResolved(v bool) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldIsResolved, v))
+}
+
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
+func CreatedAt(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// ResolvedAt applies equality check predicate on the "resolved_at" field. It's identical to ResolvedAtEQ.
+func ResolvedAt(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldResolvedAt, v))
+}
+
+// NodeIDEQ applies the EQ predicate on the "node_id" field.
+func NodeIDEQ(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldNodeID, v))
+}
+
+// NodeIDNEQ applies the NEQ predicate on the "node_id" field.
+func NodeIDNEQ(v uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNEQ(FieldNodeID, v))
+}
+
+// NodeIDIn applies the In predicate on the "node_id" field.
+func NodeIDIn(vs ...uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIn(FieldNodeID, vs...))
+}
+
+// NodeIDNotIn applies the NotIn predicate on the "node_id" field.
+func NodeIDNotIn(vs ...uuid.UUID) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotIn(FieldNodeID, vs...))
+}
+
+// ErrorTypeEQ applies the EQ predicate on the "error_type" field.
+func ErrorTypeEQ(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldErrorType, v))
+}
+
+// ErrorTypeNEQ applies the NEQ predicate on the "error_type" field.
+func ErrorTypeNEQ(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNEQ(FieldErrorType, v))
+}
+
+// ErrorTypeIn applies the In predicate on the "error_type" field.
+func ErrorTypeIn(vs ...string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIn(FieldErrorType, vs...))
+}
+
+// ErrorTypeNotIn applies the NotIn predicate on the "error_type" field.
+func ErrorTypeNotIn(vs ...string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotIn(FieldErrorType, vs...))
+}
+
+// ErrorTypeGT applies the GT predicate on the "error_type" field.
+func ErrorTypeGT(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGT(FieldErrorType, v))
+}
+
+// ErrorTypeGTE applies the GTE predicate on the "error_type" field.
+func ErrorTypeGTE(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGTE(FieldErrorType, v))
+}
+
+// ErrorTypeLT applies the LT predicate on the "error_type" field.
+func ErrorTypeLT(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLT(FieldErrorType, v))
+}
+
+// ErrorTypeLTE applies the LTE predicate on the "error_type" field.
+func ErrorTypeLTE(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLTE(FieldErrorType, v))
+}
+
+// ErrorTypeContains applies the Contains predicate on the "error_type" field.
+func ErrorTypeContains(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldContains(FieldErrorType, v))
+}
+
+// ErrorTypeHasPrefix applies the HasPrefix predicate on the "error_type" field.
+func ErrorTypeHasPrefix(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldHasPrefix(FieldErrorType, v))
+}
+
+// ErrorTypeHasSuffix applies the HasSuffix predicate on the "error_type" field.
+func ErrorTypeHasSuffix(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldHasSuffix(FieldErrorType, v))
+}
+
+// ErrorTypeEqualFold applies the EqualFold predicate on the "error_type" field.
+func ErrorTypeEqualFold(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEqualFold(FieldErrorType, v))
+}
+
+// ErrorTypeContainsFold applies the ContainsFold predicate on the "error_type" field.
+func ErrorTypeContainsFold(v string) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldContainsFold(FieldErrorType, v))
+}
+
+// WeightImpactEQ applies the EQ predicate on the "weight_impact" field.
+func WeightImpactEQ(v float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldWeightImpact, v))
+}
+
+// WeightImpactNEQ applies the NEQ predicate on the "weight_impact" field.
+func WeightImpactNEQ(v float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNEQ(FieldWeightImpact, v))
+}
+
+// WeightImpactIn applies the In predicate on the "weight_impact" field.
+func WeightImpactIn(vs ...float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIn(FieldWeightImpact, vs...))
+}
+
+// WeightImpactNotIn applies the NotIn predicate on the "weight_impact" field.
+func WeightImpactNotIn(vs ...float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotIn(FieldWeightImpact, vs...))
+}
+
+// WeightImpactGT applies the GT predicate on the "weight_impact" field.
+func WeightImpactGT(v float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGT(FieldWeightImpact, v))
+}
+
+// WeightImpactGTE applies the GTE predicate on the "weight_impact" field.
+func WeightImpactGTE(v float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGTE(FieldWeightImpact, v))
+}
+
+// WeightImpactLT applies the LT predicate on the "weight_impact" field.
+func WeightImpactLT(v float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLT(FieldWeightImpact, v))
+}
+
+// WeightImpactLTE applies the LTE predicate on the "weight_impact" field.
+func WeightImpactLTE(v float64) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLTE(FieldWeightImpact, v))
+}
+
+// IsResolvedEQ applies the EQ predicate on the "is_resolved" field.
+func IsResolvedEQ(v bool) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldIsResolved, v))
+}
+
+// IsResolvedNEQ applies the NEQ predicate on the "is_resolved" field.
+func IsResolvedNEQ(v bool) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNEQ(FieldIsResolved, v))
+}
+
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
+func CreatedAtEQ(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
+func CreatedAtNEQ(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNEQ(FieldCreatedAt, v))
+}
+
+// CreatedAtIn applies the In predicate on the "created_at" field.
+func CreatedAtIn(vs ...time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
+func CreatedAtNotIn(vs ...time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotIn(FieldCreatedAt, vs...))
+}
+
+// CreatedAtGT applies the GT predicate on the "created_at" field.
+func CreatedAtGT(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGT(FieldCreatedAt, v))
+}
+
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
+func CreatedAtGTE(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGTE(FieldCreatedAt, v))
+}
+
+// CreatedAtLT applies the LT predicate on the "created_at" field.
+func CreatedAtLT(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLT(FieldCreatedAt, v))
+}
+
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
+func CreatedAtLTE(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// ResolvedAtEQ applies the EQ predicate on the "resolved_at" field.
+func ResolvedAtEQ(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldEQ(FieldResolvedAt, v))
+}
+
+// ResolvedAtNEQ applies the NEQ predicate on the "resolved_at" field.
+func ResolvedAtNEQ(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNEQ(FieldResolvedAt, v))
+}
+
+// ResolvedAtIn applies the In predicate on the "resolved_at" field.
+func ResolvedAtIn(vs ...time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIn(FieldResolvedAt, vs...))
+}
+
+// ResolvedAtNotIn applies the NotIn predicate on the "resolved_at" field.
+func ResolvedAtNotIn(vs ...time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotIn(FieldResolvedAt, vs...))
+}
+
+// ResolvedAtGT applies the GT predicate on the "resolved_at" field.
+func ResolvedAtGT(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGT(FieldResolvedAt, v))
+}
+
+// ResolvedAtGTE applies the GTE predicate on the "resolved_at" field.
+func ResolvedAtGTE(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldGTE(FieldResolvedAt, v))
+}
+
+// ResolvedAtLT applies the LT predicate on the "resolved_at" field.
+func ResolvedAtLT(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLT(FieldResolvedAt, v))
+}
+
+// ResolvedAtLTE applies the LTE predicate on the "resolved_at" field.
+func ResolvedAtLTE(v time.Time) predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldLTE(FieldResolvedAt, v))
+}
+
+// ResolvedAtIsNil applies the IsNil predicate on the "resolved_at" field.
+func ResolvedAtIsNil() predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldIsNull(FieldResolvedAt))
+}
+
+// ResolvedAtNotNil applies the NotNil predicate on the "resolved_at" field.
+func ResolvedAtNotNil() predicate.ErrorResolution {
+	return predicate.ErrorResolution(sql.FieldNotNull(FieldResolvedAt))
+}
+
+// HasNode applies the HasEdge predicate on the "node" edge.
+func HasNode() predicate.ErrorResolution {
+	return predicate.ErrorResolution(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, NodeTable, NodeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasNodeWith applies the HasEdge predicate on the "node" edge with a given conditions (other predicates).
+func HasNodeWith(preds ...predicate.Node) predicate.ErrorResolution {
+	return predicate.ErrorResolution(func(s *sql.Selector) {
+		step := newNodeStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

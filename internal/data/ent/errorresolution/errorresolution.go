@@ -3,21 +3,54 @@
 package errorresolution
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 )
 
 const (
 	// Label holds the string label denoting the errorresolution type in the database.
 	Label = "error_resolution"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
+	FieldID = "resolution_id"
+	// FieldNodeID holds the string denoting the node_id field in the database.
+	FieldNodeID = "node_id"
+	// FieldErrorType holds the string denoting the error_type field in the database.
+	FieldErrorType = "error_type"
+	// FieldWeightImpact holds the string denoting the weight_impact field in the database.
+	FieldWeightImpact = "weight_impact"
+	// FieldIsResolved holds the string denoting the is_resolved field in the database.
+	FieldIsResolved = "is_resolved"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldResolvedAt holds the string denoting the resolved_at field in the database.
+	FieldResolvedAt = "resolved_at"
+	// EdgeNode holds the string denoting the node edge name in mutations.
+	EdgeNode = "node"
+	// NodeFieldID holds the string denoting the ID field of the Node.
+	NodeFieldID = "node_id"
 	// Table holds the table name of the errorresolution in the database.
 	Table = "error_resolutions"
+	// NodeTable is the table that holds the node relation/edge.
+	NodeTable = "error_resolutions"
+	// NodeInverseTable is the table name for the Node entity.
+	// It exists in this package in order to avoid circular dependency with the "node" package.
+	NodeInverseTable = "nodes"
+	// NodeColumn is the table column denoting the node relation/edge.
+	NodeColumn = "node_id"
 )
 
 // Columns holds all SQL columns for errorresolution fields.
 var Columns = []string{
 	FieldID,
+	FieldNodeID,
+	FieldErrorType,
+	FieldWeightImpact,
+	FieldIsResolved,
+	FieldCreatedAt,
+	FieldResolvedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -30,10 +63,67 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// ErrorTypeValidator is a validator for the "error_type" field. It is called by the builders before save.
+	ErrorTypeValidator func(string) error
+	// DefaultWeightImpact holds the default value on creation for the "weight_impact" field.
+	DefaultWeightImpact float64
+	// DefaultIsResolved holds the default value on creation for the "is_resolved" field.
+	DefaultIsResolved bool
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
+)
+
 // OrderOption defines the ordering options for the ErrorResolution queries.
 type OrderOption func(*sql.Selector)
 
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByNodeID orders the results by the node_id field.
+func ByNodeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNodeID, opts...).ToFunc()
+}
+
+// ByErrorType orders the results by the error_type field.
+func ByErrorType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldErrorType, opts...).ToFunc()
+}
+
+// ByWeightImpact orders the results by the weight_impact field.
+func ByWeightImpact(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWeightImpact, opts...).ToFunc()
+}
+
+// ByIsResolved orders the results by the is_resolved field.
+func ByIsResolved(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsResolved, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByResolvedAt orders the results by the resolved_at field.
+func ByResolvedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResolvedAt, opts...).ToFunc()
+}
+
+// ByNodeField orders the results by node field.
+func ByNodeField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newNodeStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newNodeStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(NodeInverseTable, NodeFieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, NodeTable, NodeColumn),
+	)
 }

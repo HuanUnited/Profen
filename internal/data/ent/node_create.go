@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/errorresolution"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
@@ -189,6 +190,21 @@ func (_c *NodeCreate) SetNillableFsrsCardID(id *uuid.UUID) *NodeCreate {
 // SetFsrsCard sets the "fsrs_card" edge to the FsrsCard entity.
 func (_c *NodeCreate) SetFsrsCard(v *FsrsCard) *NodeCreate {
 	return _c.SetFsrsCardID(v.ID)
+}
+
+// AddErrorResolutionIDs adds the "error_resolutions" edge to the ErrorResolution entity by IDs.
+func (_c *NodeCreate) AddErrorResolutionIDs(ids ...uuid.UUID) *NodeCreate {
+	_c.mutation.AddErrorResolutionIDs(ids...)
+	return _c
+}
+
+// AddErrorResolutions adds the "error_resolutions" edges to the ErrorResolution entity.
+func (_c *NodeCreate) AddErrorResolutions(v ...*ErrorResolution) *NodeCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddErrorResolutionIDs(ids...)
 }
 
 // Mutation returns the NodeMutation object of the builder.
@@ -406,6 +422,22 @@ func (_c *NodeCreate) createSpec() (*Node, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ErrorResolutionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   node.ErrorResolutionsTable,
+			Columns: []string{node.ErrorResolutionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errorresolution.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

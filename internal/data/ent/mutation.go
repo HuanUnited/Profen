@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/errorresolution"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
@@ -304,13 +305,21 @@ func (m *AttemptMutation) ResetEdge(name string) error {
 // ErrorResolutionMutation represents an operation that mutates the ErrorResolution nodes in the graph.
 type ErrorResolutionMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*ErrorResolution, error)
-	predicates    []predicate.ErrorResolution
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	error_type       *string
+	weight_impact    *float64
+	addweight_impact *float64
+	is_resolved      *bool
+	created_at       *time.Time
+	resolved_at      *time.Time
+	clearedFields    map[string]struct{}
+	node             *uuid.UUID
+	clearednode      bool
+	done             bool
+	oldValue         func(context.Context) (*ErrorResolution, error)
+	predicates       []predicate.ErrorResolution
 }
 
 var _ ent.Mutation = (*ErrorResolutionMutation)(nil)
@@ -333,7 +342,7 @@ func newErrorResolutionMutation(c config, op Op, opts ...errorresolutionOption) 
 }
 
 // withErrorResolutionID sets the ID field of the mutation.
-func withErrorResolutionID(id int) errorresolutionOption {
+func withErrorResolutionID(id uuid.UUID) errorresolutionOption {
 	return func(m *ErrorResolutionMutation) {
 		var (
 			err   error
@@ -383,9 +392,15 @@ func (m ErrorResolutionMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ErrorResolution entities.
+func (m *ErrorResolutionMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *ErrorResolutionMutation) ID() (id int, exists bool) {
+func (m *ErrorResolutionMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -396,12 +411,12 @@ func (m *ErrorResolutionMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *ErrorResolutionMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *ErrorResolutionMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -409,6 +424,282 @@ func (m *ErrorResolutionMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetNodeID sets the "node_id" field.
+func (m *ErrorResolutionMutation) SetNodeID(u uuid.UUID) {
+	m.node = &u
+}
+
+// NodeID returns the value of the "node_id" field in the mutation.
+func (m *ErrorResolutionMutation) NodeID() (r uuid.UUID, exists bool) {
+	v := m.node
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNodeID returns the old "node_id" field's value of the ErrorResolution entity.
+// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorResolutionMutation) OldNodeID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNodeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNodeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNodeID: %w", err)
+	}
+	return oldValue.NodeID, nil
+}
+
+// ResetNodeID resets all changes to the "node_id" field.
+func (m *ErrorResolutionMutation) ResetNodeID() {
+	m.node = nil
+}
+
+// SetErrorType sets the "error_type" field.
+func (m *ErrorResolutionMutation) SetErrorType(s string) {
+	m.error_type = &s
+}
+
+// ErrorType returns the value of the "error_type" field in the mutation.
+func (m *ErrorResolutionMutation) ErrorType() (r string, exists bool) {
+	v := m.error_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorType returns the old "error_type" field's value of the ErrorResolution entity.
+// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorResolutionMutation) OldErrorType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorType: %w", err)
+	}
+	return oldValue.ErrorType, nil
+}
+
+// ResetErrorType resets all changes to the "error_type" field.
+func (m *ErrorResolutionMutation) ResetErrorType() {
+	m.error_type = nil
+}
+
+// SetWeightImpact sets the "weight_impact" field.
+func (m *ErrorResolutionMutation) SetWeightImpact(f float64) {
+	m.weight_impact = &f
+	m.addweight_impact = nil
+}
+
+// WeightImpact returns the value of the "weight_impact" field in the mutation.
+func (m *ErrorResolutionMutation) WeightImpact() (r float64, exists bool) {
+	v := m.weight_impact
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWeightImpact returns the old "weight_impact" field's value of the ErrorResolution entity.
+// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorResolutionMutation) OldWeightImpact(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWeightImpact is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWeightImpact requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWeightImpact: %w", err)
+	}
+	return oldValue.WeightImpact, nil
+}
+
+// AddWeightImpact adds f to the "weight_impact" field.
+func (m *ErrorResolutionMutation) AddWeightImpact(f float64) {
+	if m.addweight_impact != nil {
+		*m.addweight_impact += f
+	} else {
+		m.addweight_impact = &f
+	}
+}
+
+// AddedWeightImpact returns the value that was added to the "weight_impact" field in this mutation.
+func (m *ErrorResolutionMutation) AddedWeightImpact() (r float64, exists bool) {
+	v := m.addweight_impact
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetWeightImpact resets all changes to the "weight_impact" field.
+func (m *ErrorResolutionMutation) ResetWeightImpact() {
+	m.weight_impact = nil
+	m.addweight_impact = nil
+}
+
+// SetIsResolved sets the "is_resolved" field.
+func (m *ErrorResolutionMutation) SetIsResolved(b bool) {
+	m.is_resolved = &b
+}
+
+// IsResolved returns the value of the "is_resolved" field in the mutation.
+func (m *ErrorResolutionMutation) IsResolved() (r bool, exists bool) {
+	v := m.is_resolved
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsResolved returns the old "is_resolved" field's value of the ErrorResolution entity.
+// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorResolutionMutation) OldIsResolved(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsResolved is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsResolved requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsResolved: %w", err)
+	}
+	return oldValue.IsResolved, nil
+}
+
+// ResetIsResolved resets all changes to the "is_resolved" field.
+func (m *ErrorResolutionMutation) ResetIsResolved() {
+	m.is_resolved = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ErrorResolutionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ErrorResolutionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ErrorResolution entity.
+// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorResolutionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ErrorResolutionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetResolvedAt sets the "resolved_at" field.
+func (m *ErrorResolutionMutation) SetResolvedAt(t time.Time) {
+	m.resolved_at = &t
+}
+
+// ResolvedAt returns the value of the "resolved_at" field in the mutation.
+func (m *ErrorResolutionMutation) ResolvedAt() (r time.Time, exists bool) {
+	v := m.resolved_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResolvedAt returns the old "resolved_at" field's value of the ErrorResolution entity.
+// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorResolutionMutation) OldResolvedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResolvedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResolvedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResolvedAt: %w", err)
+	}
+	return oldValue.ResolvedAt, nil
+}
+
+// ClearResolvedAt clears the value of the "resolved_at" field.
+func (m *ErrorResolutionMutation) ClearResolvedAt() {
+	m.resolved_at = nil
+	m.clearedFields[errorresolution.FieldResolvedAt] = struct{}{}
+}
+
+// ResolvedAtCleared returns if the "resolved_at" field was cleared in this mutation.
+func (m *ErrorResolutionMutation) ResolvedAtCleared() bool {
+	_, ok := m.clearedFields[errorresolution.FieldResolvedAt]
+	return ok
+}
+
+// ResetResolvedAt resets all changes to the "resolved_at" field.
+func (m *ErrorResolutionMutation) ResetResolvedAt() {
+	m.resolved_at = nil
+	delete(m.clearedFields, errorresolution.FieldResolvedAt)
+}
+
+// ClearNode clears the "node" edge to the Node entity.
+func (m *ErrorResolutionMutation) ClearNode() {
+	m.clearednode = true
+	m.clearedFields[errorresolution.FieldNodeID] = struct{}{}
+}
+
+// NodeCleared reports if the "node" edge to the Node entity was cleared.
+func (m *ErrorResolutionMutation) NodeCleared() bool {
+	return m.clearednode
+}
+
+// NodeIDs returns the "node" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// NodeID instead. It exists only for internal usage by the builders.
+func (m *ErrorResolutionMutation) NodeIDs() (ids []uuid.UUID) {
+	if id := m.node; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetNode resets all changes to the "node" edge.
+func (m *ErrorResolutionMutation) ResetNode() {
+	m.node = nil
+	m.clearednode = false
 }
 
 // Where appends a list predicates to the ErrorResolutionMutation builder.
@@ -445,7 +736,25 @@ func (m *ErrorResolutionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ErrorResolutionMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 6)
+	if m.node != nil {
+		fields = append(fields, errorresolution.FieldNodeID)
+	}
+	if m.error_type != nil {
+		fields = append(fields, errorresolution.FieldErrorType)
+	}
+	if m.weight_impact != nil {
+		fields = append(fields, errorresolution.FieldWeightImpact)
+	}
+	if m.is_resolved != nil {
+		fields = append(fields, errorresolution.FieldIsResolved)
+	}
+	if m.created_at != nil {
+		fields = append(fields, errorresolution.FieldCreatedAt)
+	}
+	if m.resolved_at != nil {
+		fields = append(fields, errorresolution.FieldResolvedAt)
+	}
 	return fields
 }
 
@@ -453,6 +762,20 @@ func (m *ErrorResolutionMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *ErrorResolutionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case errorresolution.FieldNodeID:
+		return m.NodeID()
+	case errorresolution.FieldErrorType:
+		return m.ErrorType()
+	case errorresolution.FieldWeightImpact:
+		return m.WeightImpact()
+	case errorresolution.FieldIsResolved:
+		return m.IsResolved()
+	case errorresolution.FieldCreatedAt:
+		return m.CreatedAt()
+	case errorresolution.FieldResolvedAt:
+		return m.ResolvedAt()
+	}
 	return nil, false
 }
 
@@ -460,6 +783,20 @@ func (m *ErrorResolutionMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *ErrorResolutionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case errorresolution.FieldNodeID:
+		return m.OldNodeID(ctx)
+	case errorresolution.FieldErrorType:
+		return m.OldErrorType(ctx)
+	case errorresolution.FieldWeightImpact:
+		return m.OldWeightImpact(ctx)
+	case errorresolution.FieldIsResolved:
+		return m.OldIsResolved(ctx)
+	case errorresolution.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case errorresolution.FieldResolvedAt:
+		return m.OldResolvedAt(ctx)
+	}
 	return nil, fmt.Errorf("unknown ErrorResolution field %s", name)
 }
 
@@ -468,6 +805,48 @@ func (m *ErrorResolutionMutation) OldField(ctx context.Context, name string) (en
 // type.
 func (m *ErrorResolutionMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case errorresolution.FieldNodeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNodeID(v)
+		return nil
+	case errorresolution.FieldErrorType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorType(v)
+		return nil
+	case errorresolution.FieldWeightImpact:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWeightImpact(v)
+		return nil
+	case errorresolution.FieldIsResolved:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsResolved(v)
+		return nil
+	case errorresolution.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case errorresolution.FieldResolvedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResolvedAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ErrorResolution field %s", name)
 }
@@ -475,13 +854,21 @@ func (m *ErrorResolutionMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ErrorResolutionMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addweight_impact != nil {
+		fields = append(fields, errorresolution.FieldWeightImpact)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ErrorResolutionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case errorresolution.FieldWeightImpact:
+		return m.AddedWeightImpact()
+	}
 	return nil, false
 }
 
@@ -489,13 +876,26 @@ func (m *ErrorResolutionMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *ErrorResolutionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case errorresolution.FieldWeightImpact:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddWeightImpact(v)
+		return nil
+	}
 	return fmt.Errorf("unknown ErrorResolution numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ErrorResolutionMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(errorresolution.FieldResolvedAt) {
+		fields = append(fields, errorresolution.FieldResolvedAt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -508,30 +908,64 @@ func (m *ErrorResolutionMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ErrorResolutionMutation) ClearField(name string) error {
+	switch name {
+	case errorresolution.FieldResolvedAt:
+		m.ClearResolvedAt()
+		return nil
+	}
 	return fmt.Errorf("unknown ErrorResolution nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *ErrorResolutionMutation) ResetField(name string) error {
+	switch name {
+	case errorresolution.FieldNodeID:
+		m.ResetNodeID()
+		return nil
+	case errorresolution.FieldErrorType:
+		m.ResetErrorType()
+		return nil
+	case errorresolution.FieldWeightImpact:
+		m.ResetWeightImpact()
+		return nil
+	case errorresolution.FieldIsResolved:
+		m.ResetIsResolved()
+		return nil
+	case errorresolution.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case errorresolution.FieldResolvedAt:
+		m.ResetResolvedAt()
+		return nil
+	}
 	return fmt.Errorf("unknown ErrorResolution field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ErrorResolutionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.node != nil {
+		edges = append(edges, errorresolution.EdgeNode)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *ErrorResolutionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case errorresolution.EdgeNode:
+		if id := m.node; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ErrorResolutionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -543,25 +977,42 @@ func (m *ErrorResolutionMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ErrorResolutionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearednode {
+		edges = append(edges, errorresolution.EdgeNode)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *ErrorResolutionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case errorresolution.EdgeNode:
+		return m.clearednode
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *ErrorResolutionMutation) ClearEdge(name string) error {
+	switch name {
+	case errorresolution.EdgeNode:
+		m.ClearNode()
+		return nil
+	}
 	return fmt.Errorf("unknown ErrorResolution unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *ErrorResolutionMutation) ResetEdge(name string) error {
+	switch name {
+	case errorresolution.EdgeNode:
+		m.ResetNode()
+		return nil
+	}
 	return fmt.Errorf("unknown ErrorResolution edge %s", name)
 }
 
@@ -1954,6 +2405,9 @@ type NodeMutation struct {
 	clearedincoming_associations bool
 	fsrs_card                    *uuid.UUID
 	clearedfsrs_card             bool
+	error_resolutions            map[uuid.UUID]struct{}
+	removederror_resolutions     map[uuid.UUID]struct{}
+	clearederror_resolutions     bool
 	done                         bool
 	oldValue                     func(context.Context) (*Node, error)
 	predicates                   []predicate.Node
@@ -2618,6 +3072,60 @@ func (m *NodeMutation) ResetFsrsCard() {
 	m.clearedfsrs_card = false
 }
 
+// AddErrorResolutionIDs adds the "error_resolutions" edge to the ErrorResolution entity by ids.
+func (m *NodeMutation) AddErrorResolutionIDs(ids ...uuid.UUID) {
+	if m.error_resolutions == nil {
+		m.error_resolutions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.error_resolutions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearErrorResolutions clears the "error_resolutions" edge to the ErrorResolution entity.
+func (m *NodeMutation) ClearErrorResolutions() {
+	m.clearederror_resolutions = true
+}
+
+// ErrorResolutionsCleared reports if the "error_resolutions" edge to the ErrorResolution entity was cleared.
+func (m *NodeMutation) ErrorResolutionsCleared() bool {
+	return m.clearederror_resolutions
+}
+
+// RemoveErrorResolutionIDs removes the "error_resolutions" edge to the ErrorResolution entity by IDs.
+func (m *NodeMutation) RemoveErrorResolutionIDs(ids ...uuid.UUID) {
+	if m.removederror_resolutions == nil {
+		m.removederror_resolutions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.error_resolutions, ids[i])
+		m.removederror_resolutions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedErrorResolutions returns the removed IDs of the "error_resolutions" edge to the ErrorResolution entity.
+func (m *NodeMutation) RemovedErrorResolutionsIDs() (ids []uuid.UUID) {
+	for id := range m.removederror_resolutions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ErrorResolutionsIDs returns the "error_resolutions" edge IDs in the mutation.
+func (m *NodeMutation) ErrorResolutionsIDs() (ids []uuid.UUID) {
+	for id := range m.error_resolutions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetErrorResolutions resets all changes to the "error_resolutions" edge.
+func (m *NodeMutation) ResetErrorResolutions() {
+	m.error_resolutions = nil
+	m.clearederror_resolutions = false
+	m.removederror_resolutions = nil
+}
+
 // Where appends a list predicates to the NodeMutation builder.
 func (m *NodeMutation) Where(ps ...predicate.Node) {
 	m.predicates = append(m.predicates, ps...)
@@ -2840,7 +3348,7 @@ func (m *NodeMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *NodeMutation) AddedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.parent != nil {
 		edges = append(edges, node.EdgeParent)
 	}
@@ -2861,6 +3369,9 @@ func (m *NodeMutation) AddedEdges() []string {
 	}
 	if m.fsrs_card != nil {
 		edges = append(edges, node.EdgeFsrsCard)
+	}
+	if m.error_resolutions != nil {
+		edges = append(edges, node.EdgeErrorResolutions)
 	}
 	return edges
 }
@@ -2907,13 +3418,19 @@ func (m *NodeMutation) AddedIDs(name string) []ent.Value {
 		if id := m.fsrs_card; id != nil {
 			return []ent.Value{*id}
 		}
+	case node.EdgeErrorResolutions:
+		ids := make([]ent.Value, 0, len(m.error_resolutions))
+		for id := range m.error_resolutions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *NodeMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.removedchildren != nil {
 		edges = append(edges, node.EdgeChildren)
 	}
@@ -2928,6 +3445,9 @@ func (m *NodeMutation) RemovedEdges() []string {
 	}
 	if m.removedincoming_associations != nil {
 		edges = append(edges, node.EdgeIncomingAssociations)
+	}
+	if m.removederror_resolutions != nil {
+		edges = append(edges, node.EdgeErrorResolutions)
 	}
 	return edges
 }
@@ -2966,13 +3486,19 @@ func (m *NodeMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case node.EdgeErrorResolutions:
+		ids := make([]ent.Value, 0, len(m.removederror_resolutions))
+		for id := range m.removederror_resolutions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *NodeMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.clearedparent {
 		edges = append(edges, node.EdgeParent)
 	}
@@ -2993,6 +3519,9 @@ func (m *NodeMutation) ClearedEdges() []string {
 	}
 	if m.clearedfsrs_card {
 		edges = append(edges, node.EdgeFsrsCard)
+	}
+	if m.clearederror_resolutions {
+		edges = append(edges, node.EdgeErrorResolutions)
 	}
 	return edges
 }
@@ -3015,6 +3544,8 @@ func (m *NodeMutation) EdgeCleared(name string) bool {
 		return m.clearedincoming_associations
 	case node.EdgeFsrsCard:
 		return m.clearedfsrs_card
+	case node.EdgeErrorResolutions:
+		return m.clearederror_resolutions
 	}
 	return false
 }
@@ -3057,6 +3588,9 @@ func (m *NodeMutation) ResetEdge(name string) error {
 		return nil
 	case node.EdgeFsrsCard:
 		m.ResetFsrsCard()
+		return nil
+	case node.EdgeErrorResolutions:
+		m.ResetErrorResolutions()
 		return nil
 	}
 	return fmt.Errorf("unknown Node edge %s", name)

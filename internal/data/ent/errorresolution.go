@@ -5,18 +5,56 @@ package ent
 import (
 	"fmt"
 	"profen/internal/data/ent/errorresolution"
+	"profen/internal/data/ent/node"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 )
 
 // ErrorResolution is the model entity for the ErrorResolution schema.
 type ErrorResolution struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID           int `json:"id,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
+	// NodeID holds the value of the "node_id" field.
+	NodeID uuid.UUID `json:"node_id,omitempty"`
+	// Category: 'calc', 'concept', 'memory'
+	ErrorType string `json:"error_type,omitempty"`
+	// Higher value = higher priority to fix
+	WeightImpact float64 `json:"weight_impact,omitempty"`
+	// False = Active Gap. True = History.
+	IsResolved bool `json:"is_resolved,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// ResolvedAt holds the value of the "resolved_at" field.
+	ResolvedAt *time.Time `json:"resolved_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ErrorResolutionQuery when eager-loading is set.
+	Edges        ErrorResolutionEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// ErrorResolutionEdges holds the relations/edges for other nodes in the graph.
+type ErrorResolutionEdges struct {
+	// Node holds the value of the node edge.
+	Node *Node `json:"node,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// NodeOrErr returns the Node value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ErrorResolutionEdges) NodeOrErr() (*Node, error) {
+	if e.Node != nil {
+		return e.Node, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: node.Label}
+	}
+	return nil, &NotLoadedError{edge: "node"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -24,8 +62,16 @@ func (*ErrorResolution) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case errorresolution.FieldID:
-			values[i] = new(sql.NullInt64)
+		case errorresolution.FieldIsResolved:
+			values[i] = new(sql.NullBool)
+		case errorresolution.FieldWeightImpact:
+			values[i] = new(sql.NullFloat64)
+		case errorresolution.FieldErrorType:
+			values[i] = new(sql.NullString)
+		case errorresolution.FieldCreatedAt, errorresolution.FieldResolvedAt:
+			values[i] = new(sql.NullTime)
+		case errorresolution.FieldID, errorresolution.FieldNodeID:
+			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -42,11 +88,48 @@ func (_m *ErrorResolution) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case errorresolution.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				_m.ID = *value
 			}
-			_m.ID = int(value.Int64)
+		case errorresolution.FieldNodeID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field node_id", values[i])
+			} else if value != nil {
+				_m.NodeID = *value
+			}
+		case errorresolution.FieldErrorType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field error_type", values[i])
+			} else if value.Valid {
+				_m.ErrorType = value.String
+			}
+		case errorresolution.FieldWeightImpact:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field weight_impact", values[i])
+			} else if value.Valid {
+				_m.WeightImpact = value.Float64
+			}
+		case errorresolution.FieldIsResolved:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_resolved", values[i])
+			} else if value.Valid {
+				_m.IsResolved = value.Bool
+			}
+		case errorresolution.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				_m.CreatedAt = value.Time
+			}
+		case errorresolution.FieldResolvedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field resolved_at", values[i])
+			} else if value.Valid {
+				_m.ResolvedAt = new(time.Time)
+				*_m.ResolvedAt = value.Time
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -58,6 +141,11 @@ func (_m *ErrorResolution) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *ErrorResolution) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryNode queries the "node" edge of the ErrorResolution entity.
+func (_m *ErrorResolution) QueryNode() *NodeQuery {
+	return NewErrorResolutionClient(_m.config).QueryNode(_m)
 }
 
 // Update returns a builder for updating this ErrorResolution.
@@ -82,7 +170,26 @@ func (_m *ErrorResolution) Unwrap() *ErrorResolution {
 func (_m *ErrorResolution) String() string {
 	var builder strings.Builder
 	builder.WriteString("ErrorResolution(")
-	builder.WriteString(fmt.Sprintf("id=%v", _m.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("node_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.NodeID))
+	builder.WriteString(", ")
+	builder.WriteString("error_type=")
+	builder.WriteString(_m.ErrorType)
+	builder.WriteString(", ")
+	builder.WriteString("weight_impact=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WeightImpact))
+	builder.WriteString(", ")
+	builder.WriteString("is_resolved=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsResolved))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	if v := _m.ResolvedAt; v != nil {
+		builder.WriteString("resolved_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

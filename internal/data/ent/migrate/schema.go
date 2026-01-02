@@ -21,13 +21,27 @@ var (
 	}
 	// ErrorResolutionsColumns holds the columns for the "error_resolutions" table.
 	ErrorResolutionsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "resolution_id", Type: field.TypeUUID},
+		{Name: "error_type", Type: field.TypeString},
+		{Name: "weight_impact", Type: field.TypeFloat64, Default: 1},
+		{Name: "is_resolved", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "resolved_at", Type: field.TypeTime, Nullable: true},
+		{Name: "node_id", Type: field.TypeUUID},
 	}
 	// ErrorResolutionsTable holds the schema information for the "error_resolutions" table.
 	ErrorResolutionsTable = &schema.Table{
 		Name:       "error_resolutions",
 		Columns:    ErrorResolutionsColumns,
 		PrimaryKey: []*schema.Column{ErrorResolutionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "error_resolutions_nodes_error_resolutions",
+				Columns:    []*schema.Column{ErrorResolutionsColumns[6]},
+				RefColumns: []*schema.Column{NodesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 	}
 	// ErrorTypesColumns holds the columns for the "error_types" table.
 	ErrorTypesColumns = []*schema.Column{
@@ -171,6 +185,7 @@ var (
 )
 
 func init() {
+	ErrorResolutionsTable.ForeignKeys[0].RefTable = NodesTable
 	FsrsCardsTable.ForeignKeys[0].RefTable = NodesTable
 	NodesTable.ForeignKeys[0].RefTable = NodesTable
 	NodeAssociationsTable.ForeignKeys[0].RefTable = NodesTable
