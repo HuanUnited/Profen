@@ -7,11 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"profen/internal/data/ent/attempt"
+	"profen/internal/data/ent/errordefinition"
+	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // AttemptUpdate is the builder for updating Attempt entities.
@@ -28,9 +31,191 @@ func (_u *AttemptUpdate) Where(ps ...predicate.Attempt) *AttemptUpdate {
 	return _u
 }
 
+// SetRating sets the "rating" field.
+func (_u *AttemptUpdate) SetRating(v int) *AttemptUpdate {
+	_u.mutation.ResetRating()
+	_u.mutation.SetRating(v)
+	return _u
+}
+
+// SetNillableRating sets the "rating" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableRating(v *int) *AttemptUpdate {
+	if v != nil {
+		_u.SetRating(*v)
+	}
+	return _u
+}
+
+// AddRating adds value to the "rating" field.
+func (_u *AttemptUpdate) AddRating(v int) *AttemptUpdate {
+	_u.mutation.AddRating(v)
+	return _u
+}
+
+// SetDurationMs sets the "duration_ms" field.
+func (_u *AttemptUpdate) SetDurationMs(v int) *AttemptUpdate {
+	_u.mutation.ResetDurationMs()
+	_u.mutation.SetDurationMs(v)
+	return _u
+}
+
+// SetNillableDurationMs sets the "duration_ms" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableDurationMs(v *int) *AttemptUpdate {
+	if v != nil {
+		_u.SetDurationMs(*v)
+	}
+	return _u
+}
+
+// AddDurationMs adds value to the "duration_ms" field.
+func (_u *AttemptUpdate) AddDurationMs(v int) *AttemptUpdate {
+	_u.mutation.AddDurationMs(v)
+	return _u
+}
+
+// SetState sets the "state" field.
+func (_u *AttemptUpdate) SetState(v attempt.State) *AttemptUpdate {
+	_u.mutation.SetState(v)
+	return _u
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableState(v *attempt.State) *AttemptUpdate {
+	if v != nil {
+		_u.SetState(*v)
+	}
+	return _u
+}
+
+// SetStability sets the "stability" field.
+func (_u *AttemptUpdate) SetStability(v float64) *AttemptUpdate {
+	_u.mutation.ResetStability()
+	_u.mutation.SetStability(v)
+	return _u
+}
+
+// SetNillableStability sets the "stability" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableStability(v *float64) *AttemptUpdate {
+	if v != nil {
+		_u.SetStability(*v)
+	}
+	return _u
+}
+
+// AddStability adds value to the "stability" field.
+func (_u *AttemptUpdate) AddStability(v float64) *AttemptUpdate {
+	_u.mutation.AddStability(v)
+	return _u
+}
+
+// SetDifficulty sets the "difficulty" field.
+func (_u *AttemptUpdate) SetDifficulty(v float64) *AttemptUpdate {
+	_u.mutation.ResetDifficulty()
+	_u.mutation.SetDifficulty(v)
+	return _u
+}
+
+// SetNillableDifficulty sets the "difficulty" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableDifficulty(v *float64) *AttemptUpdate {
+	if v != nil {
+		_u.SetDifficulty(*v)
+	}
+	return _u
+}
+
+// AddDifficulty adds value to the "difficulty" field.
+func (_u *AttemptUpdate) AddDifficulty(v float64) *AttemptUpdate {
+	_u.mutation.AddDifficulty(v)
+	return _u
+}
+
+// SetCardID sets the "card_id" field.
+func (_u *AttemptUpdate) SetCardID(v uuid.UUID) *AttemptUpdate {
+	_u.mutation.SetCardID(v)
+	return _u
+}
+
+// SetNillableCardID sets the "card_id" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableCardID(v *uuid.UUID) *AttemptUpdate {
+	if v != nil {
+		_u.SetCardID(*v)
+	}
+	return _u
+}
+
+// SetIsCorrect sets the "is_correct" field.
+func (_u *AttemptUpdate) SetIsCorrect(v bool) *AttemptUpdate {
+	_u.mutation.SetIsCorrect(v)
+	return _u
+}
+
+// SetNillableIsCorrect sets the "is_correct" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableIsCorrect(v *bool) *AttemptUpdate {
+	if v != nil {
+		_u.SetIsCorrect(*v)
+	}
+	return _u
+}
+
+// SetErrorTypeID sets the "error_type_id" field.
+func (_u *AttemptUpdate) SetErrorTypeID(v uuid.UUID) *AttemptUpdate {
+	_u.mutation.SetErrorTypeID(v)
+	return _u
+}
+
+// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableErrorTypeID(v *uuid.UUID) *AttemptUpdate {
+	if v != nil {
+		_u.SetErrorTypeID(*v)
+	}
+	return _u
+}
+
+// ClearErrorTypeID clears the value of the "error_type_id" field.
+func (_u *AttemptUpdate) ClearErrorTypeID() *AttemptUpdate {
+	_u.mutation.ClearErrorTypeID()
+	return _u
+}
+
+// SetCard sets the "card" edge to the FsrsCard entity.
+func (_u *AttemptUpdate) SetCard(v *FsrsCard) *AttemptUpdate {
+	return _u.SetCardID(v.ID)
+}
+
+// SetErrorDefinitionID sets the "error_definition" edge to the ErrorDefinition entity by ID.
+func (_u *AttemptUpdate) SetErrorDefinitionID(id uuid.UUID) *AttemptUpdate {
+	_u.mutation.SetErrorDefinitionID(id)
+	return _u
+}
+
+// SetNillableErrorDefinitionID sets the "error_definition" edge to the ErrorDefinition entity by ID if the given value is not nil.
+func (_u *AttemptUpdate) SetNillableErrorDefinitionID(id *uuid.UUID) *AttemptUpdate {
+	if id != nil {
+		_u = _u.SetErrorDefinitionID(*id)
+	}
+	return _u
+}
+
+// SetErrorDefinition sets the "error_definition" edge to the ErrorDefinition entity.
+func (_u *AttemptUpdate) SetErrorDefinition(v *ErrorDefinition) *AttemptUpdate {
+	return _u.SetErrorDefinitionID(v.ID)
+}
+
 // Mutation returns the AttemptMutation object of the builder.
 func (_u *AttemptUpdate) Mutation() *AttemptMutation {
 	return _u.mutation
+}
+
+// ClearCard clears the "card" edge to the FsrsCard entity.
+func (_u *AttemptUpdate) ClearCard() *AttemptUpdate {
+	_u.mutation.ClearCard()
+	return _u
+}
+
+// ClearErrorDefinition clears the "error_definition" edge to the ErrorDefinition entity.
+func (_u *AttemptUpdate) ClearErrorDefinition() *AttemptUpdate {
+	_u.mutation.ClearErrorDefinition()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -60,6 +245,19 @@ func (_u *AttemptUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *AttemptUpdate) check() error {
+	if v, ok := _u.mutation.State(); ok {
+		if err := attempt.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Attempt.state": %w`, err)}
+		}
+	}
+	if _u.mutation.CardCleared() && len(_u.mutation.CardIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Attempt.card"`)
+	}
+	return nil
+}
+
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
 func (_u *AttemptUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AttemptUpdate {
 	_u.modifiers = append(_u.modifiers, modifiers...)
@@ -67,13 +265,104 @@ func (_u *AttemptUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *Attemp
 }
 
 func (_u *AttemptUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(attempt.Table, attempt.Columns, sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(attempt.Table, attempt.Columns, sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.Rating(); ok {
+		_spec.SetField(attempt.FieldRating, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRating(); ok {
+		_spec.AddField(attempt.FieldRating, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.DurationMs(); ok {
+		_spec.SetField(attempt.FieldDurationMs, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedDurationMs(); ok {
+		_spec.AddField(attempt.FieldDurationMs, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.State(); ok {
+		_spec.SetField(attempt.FieldState, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Stability(); ok {
+		_spec.SetField(attempt.FieldStability, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedStability(); ok {
+		_spec.AddField(attempt.FieldStability, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.Difficulty(); ok {
+		_spec.SetField(attempt.FieldDifficulty, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDifficulty(); ok {
+		_spec.AddField(attempt.FieldDifficulty, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.IsCorrect(); ok {
+		_spec.SetField(attempt.FieldIsCorrect, field.TypeBool, value)
+	}
+	if _u.mutation.CardCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.CardTable,
+			Columns: []string{attempt.CardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CardIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.CardTable,
+			Columns: []string{attempt.CardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ErrorDefinitionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.ErrorDefinitionTable,
+			Columns: []string{attempt.ErrorDefinitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errordefinition.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ErrorDefinitionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.ErrorDefinitionTable,
+			Columns: []string{attempt.ErrorDefinitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errordefinition.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
@@ -97,9 +386,191 @@ type AttemptUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetRating sets the "rating" field.
+func (_u *AttemptUpdateOne) SetRating(v int) *AttemptUpdateOne {
+	_u.mutation.ResetRating()
+	_u.mutation.SetRating(v)
+	return _u
+}
+
+// SetNillableRating sets the "rating" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableRating(v *int) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetRating(*v)
+	}
+	return _u
+}
+
+// AddRating adds value to the "rating" field.
+func (_u *AttemptUpdateOne) AddRating(v int) *AttemptUpdateOne {
+	_u.mutation.AddRating(v)
+	return _u
+}
+
+// SetDurationMs sets the "duration_ms" field.
+func (_u *AttemptUpdateOne) SetDurationMs(v int) *AttemptUpdateOne {
+	_u.mutation.ResetDurationMs()
+	_u.mutation.SetDurationMs(v)
+	return _u
+}
+
+// SetNillableDurationMs sets the "duration_ms" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableDurationMs(v *int) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetDurationMs(*v)
+	}
+	return _u
+}
+
+// AddDurationMs adds value to the "duration_ms" field.
+func (_u *AttemptUpdateOne) AddDurationMs(v int) *AttemptUpdateOne {
+	_u.mutation.AddDurationMs(v)
+	return _u
+}
+
+// SetState sets the "state" field.
+func (_u *AttemptUpdateOne) SetState(v attempt.State) *AttemptUpdateOne {
+	_u.mutation.SetState(v)
+	return _u
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableState(v *attempt.State) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetState(*v)
+	}
+	return _u
+}
+
+// SetStability sets the "stability" field.
+func (_u *AttemptUpdateOne) SetStability(v float64) *AttemptUpdateOne {
+	_u.mutation.ResetStability()
+	_u.mutation.SetStability(v)
+	return _u
+}
+
+// SetNillableStability sets the "stability" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableStability(v *float64) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetStability(*v)
+	}
+	return _u
+}
+
+// AddStability adds value to the "stability" field.
+func (_u *AttemptUpdateOne) AddStability(v float64) *AttemptUpdateOne {
+	_u.mutation.AddStability(v)
+	return _u
+}
+
+// SetDifficulty sets the "difficulty" field.
+func (_u *AttemptUpdateOne) SetDifficulty(v float64) *AttemptUpdateOne {
+	_u.mutation.ResetDifficulty()
+	_u.mutation.SetDifficulty(v)
+	return _u
+}
+
+// SetNillableDifficulty sets the "difficulty" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableDifficulty(v *float64) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetDifficulty(*v)
+	}
+	return _u
+}
+
+// AddDifficulty adds value to the "difficulty" field.
+func (_u *AttemptUpdateOne) AddDifficulty(v float64) *AttemptUpdateOne {
+	_u.mutation.AddDifficulty(v)
+	return _u
+}
+
+// SetCardID sets the "card_id" field.
+func (_u *AttemptUpdateOne) SetCardID(v uuid.UUID) *AttemptUpdateOne {
+	_u.mutation.SetCardID(v)
+	return _u
+}
+
+// SetNillableCardID sets the "card_id" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableCardID(v *uuid.UUID) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetCardID(*v)
+	}
+	return _u
+}
+
+// SetIsCorrect sets the "is_correct" field.
+func (_u *AttemptUpdateOne) SetIsCorrect(v bool) *AttemptUpdateOne {
+	_u.mutation.SetIsCorrect(v)
+	return _u
+}
+
+// SetNillableIsCorrect sets the "is_correct" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableIsCorrect(v *bool) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetIsCorrect(*v)
+	}
+	return _u
+}
+
+// SetErrorTypeID sets the "error_type_id" field.
+func (_u *AttemptUpdateOne) SetErrorTypeID(v uuid.UUID) *AttemptUpdateOne {
+	_u.mutation.SetErrorTypeID(v)
+	return _u
+}
+
+// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableErrorTypeID(v *uuid.UUID) *AttemptUpdateOne {
+	if v != nil {
+		_u.SetErrorTypeID(*v)
+	}
+	return _u
+}
+
+// ClearErrorTypeID clears the value of the "error_type_id" field.
+func (_u *AttemptUpdateOne) ClearErrorTypeID() *AttemptUpdateOne {
+	_u.mutation.ClearErrorTypeID()
+	return _u
+}
+
+// SetCard sets the "card" edge to the FsrsCard entity.
+func (_u *AttemptUpdateOne) SetCard(v *FsrsCard) *AttemptUpdateOne {
+	return _u.SetCardID(v.ID)
+}
+
+// SetErrorDefinitionID sets the "error_definition" edge to the ErrorDefinition entity by ID.
+func (_u *AttemptUpdateOne) SetErrorDefinitionID(id uuid.UUID) *AttemptUpdateOne {
+	_u.mutation.SetErrorDefinitionID(id)
+	return _u
+}
+
+// SetNillableErrorDefinitionID sets the "error_definition" edge to the ErrorDefinition entity by ID if the given value is not nil.
+func (_u *AttemptUpdateOne) SetNillableErrorDefinitionID(id *uuid.UUID) *AttemptUpdateOne {
+	if id != nil {
+		_u = _u.SetErrorDefinitionID(*id)
+	}
+	return _u
+}
+
+// SetErrorDefinition sets the "error_definition" edge to the ErrorDefinition entity.
+func (_u *AttemptUpdateOne) SetErrorDefinition(v *ErrorDefinition) *AttemptUpdateOne {
+	return _u.SetErrorDefinitionID(v.ID)
+}
+
 // Mutation returns the AttemptMutation object of the builder.
 func (_u *AttemptUpdateOne) Mutation() *AttemptMutation {
 	return _u.mutation
+}
+
+// ClearCard clears the "card" edge to the FsrsCard entity.
+func (_u *AttemptUpdateOne) ClearCard() *AttemptUpdateOne {
+	_u.mutation.ClearCard()
+	return _u
+}
+
+// ClearErrorDefinition clears the "error_definition" edge to the ErrorDefinition entity.
+func (_u *AttemptUpdateOne) ClearErrorDefinition() *AttemptUpdateOne {
+	_u.mutation.ClearErrorDefinition()
+	return _u
 }
 
 // Where appends a list predicates to the AttemptUpdate builder.
@@ -142,6 +613,19 @@ func (_u *AttemptUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *AttemptUpdateOne) check() error {
+	if v, ok := _u.mutation.State(); ok {
+		if err := attempt.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Attempt.state": %w`, err)}
+		}
+	}
+	if _u.mutation.CardCleared() && len(_u.mutation.CardIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Attempt.card"`)
+	}
+	return nil
+}
+
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
 func (_u *AttemptUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *AttemptUpdateOne {
 	_u.modifiers = append(_u.modifiers, modifiers...)
@@ -149,7 +633,10 @@ func (_u *AttemptUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *Att
 }
 
 func (_u *AttemptUpdateOne) sqlSave(ctx context.Context) (_node *Attempt, err error) {
-	_spec := sqlgraph.NewUpdateSpec(attempt.Table, attempt.Columns, sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(attempt.Table, attempt.Columns, sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID))
 	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Attempt.id" for update`)}
@@ -173,6 +660,94 @@ func (_u *AttemptUpdateOne) sqlSave(ctx context.Context) (_node *Attempt, err er
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.Rating(); ok {
+		_spec.SetField(attempt.FieldRating, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRating(); ok {
+		_spec.AddField(attempt.FieldRating, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.DurationMs(); ok {
+		_spec.SetField(attempt.FieldDurationMs, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedDurationMs(); ok {
+		_spec.AddField(attempt.FieldDurationMs, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.State(); ok {
+		_spec.SetField(attempt.FieldState, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Stability(); ok {
+		_spec.SetField(attempt.FieldStability, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedStability(); ok {
+		_spec.AddField(attempt.FieldStability, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.Difficulty(); ok {
+		_spec.SetField(attempt.FieldDifficulty, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDifficulty(); ok {
+		_spec.AddField(attempt.FieldDifficulty, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.IsCorrect(); ok {
+		_spec.SetField(attempt.FieldIsCorrect, field.TypeBool, value)
+	}
+	if _u.mutation.CardCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.CardTable,
+			Columns: []string{attempt.CardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CardIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.CardTable,
+			Columns: []string{attempt.CardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ErrorDefinitionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.ErrorDefinitionTable,
+			Columns: []string{attempt.ErrorDefinitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errordefinition.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ErrorDefinitionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.ErrorDefinitionTable,
+			Columns: []string{attempt.ErrorDefinitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errordefinition.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	_node = &Attempt{config: _u.config}

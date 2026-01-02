@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"profen/internal/data/ent"
+	"profen/internal/data/ent/attempt"
 	"profen/internal/data/ent/fsrscard"
 
 	"github.com/google/uuid"
@@ -25,12 +26,11 @@ const (
 // FSRSService handles the spaced repetition logic.
 type FSRSService struct {
 	client *ent.Client
-	params fsrs.Parameters // Holds weights (w0-w19) and settings
-	fsrs   *fsrs.FSRS
+	params fsrs.Parameters
+	fsrs   *fsrs.FSRS // Changed to pointer to match NewFSRS return type
 }
 
 func NewFSRSService(client *ent.Client) *FSRSService {
-	// TODO: Initialize with default parameters (can be loaded from DB/JSON later)
 	params := fsrs.DefaultParam()
 	return &FSRSService{
 		client: client,
@@ -39,43 +39,81 @@ func NewFSRSService(client *ent.Client) *FSRSService {
 	}
 }
 
-// ReviewCard processes a user's attempt and updates the database.
-func (s *FSRSService) ReviewCard(ctx context.Context, cardID uuid.UUID, grade FSRSGrade) (*ent.FsrsCard, error) {
-	// 1. Fetch the current card from DB
-	// Note: We need the ID to be a UUID, assuming cardID is a string.
-	// If your service uses uuid.UUID directly, adjust signature.
+// ReviewCard processes a user's attempt.
+func (s *FSRSService) ReviewCard(
+	ctx context.Context,
+	cardID uuid.UUID,
+	grade FSRSGrade,
+	durationMs int,
+	errorDefID *uuid.UUID,
+) (*ent.FsrsCard, error) {
 
-	// Convert ID if necessary, or pass uuid.UUID
-	// id, _ := uuid.Parse(cardID)
-
-	currentEntCard, err := s.client.FsrsCard.Query().
+	// 1. Fetch Card
+	card, err := s.client.FsrsCard.Query().
 		Where(fsrscard.IDEQ(cardID)).
 		Only(ctx)
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to find card: %w", err)
+		return nil, fmt.Errorf("failed to fetch card: %w", err)
 	}
 
-	// 2. Map Ent -> go-fsrs Card
+	// 2. Log Attempt (History)
+	// Convert FsrsCard State to Attempt State (Enum conversion)
+	attemptState := attempt.State(card.State.String())
+
+	attemptBuilder := s.client.Attempt.Create().
+		SetCardID(card.ID).
+		SetRating(int(grade)).
+		SetDurationMs(durationMs).
+		SetState(attemptState). // Fixed Type Mismatch
+		SetStability(card.Stability).
+		SetDifficulty(card.Difficulty).
+		SetIsCorrect(grade >= GradeGood)
+
+	if errorDefID != nil {
+		attemptBuilder.SetErrorTypeID(*errorDefID)
+	}
+
+	_, err = attemptBuilder.Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to log attempt: %w", err)
+	}
+
+	// 3. Update Error Resolutions (Diagnostic Stream)
+	if errorDefID != nil && grade <= GradeHard {
+		def, err := s.client.ErrorDefinition.Get(ctx, *errorDefID)
+		weight := 1.0
+		if err == nil {
+			weight = def.BaseWeight
+		}
+
+		_, err = s.client.ErrorResolution.Create().
+			SetNodeID(card.NodeID).
+			SetErrorTypeID(*errorDefID).
+			SetWeightImpact(weight).
+			SetIsResolved(false).
+			Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to record error resolution: %w", err)
+		}
+	}
+
+	// 4. Map Ent -> go-fsrs Card
 	libCard := fsrs.Card{
-		Stability:     currentEntCard.Stability,
-		Difficulty:    currentEntCard.Difficulty,
-		ElapsedDays:   uint64(currentEntCard.ElapsedDays),
-		ScheduledDays: uint64(currentEntCard.ScheduledDays),
-		Reps:          uint64(currentEntCard.Reps),
-		Lapses:        uint64(currentEntCard.Lapses),
-		State:         mapStateToLib(currentEntCard.State),
-		LastReview:    safeTime(currentEntCard.LastReview),
-		Due:           currentEntCard.Due,
+		Stability:     card.Stability,
+		Difficulty:    card.Difficulty,
+		ElapsedDays:   uint64(card.ElapsedDays),
+		ScheduledDays: uint64(card.ScheduledDays),
+		Reps:          uint64(card.Reps),
+		Lapses:        uint64(card.Lapses),
+		State:         mapStateToLib(card.State),
+		LastReview:    safeTime(card.LastReview),
+		Due:           card.Due,
 	}
 
-	// 3. Calculate Next Schedule
-	// We need "Now" for calculation.
+	// 5. Calculate Next Schedule
 	now := time.Now()
 	scheduledItem := s.fsrs.Repeat(libCard, now)
 
-	// Select the result matching the user's grade
-	// go-fsrs returns a map[Rating]SchedulingInfo
 	nextSchedule, exists := scheduledItem[fsrs.Rating(grade)]
 	if !exists {
 		return nil, fmt.Errorf("invalid grade provided: %d", grade)
@@ -83,8 +121,8 @@ func (s *FSRSService) ReviewCard(ctx context.Context, cardID uuid.UUID, grade FS
 
 	nextCard := nextSchedule.Card
 
-	// 4. Update DB with New State
-	updatedCard, err := s.client.FsrsCard.UpdateOne(currentEntCard).
+	// 6. Update DB with New State
+	updatedCard, err := s.client.FsrsCard.UpdateOne(card).
 		SetStability(nextCard.Stability).
 		SetDifficulty(nextCard.Difficulty).
 		SetElapsedDays(int(nextCard.ElapsedDays)).
@@ -103,7 +141,8 @@ func (s *FSRSService) ReviewCard(ctx context.Context, cardID uuid.UUID, grade FS
 	return updatedCard, nil
 }
 
-// Helper: Map Ent Enum string -> fsrs.State int
+// --- HELPERS ---
+
 func mapStateToLib(s fsrscard.State) fsrs.State {
 	switch s {
 	case fsrscard.StateNew:
@@ -119,7 +158,6 @@ func mapStateToLib(s fsrscard.State) fsrs.State {
 	}
 }
 
-// Helper: Map fsrs.State int -> Ent Enum string
 func mapStateFromLib(s fsrs.State) fsrscard.State {
 	switch s {
 	case fsrs.New:
@@ -135,10 +173,9 @@ func mapStateFromLib(s fsrs.State) fsrscard.State {
 	}
 }
 
-// Helper: Handle nil pointer for time (Ent uses *time.Time for nullable)
 func safeTime(t *time.Time) time.Time {
 	if t == nil {
-		return time.Time{} // Return zero time
+		return time.Time{}
 	}
 	return *t
 }

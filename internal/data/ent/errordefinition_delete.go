@@ -4,7 +4,7 @@ package ent
 
 import (
 	"context"
-	"profen/internal/data/ent/errortype"
+	"profen/internal/data/ent/errordefinition"
 	"profen/internal/data/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -12,26 +12,26 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// ErrorTypeDelete is the builder for deleting a ErrorType entity.
-type ErrorTypeDelete struct {
+// ErrorDefinitionDelete is the builder for deleting a ErrorDefinition entity.
+type ErrorDefinitionDelete struct {
 	config
 	hooks    []Hook
-	mutation *ErrorTypeMutation
+	mutation *ErrorDefinitionMutation
 }
 
-// Where appends a list predicates to the ErrorTypeDelete builder.
-func (_d *ErrorTypeDelete) Where(ps ...predicate.ErrorType) *ErrorTypeDelete {
+// Where appends a list predicates to the ErrorDefinitionDelete builder.
+func (_d *ErrorDefinitionDelete) Where(ps ...predicate.ErrorDefinition) *ErrorDefinitionDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *ErrorTypeDelete) Exec(ctx context.Context) (int, error) {
+func (_d *ErrorDefinitionDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *ErrorTypeDelete) ExecX(ctx context.Context) int {
+func (_d *ErrorDefinitionDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *ErrorTypeDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *ErrorTypeDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(errortype.Table, sqlgraph.NewFieldSpec(errortype.FieldID, field.TypeInt))
+func (_d *ErrorDefinitionDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(errordefinition.Table, sqlgraph.NewFieldSpec(errordefinition.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *ErrorTypeDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// ErrorTypeDeleteOne is the builder for deleting a single ErrorType entity.
-type ErrorTypeDeleteOne struct {
-	_d *ErrorTypeDelete
+// ErrorDefinitionDeleteOne is the builder for deleting a single ErrorDefinition entity.
+type ErrorDefinitionDeleteOne struct {
+	_d *ErrorDefinitionDelete
 }
 
-// Where appends a list predicates to the ErrorTypeDelete builder.
-func (_d *ErrorTypeDeleteOne) Where(ps ...predicate.ErrorType) *ErrorTypeDeleteOne {
+// Where appends a list predicates to the ErrorDefinitionDelete builder.
+func (_d *ErrorDefinitionDeleteOne) Where(ps ...predicate.ErrorDefinition) *ErrorDefinitionDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *ErrorTypeDeleteOne) Exec(ctx context.Context) error {
+func (_d *ErrorDefinitionDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{errortype.Label}
+		return &NotFoundError{errordefinition.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *ErrorTypeDeleteOne) ExecX(ctx context.Context) {
+func (_d *ErrorDefinitionDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

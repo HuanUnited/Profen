@@ -5,18 +5,76 @@ package ent
 import (
 	"fmt"
 	"profen/internal/data/ent/attempt"
+	"profen/internal/data/ent/errordefinition"
+	"profen/internal/data/ent/fsrscard"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 )
 
 // Attempt is the model entity for the Attempt schema.
 type Attempt struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID           int `json:"id,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
+	// 1=Again, 2=Hard, 3=Good, 4=Easy
+	Rating int `json:"rating,omitempty"`
+	// Time taken to answer in milliseconds
+	DurationMs int `json:"duration_ms,omitempty"`
+	// State of the card before this attempt
+	State attempt.State `json:"state,omitempty"`
+	// Stability before this attempt
+	Stability float64 `json:"stability,omitempty"`
+	// Difficulty before this attempt
+	Difficulty float64 `json:"difficulty,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// CardID holds the value of the "card_id" field.
+	CardID uuid.UUID `json:"card_id,omitempty"`
+	// Derived from rating. True if Grade >= 3
+	IsCorrect bool `json:"is_correct,omitempty"`
+	// ErrorTypeID holds the value of the "error_type_id" field.
+	ErrorTypeID *uuid.UUID `json:"error_type_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the AttemptQuery when eager-loading is set.
+	Edges        AttemptEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// AttemptEdges holds the relations/edges for other nodes in the graph.
+type AttemptEdges struct {
+	// Card holds the value of the card edge.
+	Card *FsrsCard `json:"card,omitempty"`
+	// ErrorDefinition holds the value of the error_definition edge.
+	ErrorDefinition *ErrorDefinition `json:"error_definition,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// CardOrErr returns the Card value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AttemptEdges) CardOrErr() (*FsrsCard, error) {
+	if e.Card != nil {
+		return e.Card, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: fsrscard.Label}
+	}
+	return nil, &NotLoadedError{edge: "card"}
+}
+
+// ErrorDefinitionOrErr returns the ErrorDefinition value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AttemptEdges) ErrorDefinitionOrErr() (*ErrorDefinition, error) {
+	if e.ErrorDefinition != nil {
+		return e.ErrorDefinition, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: errordefinition.Label}
+	}
+	return nil, &NotLoadedError{edge: "error_definition"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -24,8 +82,20 @@ func (*Attempt) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case attempt.FieldID:
+		case attempt.FieldErrorTypeID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case attempt.FieldIsCorrect:
+			values[i] = new(sql.NullBool)
+		case attempt.FieldStability, attempt.FieldDifficulty:
+			values[i] = new(sql.NullFloat64)
+		case attempt.FieldRating, attempt.FieldDurationMs:
 			values[i] = new(sql.NullInt64)
+		case attempt.FieldState:
+			values[i] = new(sql.NullString)
+		case attempt.FieldCreatedAt:
+			values[i] = new(sql.NullTime)
+		case attempt.FieldID, attempt.FieldCardID:
+			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -42,11 +112,66 @@ func (_m *Attempt) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case attempt.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				_m.ID = *value
 			}
-			_m.ID = int(value.Int64)
+		case attempt.FieldRating:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field rating", values[i])
+			} else if value.Valid {
+				_m.Rating = int(value.Int64)
+			}
+		case attempt.FieldDurationMs:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field duration_ms", values[i])
+			} else if value.Valid {
+				_m.DurationMs = int(value.Int64)
+			}
+		case attempt.FieldState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field state", values[i])
+			} else if value.Valid {
+				_m.State = attempt.State(value.String)
+			}
+		case attempt.FieldStability:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field stability", values[i])
+			} else if value.Valid {
+				_m.Stability = value.Float64
+			}
+		case attempt.FieldDifficulty:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field difficulty", values[i])
+			} else if value.Valid {
+				_m.Difficulty = value.Float64
+			}
+		case attempt.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				_m.CreatedAt = value.Time
+			}
+		case attempt.FieldCardID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field card_id", values[i])
+			} else if value != nil {
+				_m.CardID = *value
+			}
+		case attempt.FieldIsCorrect:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_correct", values[i])
+			} else if value.Valid {
+				_m.IsCorrect = value.Bool
+			}
+		case attempt.FieldErrorTypeID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field error_type_id", values[i])
+			} else if value.Valid {
+				_m.ErrorTypeID = new(uuid.UUID)
+				*_m.ErrorTypeID = *value.S.(*uuid.UUID)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -58,6 +183,16 @@ func (_m *Attempt) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Attempt) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryCard queries the "card" edge of the Attempt entity.
+func (_m *Attempt) QueryCard() *FsrsCardQuery {
+	return NewAttemptClient(_m.config).QueryCard(_m)
+}
+
+// QueryErrorDefinition queries the "error_definition" edge of the Attempt entity.
+func (_m *Attempt) QueryErrorDefinition() *ErrorDefinitionQuery {
+	return NewAttemptClient(_m.config).QueryErrorDefinition(_m)
 }
 
 // Update returns a builder for updating this Attempt.
@@ -82,7 +217,35 @@ func (_m *Attempt) Unwrap() *Attempt {
 func (_m *Attempt) String() string {
 	var builder strings.Builder
 	builder.WriteString("Attempt(")
-	builder.WriteString(fmt.Sprintf("id=%v", _m.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("rating=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Rating))
+	builder.WriteString(", ")
+	builder.WriteString("duration_ms=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DurationMs))
+	builder.WriteString(", ")
+	builder.WriteString("state=")
+	builder.WriteString(fmt.Sprintf("%v", _m.State))
+	builder.WriteString(", ")
+	builder.WriteString("stability=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Stability))
+	builder.WriteString(", ")
+	builder.WriteString("difficulty=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Difficulty))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("card_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CardID))
+	builder.WriteString(", ")
+	builder.WriteString("is_correct=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsCorrect))
+	builder.WriteString(", ")
+	if v := _m.ErrorTypeID; v != nil {
+		builder.WriteString("error_type_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

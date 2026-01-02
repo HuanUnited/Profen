@@ -31,6 +31,8 @@ type ErrorResolution struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// ResolvedAt holds the value of the "resolved_at" field.
 	ResolvedAt *time.Time `json:"resolved_at,omitempty"`
+	// ErrorTypeID holds the value of the "error_type_id" field.
+	ErrorTypeID uuid.UUID `json:"error_type_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ErrorResolutionQuery when eager-loading is set.
 	Edges        ErrorResolutionEdges `json:"edges"`
@@ -70,7 +72,7 @@ func (*ErrorResolution) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case errorresolution.FieldCreatedAt, errorresolution.FieldResolvedAt:
 			values[i] = new(sql.NullTime)
-		case errorresolution.FieldID, errorresolution.FieldNodeID:
+		case errorresolution.FieldID, errorresolution.FieldNodeID, errorresolution.FieldErrorTypeID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -129,6 +131,12 @@ func (_m *ErrorResolution) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ResolvedAt = new(time.Time)
 				*_m.ResolvedAt = value.Time
+			}
+		case errorresolution.FieldErrorTypeID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field error_type_id", values[i])
+			} else if value != nil {
+				_m.ErrorTypeID = *value
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -190,6 +198,9 @@ func (_m *ErrorResolution) String() string {
 		builder.WriteString("resolved_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("error_type_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ErrorTypeID))
 	builder.WriteByte(')')
 	return builder.String()
 }

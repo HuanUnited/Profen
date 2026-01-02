@@ -38,8 +38,12 @@ const (
 	FieldNodeID = "node_id"
 	// EdgeNode holds the string denoting the node edge name in mutations.
 	EdgeNode = "node"
+	// EdgeAttempts holds the string denoting the attempts edge name in mutations.
+	EdgeAttempts = "attempts"
 	// NodeFieldID holds the string denoting the ID field of the Node.
 	NodeFieldID = "node_id"
+	// AttemptFieldID holds the string denoting the ID field of the Attempt.
+	AttemptFieldID = "attempt_id"
 	// Table holds the table name of the fsrscard in the database.
 	Table = "fsrs_cards"
 	// NodeTable is the table that holds the node relation/edge.
@@ -49,6 +53,13 @@ const (
 	NodeInverseTable = "nodes"
 	// NodeColumn is the table column denoting the node relation/edge.
 	NodeColumn = "node_id"
+	// AttemptsTable is the table that holds the attempts relation/edge.
+	AttemptsTable = "attempts"
+	// AttemptsInverseTable is the table name for the Attempt entity.
+	// It exists in this package in order to avoid circular dependency with the "attempt" package.
+	AttemptsInverseTable = "attempts"
+	// AttemptsColumn is the table column denoting the attempts relation/edge.
+	AttemptsColumn = "card_id"
 )
 
 // Columns holds all SQL columns for fsrscard fields.
@@ -187,10 +198,31 @@ func ByNodeField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newNodeStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByAttemptsCount orders the results by attempts count.
+func ByAttemptsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAttemptsStep(), opts...)
+	}
+}
+
+// ByAttempts orders the results by attempts terms.
+func ByAttempts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAttemptsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newNodeStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(NodeInverseTable, NodeFieldID),
 		sqlgraph.Edge(sqlgraph.O2O, true, NodeTable, NodeColumn),
+	)
+}
+func newAttemptsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AttemptsInverseTable, AttemptFieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AttemptsTable, AttemptsColumn),
 	)
 }

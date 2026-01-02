@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"profen/internal/data/ent/attempt"
+	"profen/internal/data/ent/errordefinition"
 	"profen/internal/data/ent/errorresolution"
-	"profen/internal/data/ent/errortype"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
@@ -80,8 +80,8 @@ func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			attempt.Table:         attempt.ValidColumn,
+			errordefinition.Table: errordefinition.ValidColumn,
 			errorresolution.Table: errorresolution.ValidColumn,
-			errortype.Table:       errortype.ValidColumn,
 			fsrscard.Table:        fsrscard.ValidColumn,
 			node.Table:            node.ValidColumn,
 			nodeassociation.Table: nodeassociation.ValidColumn,

@@ -12,8 +12,8 @@ import (
 	"profen/internal/data/ent/migrate"
 
 	"profen/internal/data/ent/attempt"
+	"profen/internal/data/ent/errordefinition"
 	"profen/internal/data/ent/errorresolution"
-	"profen/internal/data/ent/errortype"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
@@ -33,10 +33,10 @@ type Client struct {
 	Schema *migrate.Schema
 	// Attempt is the client for interacting with the Attempt builders.
 	Attempt *AttemptClient
+	// ErrorDefinition is the client for interacting with the ErrorDefinition builders.
+	ErrorDefinition *ErrorDefinitionClient
 	// ErrorResolution is the client for interacting with the ErrorResolution builders.
 	ErrorResolution *ErrorResolutionClient
-	// ErrorType is the client for interacting with the ErrorType builders.
-	ErrorType *ErrorTypeClient
 	// FsrsCard is the client for interacting with the FsrsCard builders.
 	FsrsCard *FsrsCardClient
 	// Node is the client for interacting with the Node builders.
@@ -57,8 +57,8 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Attempt = NewAttemptClient(c.config)
+	c.ErrorDefinition = NewErrorDefinitionClient(c.config)
 	c.ErrorResolution = NewErrorResolutionClient(c.config)
-	c.ErrorType = NewErrorTypeClient(c.config)
 	c.FsrsCard = NewFsrsCardClient(c.config)
 	c.Node = NewNodeClient(c.config)
 	c.NodeAssociation = NewNodeAssociationClient(c.config)
@@ -156,8 +156,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:             ctx,
 		config:          cfg,
 		Attempt:         NewAttemptClient(cfg),
+		ErrorDefinition: NewErrorDefinitionClient(cfg),
 		ErrorResolution: NewErrorResolutionClient(cfg),
-		ErrorType:       NewErrorTypeClient(cfg),
 		FsrsCard:        NewFsrsCardClient(cfg),
 		Node:            NewNodeClient(cfg),
 		NodeAssociation: NewNodeAssociationClient(cfg),
@@ -182,8 +182,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:             ctx,
 		config:          cfg,
 		Attempt:         NewAttemptClient(cfg),
+		ErrorDefinition: NewErrorDefinitionClient(cfg),
 		ErrorResolution: NewErrorResolutionClient(cfg),
-		ErrorType:       NewErrorTypeClient(cfg),
 		FsrsCard:        NewFsrsCardClient(cfg),
 		Node:            NewNodeClient(cfg),
 		NodeAssociation: NewNodeAssociationClient(cfg),
@@ -217,7 +217,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Attempt, c.ErrorResolution, c.ErrorType, c.FsrsCard, c.Node,
+		c.Attempt, c.ErrorDefinition, c.ErrorResolution, c.FsrsCard, c.Node,
 		c.NodeAssociation, c.NodeClosure,
 	} {
 		n.Use(hooks...)
@@ -228,7 +228,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Attempt, c.ErrorResolution, c.ErrorType, c.FsrsCard, c.Node,
+		c.Attempt, c.ErrorDefinition, c.ErrorResolution, c.FsrsCard, c.Node,
 		c.NodeAssociation, c.NodeClosure,
 	} {
 		n.Intercept(interceptors...)
@@ -240,10 +240,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *AttemptMutation:
 		return c.Attempt.mutate(ctx, m)
+	case *ErrorDefinitionMutation:
+		return c.ErrorDefinition.mutate(ctx, m)
 	case *ErrorResolutionMutation:
 		return c.ErrorResolution.mutate(ctx, m)
-	case *ErrorTypeMutation:
-		return c.ErrorType.mutate(ctx, m)
 	case *FsrsCardMutation:
 		return c.FsrsCard.mutate(ctx, m)
 	case *NodeMutation:
@@ -318,7 +318,7 @@ func (c *AttemptClient) UpdateOne(_m *Attempt) *AttemptUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *AttemptClient) UpdateOneID(id int) *AttemptUpdateOne {
+func (c *AttemptClient) UpdateOneID(id uuid.UUID) *AttemptUpdateOne {
 	mutation := newAttemptMutation(c.config, OpUpdateOne, withAttemptID(id))
 	return &AttemptUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -335,7 +335,7 @@ func (c *AttemptClient) DeleteOne(_m *Attempt) *AttemptDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *AttemptClient) DeleteOneID(id int) *AttemptDeleteOne {
+func (c *AttemptClient) DeleteOneID(id uuid.UUID) *AttemptDeleteOne {
 	builder := c.Delete().Where(attempt.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -352,17 +352,49 @@ func (c *AttemptClient) Query() *AttemptQuery {
 }
 
 // Get returns a Attempt entity by its id.
-func (c *AttemptClient) Get(ctx context.Context, id int) (*Attempt, error) {
+func (c *AttemptClient) Get(ctx context.Context, id uuid.UUID) (*Attempt, error) {
 	return c.Query().Where(attempt.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *AttemptClient) GetX(ctx context.Context, id int) *Attempt {
+func (c *AttemptClient) GetX(ctx context.Context, id uuid.UUID) *Attempt {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryCard queries the card edge of a Attempt.
+func (c *AttemptClient) QueryCard(_m *Attempt) *FsrsCardQuery {
+	query := (&FsrsCardClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(attempt.Table, attempt.FieldID, id),
+			sqlgraph.To(fsrscard.Table, fsrscard.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, attempt.CardTable, attempt.CardColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryErrorDefinition queries the error_definition edge of a Attempt.
+func (c *AttemptClient) QueryErrorDefinition(_m *Attempt) *ErrorDefinitionQuery {
+	query := (&ErrorDefinitionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(attempt.Table, attempt.FieldID, id),
+			sqlgraph.To(errordefinition.Table, errordefinition.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, attempt.ErrorDefinitionTable, attempt.ErrorDefinitionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -387,6 +419,155 @@ func (c *AttemptClient) mutate(ctx context.Context, m *AttemptMutation) (Value, 
 		return (&AttemptDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Attempt mutation op: %q", m.Op())
+	}
+}
+
+// ErrorDefinitionClient is a client for the ErrorDefinition schema.
+type ErrorDefinitionClient struct {
+	config
+}
+
+// NewErrorDefinitionClient returns a client for the ErrorDefinition from the given config.
+func NewErrorDefinitionClient(c config) *ErrorDefinitionClient {
+	return &ErrorDefinitionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `errordefinition.Hooks(f(g(h())))`.
+func (c *ErrorDefinitionClient) Use(hooks ...Hook) {
+	c.hooks.ErrorDefinition = append(c.hooks.ErrorDefinition, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `errordefinition.Intercept(f(g(h())))`.
+func (c *ErrorDefinitionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ErrorDefinition = append(c.inters.ErrorDefinition, interceptors...)
+}
+
+// Create returns a builder for creating a ErrorDefinition entity.
+func (c *ErrorDefinitionClient) Create() *ErrorDefinitionCreate {
+	mutation := newErrorDefinitionMutation(c.config, OpCreate)
+	return &ErrorDefinitionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ErrorDefinition entities.
+func (c *ErrorDefinitionClient) CreateBulk(builders ...*ErrorDefinitionCreate) *ErrorDefinitionCreateBulk {
+	return &ErrorDefinitionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ErrorDefinitionClient) MapCreateBulk(slice any, setFunc func(*ErrorDefinitionCreate, int)) *ErrorDefinitionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ErrorDefinitionCreateBulk{err: fmt.Errorf("calling to ErrorDefinitionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ErrorDefinitionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ErrorDefinitionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ErrorDefinition.
+func (c *ErrorDefinitionClient) Update() *ErrorDefinitionUpdate {
+	mutation := newErrorDefinitionMutation(c.config, OpUpdate)
+	return &ErrorDefinitionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ErrorDefinitionClient) UpdateOne(_m *ErrorDefinition) *ErrorDefinitionUpdateOne {
+	mutation := newErrorDefinitionMutation(c.config, OpUpdateOne, withErrorDefinition(_m))
+	return &ErrorDefinitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ErrorDefinitionClient) UpdateOneID(id uuid.UUID) *ErrorDefinitionUpdateOne {
+	mutation := newErrorDefinitionMutation(c.config, OpUpdateOne, withErrorDefinitionID(id))
+	return &ErrorDefinitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ErrorDefinition.
+func (c *ErrorDefinitionClient) Delete() *ErrorDefinitionDelete {
+	mutation := newErrorDefinitionMutation(c.config, OpDelete)
+	return &ErrorDefinitionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ErrorDefinitionClient) DeleteOne(_m *ErrorDefinition) *ErrorDefinitionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ErrorDefinitionClient) DeleteOneID(id uuid.UUID) *ErrorDefinitionDeleteOne {
+	builder := c.Delete().Where(errordefinition.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ErrorDefinitionDeleteOne{builder}
+}
+
+// Query returns a query builder for ErrorDefinition.
+func (c *ErrorDefinitionClient) Query() *ErrorDefinitionQuery {
+	return &ErrorDefinitionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeErrorDefinition},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ErrorDefinition entity by its id.
+func (c *ErrorDefinitionClient) Get(ctx context.Context, id uuid.UUID) (*ErrorDefinition, error) {
+	return c.Query().Where(errordefinition.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ErrorDefinitionClient) GetX(ctx context.Context, id uuid.UUID) *ErrorDefinition {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAttempts queries the attempts edge of a ErrorDefinition.
+func (c *ErrorDefinitionClient) QueryAttempts(_m *ErrorDefinition) *AttemptQuery {
+	query := (&AttemptClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(errordefinition.Table, errordefinition.FieldID, id),
+			sqlgraph.To(attempt.Table, attempt.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, errordefinition.AttemptsTable, errordefinition.AttemptsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ErrorDefinitionClient) Hooks() []Hook {
+	return c.hooks.ErrorDefinition
+}
+
+// Interceptors returns the client interceptors.
+func (c *ErrorDefinitionClient) Interceptors() []Interceptor {
+	return c.inters.ErrorDefinition
+}
+
+func (c *ErrorDefinitionClient) mutate(ctx context.Context, m *ErrorDefinitionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ErrorDefinitionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ErrorDefinitionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ErrorDefinitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ErrorDefinitionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ErrorDefinition mutation op: %q", m.Op())
 	}
 }
 
@@ -539,139 +720,6 @@ func (c *ErrorResolutionClient) mutate(ctx context.Context, m *ErrorResolutionMu
 	}
 }
 
-// ErrorTypeClient is a client for the ErrorType schema.
-type ErrorTypeClient struct {
-	config
-}
-
-// NewErrorTypeClient returns a client for the ErrorType from the given config.
-func NewErrorTypeClient(c config) *ErrorTypeClient {
-	return &ErrorTypeClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `errortype.Hooks(f(g(h())))`.
-func (c *ErrorTypeClient) Use(hooks ...Hook) {
-	c.hooks.ErrorType = append(c.hooks.ErrorType, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `errortype.Intercept(f(g(h())))`.
-func (c *ErrorTypeClient) Intercept(interceptors ...Interceptor) {
-	c.inters.ErrorType = append(c.inters.ErrorType, interceptors...)
-}
-
-// Create returns a builder for creating a ErrorType entity.
-func (c *ErrorTypeClient) Create() *ErrorTypeCreate {
-	mutation := newErrorTypeMutation(c.config, OpCreate)
-	return &ErrorTypeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of ErrorType entities.
-func (c *ErrorTypeClient) CreateBulk(builders ...*ErrorTypeCreate) *ErrorTypeCreateBulk {
-	return &ErrorTypeCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *ErrorTypeClient) MapCreateBulk(slice any, setFunc func(*ErrorTypeCreate, int)) *ErrorTypeCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &ErrorTypeCreateBulk{err: fmt.Errorf("calling to ErrorTypeClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*ErrorTypeCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &ErrorTypeCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for ErrorType.
-func (c *ErrorTypeClient) Update() *ErrorTypeUpdate {
-	mutation := newErrorTypeMutation(c.config, OpUpdate)
-	return &ErrorTypeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *ErrorTypeClient) UpdateOne(_m *ErrorType) *ErrorTypeUpdateOne {
-	mutation := newErrorTypeMutation(c.config, OpUpdateOne, withErrorType(_m))
-	return &ErrorTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *ErrorTypeClient) UpdateOneID(id int) *ErrorTypeUpdateOne {
-	mutation := newErrorTypeMutation(c.config, OpUpdateOne, withErrorTypeID(id))
-	return &ErrorTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for ErrorType.
-func (c *ErrorTypeClient) Delete() *ErrorTypeDelete {
-	mutation := newErrorTypeMutation(c.config, OpDelete)
-	return &ErrorTypeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *ErrorTypeClient) DeleteOne(_m *ErrorType) *ErrorTypeDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ErrorTypeClient) DeleteOneID(id int) *ErrorTypeDeleteOne {
-	builder := c.Delete().Where(errortype.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &ErrorTypeDeleteOne{builder}
-}
-
-// Query returns a query builder for ErrorType.
-func (c *ErrorTypeClient) Query() *ErrorTypeQuery {
-	return &ErrorTypeQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeErrorType},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a ErrorType entity by its id.
-func (c *ErrorTypeClient) Get(ctx context.Context, id int) (*ErrorType, error) {
-	return c.Query().Where(errortype.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *ErrorTypeClient) GetX(ctx context.Context, id int) *ErrorType {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *ErrorTypeClient) Hooks() []Hook {
-	return c.hooks.ErrorType
-}
-
-// Interceptors returns the client interceptors.
-func (c *ErrorTypeClient) Interceptors() []Interceptor {
-	return c.inters.ErrorType
-}
-
-func (c *ErrorTypeClient) mutate(ctx context.Context, m *ErrorTypeMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&ErrorTypeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&ErrorTypeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&ErrorTypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&ErrorTypeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown ErrorType mutation op: %q", m.Op())
-	}
-}
-
 // FsrsCardClient is a client for the FsrsCard schema.
 type FsrsCardClient struct {
 	config
@@ -789,6 +837,22 @@ func (c *FsrsCardClient) QueryNode(_m *FsrsCard) *NodeQuery {
 			sqlgraph.From(fsrscard.Table, fsrscard.FieldID, id),
 			sqlgraph.To(node.Table, node.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, true, fsrscard.NodeTable, fsrscard.NodeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAttempts queries the attempts edge of a FsrsCard.
+func (c *FsrsCardClient) QueryAttempts(_m *FsrsCard) *AttemptQuery {
+	query := (&AttemptClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(fsrscard.Table, fsrscard.FieldID, id),
+			sqlgraph.To(attempt.Table, attempt.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, fsrscard.AttemptsTable, fsrscard.AttemptsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1415,11 +1479,11 @@ func (c *NodeClosureClient) mutate(ctx context.Context, m *NodeClosureMutation) 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Attempt, ErrorResolution, ErrorType, FsrsCard, Node, NodeAssociation,
+		Attempt, ErrorDefinition, ErrorResolution, FsrsCard, Node, NodeAssociation,
 		NodeClosure []ent.Hook
 	}
 	inters struct {
-		Attempt, ErrorResolution, ErrorType, FsrsCard, Node, NodeAssociation,
+		Attempt, ErrorDefinition, ErrorResolution, FsrsCard, Node, NodeAssociation,
 		NodeClosure []ent.Interceptor
 	}
 )

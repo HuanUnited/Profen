@@ -3,21 +3,75 @@
 package attempt
 
 import (
+	"fmt"
+	"time"
+
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 )
 
 const (
 	// Label holds the string label denoting the attempt type in the database.
 	Label = "attempt"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
+	FieldID = "attempt_id"
+	// FieldRating holds the string denoting the rating field in the database.
+	FieldRating = "rating"
+	// FieldDurationMs holds the string denoting the duration_ms field in the database.
+	FieldDurationMs = "duration_ms"
+	// FieldState holds the string denoting the state field in the database.
+	FieldState = "state"
+	// FieldStability holds the string denoting the stability field in the database.
+	FieldStability = "stability"
+	// FieldDifficulty holds the string denoting the difficulty field in the database.
+	FieldDifficulty = "difficulty"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
+	FieldCreatedAt = "created_at"
+	// FieldCardID holds the string denoting the card_id field in the database.
+	FieldCardID = "card_id"
+	// FieldIsCorrect holds the string denoting the is_correct field in the database.
+	FieldIsCorrect = "is_correct"
+	// FieldErrorTypeID holds the string denoting the error_type_id field in the database.
+	FieldErrorTypeID = "error_type_id"
+	// EdgeCard holds the string denoting the card edge name in mutations.
+	EdgeCard = "card"
+	// EdgeErrorDefinition holds the string denoting the error_definition edge name in mutations.
+	EdgeErrorDefinition = "error_definition"
+	// FsrsCardFieldID holds the string denoting the ID field of the FsrsCard.
+	FsrsCardFieldID = "card_id"
+	// ErrorDefinitionFieldID holds the string denoting the ID field of the ErrorDefinition.
+	ErrorDefinitionFieldID = "error_type_id"
 	// Table holds the table name of the attempt in the database.
 	Table = "attempts"
+	// CardTable is the table that holds the card relation/edge.
+	CardTable = "attempts"
+	// CardInverseTable is the table name for the FsrsCard entity.
+	// It exists in this package in order to avoid circular dependency with the "fsrscard" package.
+	CardInverseTable = "fsrs_cards"
+	// CardColumn is the table column denoting the card relation/edge.
+	CardColumn = "card_id"
+	// ErrorDefinitionTable is the table that holds the error_definition relation/edge.
+	ErrorDefinitionTable = "attempts"
+	// ErrorDefinitionInverseTable is the table name for the ErrorDefinition entity.
+	// It exists in this package in order to avoid circular dependency with the "errordefinition" package.
+	ErrorDefinitionInverseTable = "error_definitions"
+	// ErrorDefinitionColumn is the table column denoting the error_definition relation/edge.
+	ErrorDefinitionColumn = "error_type_id"
 )
 
 // Columns holds all SQL columns for attempt fields.
 var Columns = []string{
 	FieldID,
+	FieldRating,
+	FieldDurationMs,
+	FieldState,
+	FieldStability,
+	FieldDifficulty,
+	FieldCreatedAt,
+	FieldCardID,
+	FieldIsCorrect,
+	FieldErrorTypeID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -30,10 +84,117 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// DefaultDurationMs holds the default value on creation for the "duration_ms" field.
+	DefaultDurationMs int
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
+	DefaultCreatedAt func() time.Time
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
+)
+
+// State defines the type for the "state" enum field.
+type State string
+
+// State values.
+const (
+	StateNew        State = "new"
+	StateLearning   State = "learning"
+	StateReview     State = "review"
+	StateRelearning State = "relearning"
+)
+
+func (s State) String() string {
+	return string(s)
+}
+
+// StateValidator is a validator for the "state" field enum values. It is called by the builders before save.
+func StateValidator(s State) error {
+	switch s {
+	case StateNew, StateLearning, StateReview, StateRelearning:
+		return nil
+	default:
+		return fmt.Errorf("attempt: invalid enum value for state field: %q", s)
+	}
+}
+
 // OrderOption defines the ordering options for the Attempt queries.
 type OrderOption func(*sql.Selector)
 
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByRating orders the results by the rating field.
+func ByRating(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRating, opts...).ToFunc()
+}
+
+// ByDurationMs orders the results by the duration_ms field.
+func ByDurationMs(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDurationMs, opts...).ToFunc()
+}
+
+// ByState orders the results by the state field.
+func ByState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldState, opts...).ToFunc()
+}
+
+// ByStability orders the results by the stability field.
+func ByStability(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStability, opts...).ToFunc()
+}
+
+// ByDifficulty orders the results by the difficulty field.
+func ByDifficulty(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDifficulty, opts...).ToFunc()
+}
+
+// ByCreatedAt orders the results by the created_at field.
+func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByCardID orders the results by the card_id field.
+func ByCardID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCardID, opts...).ToFunc()
+}
+
+// ByIsCorrect orders the results by the is_correct field.
+func ByIsCorrect(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsCorrect, opts...).ToFunc()
+}
+
+// ByErrorTypeID orders the results by the error_type_id field.
+func ByErrorTypeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldErrorTypeID, opts...).ToFunc()
+}
+
+// ByCardField orders the results by card field.
+func ByCardField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCardStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByErrorDefinitionField orders the results by error_definition field.
+func ByErrorDefinitionField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newErrorDefinitionStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newCardStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CardInverseTable, FsrsCardFieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, CardTable, CardColumn),
+	)
+}
+func newErrorDefinitionStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ErrorDefinitionInverseTable, ErrorDefinitionFieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ErrorDefinitionTable, ErrorDefinitionColumn),
+	)
 }

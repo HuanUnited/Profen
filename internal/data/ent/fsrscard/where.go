@@ -494,6 +494,29 @@ func HasNodeWith(preds ...predicate.Node) predicate.FsrsCard {
 	})
 }
 
+// HasAttempts applies the HasEdge predicate on the "attempts" edge.
+func HasAttempts() predicate.FsrsCard {
+	return predicate.FsrsCard(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AttemptsTable, AttemptsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAttemptsWith applies the HasEdge predicate on the "attempts" edge with a given conditions (other predicates).
+func HasAttemptsWith(preds ...predicate.Attempt) predicate.FsrsCard {
+	return predicate.FsrsCard(func(s *sql.Selector) {
+		step := newAttemptsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.FsrsCard) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.AndPredicates(predicates...))

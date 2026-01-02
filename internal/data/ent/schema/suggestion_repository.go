@@ -48,6 +48,8 @@ func (ErrorResolution) Fields() []ent.Field {
 		field.Time("resolved_at").
 			Optional().
 			Nillable(),
+
+		field.UUID("error_type_id", uuid.UUID{}),
 	}
 }
 

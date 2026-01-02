@@ -48,3 +48,13 @@ Standard ORM predicates were insufficient for the "Error Gravity" sort logic.
 | `internal/data/schema/error_resolution.go` | The entity tracking user mistakes. |
 | `internal/data/suggestion_repository.go` | The complex query logic (SQL modifiers). |
 | `internal/data/suggestion_test.go` | Verification of the weighting algorithm. |
+
+## 5. Updates
+
+* **Dynamic Error Definitions**: Replaced hardcoded error types with a dynamic `error_definitions` table. This allows the system to scale to hundreds of error types (Syntax, Logic, Memory) without code changes.
+* **Seeding**: Implemented a startup seeder that populates default error types (`ERR_LAPSE` - 1.0, `ERR_CONCEPT` - 2.5) to ensure the system works out-of-the-box.
+* **Schema Integration**: Updated `ErrorResolution` to reference `error_definitions` via Foreign Key, ensuring data integrity. The Suggestion Engine query (`GetDiagnosticGaps`) relies on these resolutions to calculate priority.
+
+### Block 7 Documentation (Partial / Data Ready)
+
+Create `internal/data/docs/block_7_implementation.md`.

@@ -90,6 +90,12 @@ func (_c *ErrorResolutionCreate) SetNillableResolvedAt(v *time.Time) *ErrorResol
 	return _c
 }
 
+// SetErrorTypeID sets the "error_type_id" field.
+func (_c *ErrorResolutionCreate) SetErrorTypeID(v uuid.UUID) *ErrorResolutionCreate {
+	_c.mutation.SetErrorTypeID(v)
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *ErrorResolutionCreate) SetID(v uuid.UUID) *ErrorResolutionCreate {
 	_c.mutation.SetID(v)
@@ -184,6 +190,9 @@ func (_c *ErrorResolutionCreate) check() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "ErrorResolution.created_at"`)}
 	}
+	if _, ok := _c.mutation.ErrorTypeID(); !ok {
+		return &ValidationError{Name: "error_type_id", err: errors.New(`ent: missing required field "ErrorResolution.error_type_id"`)}
+	}
 	if len(_c.mutation.NodeIDs()) == 0 {
 		return &ValidationError{Name: "node", err: errors.New(`ent: missing required edge "ErrorResolution.node"`)}
 	}
@@ -241,6 +250,10 @@ func (_c *ErrorResolutionCreate) createSpec() (*ErrorResolution, *sqlgraph.Creat
 	if value, ok := _c.mutation.ResolvedAt(); ok {
 		_spec.SetField(errorresolution.FieldResolvedAt, field.TypeTime, value)
 		_node.ResolvedAt = &value
+	}
+	if value, ok := _c.mutation.ErrorTypeID(); ok {
+		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
+		_node.ErrorTypeID = value
 	}
 	if nodes := _c.mutation.NodeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

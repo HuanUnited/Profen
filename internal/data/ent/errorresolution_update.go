@@ -128,6 +128,20 @@ func (_u *ErrorResolutionUpdate) ClearResolvedAt() *ErrorResolutionUpdate {
 	return _u
 }
 
+// SetErrorTypeID sets the "error_type_id" field.
+func (_u *ErrorResolutionUpdate) SetErrorTypeID(v uuid.UUID) *ErrorResolutionUpdate {
+	_u.mutation.SetErrorTypeID(v)
+	return _u
+}
+
+// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
+func (_u *ErrorResolutionUpdate) SetNillableErrorTypeID(v *uuid.UUID) *ErrorResolutionUpdate {
+	if v != nil {
+		_u.SetErrorTypeID(*v)
+	}
+	return _u
+}
+
 // SetNode sets the "node" edge to the Node entity.
 func (_u *ErrorResolutionUpdate) SetNode(v *Node) *ErrorResolutionUpdate {
 	return _u.SetNodeID(v.ID)
@@ -222,6 +236,9 @@ func (_u *ErrorResolutionUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if _u.mutation.ResolvedAtCleared() {
 		_spec.ClearField(errorresolution.FieldResolvedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ErrorTypeID(); ok {
+		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
 	}
 	if _u.mutation.NodeCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -371,6 +388,20 @@ func (_u *ErrorResolutionUpdateOne) ClearResolvedAt() *ErrorResolutionUpdateOne 
 	return _u
 }
 
+// SetErrorTypeID sets the "error_type_id" field.
+func (_u *ErrorResolutionUpdateOne) SetErrorTypeID(v uuid.UUID) *ErrorResolutionUpdateOne {
+	_u.mutation.SetErrorTypeID(v)
+	return _u
+}
+
+// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
+func (_u *ErrorResolutionUpdateOne) SetNillableErrorTypeID(v *uuid.UUID) *ErrorResolutionUpdateOne {
+	if v != nil {
+		_u.SetErrorTypeID(*v)
+	}
+	return _u
+}
+
 // SetNode sets the "node" edge to the Node entity.
 func (_u *ErrorResolutionUpdateOne) SetNode(v *Node) *ErrorResolutionUpdateOne {
 	return _u.SetNodeID(v.ID)
@@ -495,6 +526,9 @@ func (_u *ErrorResolutionUpdateOne) sqlSave(ctx context.Context) (_node *ErrorRe
 	}
 	if _u.mutation.ResolvedAtCleared() {
 		_spec.ClearField(errorresolution.FieldResolvedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ErrorTypeID(); ok {
+		_spec.SetField(errorresolution.FieldErrorTypeID, field.TypeUUID, value)
 	}
 	if _u.mutation.NodeCleared() {
 		edge := &sqlgraph.EdgeSpec{

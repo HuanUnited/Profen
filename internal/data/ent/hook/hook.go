@@ -20,6 +20,18 @@ func (f AttemptFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AttemptMutation", m)
 }
 
+// The ErrorDefinitionFunc type is an adapter to allow the use of ordinary
+// function as ErrorDefinition mutator.
+type ErrorDefinitionFunc func(context.Context, *ent.ErrorDefinitionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ErrorDefinitionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ErrorDefinitionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ErrorDefinitionMutation", m)
+}
+
 // The ErrorResolutionFunc type is an adapter to allow the use of ordinary
 // function as ErrorResolution mutator.
 type ErrorResolutionFunc func(context.Context, *ent.ErrorResolutionMutation) (ent.Value, error)
@@ -30,18 +42,6 @@ func (f ErrorResolutionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ErrorResolutionMutation", m)
-}
-
-// The ErrorTypeFunc type is an adapter to allow the use of ordinary
-// function as ErrorType mutator.
-type ErrorTypeFunc func(context.Context, *ent.ErrorTypeMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ErrorTypeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ErrorTypeMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ErrorTypeMutation", m)
 }
 
 // The FsrsCardFunc type is an adapter to allow the use of ordinary

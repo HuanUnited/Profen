@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/attempt"
+	"profen/internal/data/ent/errordefinition"
 	"profen/internal/data/ent/errorresolution"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
@@ -30,8 +32,8 @@ const (
 
 	// Node types.
 	TypeAttempt         = "Attempt"
+	TypeErrorDefinition = "ErrorDefinition"
 	TypeErrorResolution = "ErrorResolution"
-	TypeErrorType       = "ErrorType"
 	TypeFsrsCard        = "FsrsCard"
 	TypeNode            = "Node"
 	TypeNodeAssociation = "NodeAssociation"
@@ -41,13 +43,28 @@ const (
 // AttemptMutation represents an operation that mutates the Attempt nodes in the graph.
 type AttemptMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Attempt, error)
-	predicates    []predicate.Attempt
+	op                      Op
+	typ                     string
+	id                      *uuid.UUID
+	rating                  *int
+	addrating               *int
+	duration_ms             *int
+	addduration_ms          *int
+	state                   *attempt.State
+	stability               *float64
+	addstability            *float64
+	difficulty              *float64
+	adddifficulty           *float64
+	created_at              *time.Time
+	is_correct              *bool
+	clearedFields           map[string]struct{}
+	card                    *uuid.UUID
+	clearedcard             bool
+	error_definition        *uuid.UUID
+	clearederror_definition bool
+	done                    bool
+	oldValue                func(context.Context) (*Attempt, error)
+	predicates              []predicate.Attempt
 }
 
 var _ ent.Mutation = (*AttemptMutation)(nil)
@@ -70,7 +87,7 @@ func newAttemptMutation(c config, op Op, opts ...attemptOption) *AttemptMutation
 }
 
 // withAttemptID sets the ID field of the mutation.
-func withAttemptID(id int) attemptOption {
+func withAttemptID(id uuid.UUID) attemptOption {
 	return func(m *AttemptMutation) {
 		var (
 			err   error
@@ -120,9 +137,15 @@ func (m AttemptMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Attempt entities.
+func (m *AttemptMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *AttemptMutation) ID() (id int, exists bool) {
+func (m *AttemptMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -133,12 +156,12 @@ func (m *AttemptMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *AttemptMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *AttemptMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -146,6 +169,490 @@ func (m *AttemptMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetRating sets the "rating" field.
+func (m *AttemptMutation) SetRating(i int) {
+	m.rating = &i
+	m.addrating = nil
+}
+
+// Rating returns the value of the "rating" field in the mutation.
+func (m *AttemptMutation) Rating() (r int, exists bool) {
+	v := m.rating
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRating returns the old "rating" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldRating(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRating is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRating requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRating: %w", err)
+	}
+	return oldValue.Rating, nil
+}
+
+// AddRating adds i to the "rating" field.
+func (m *AttemptMutation) AddRating(i int) {
+	if m.addrating != nil {
+		*m.addrating += i
+	} else {
+		m.addrating = &i
+	}
+}
+
+// AddedRating returns the value that was added to the "rating" field in this mutation.
+func (m *AttemptMutation) AddedRating() (r int, exists bool) {
+	v := m.addrating
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRating resets all changes to the "rating" field.
+func (m *AttemptMutation) ResetRating() {
+	m.rating = nil
+	m.addrating = nil
+}
+
+// SetDurationMs sets the "duration_ms" field.
+func (m *AttemptMutation) SetDurationMs(i int) {
+	m.duration_ms = &i
+	m.addduration_ms = nil
+}
+
+// DurationMs returns the value of the "duration_ms" field in the mutation.
+func (m *AttemptMutation) DurationMs() (r int, exists bool) {
+	v := m.duration_ms
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDurationMs returns the old "duration_ms" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldDurationMs(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDurationMs is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDurationMs requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDurationMs: %w", err)
+	}
+	return oldValue.DurationMs, nil
+}
+
+// AddDurationMs adds i to the "duration_ms" field.
+func (m *AttemptMutation) AddDurationMs(i int) {
+	if m.addduration_ms != nil {
+		*m.addduration_ms += i
+	} else {
+		m.addduration_ms = &i
+	}
+}
+
+// AddedDurationMs returns the value that was added to the "duration_ms" field in this mutation.
+func (m *AttemptMutation) AddedDurationMs() (r int, exists bool) {
+	v := m.addduration_ms
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDurationMs resets all changes to the "duration_ms" field.
+func (m *AttemptMutation) ResetDurationMs() {
+	m.duration_ms = nil
+	m.addduration_ms = nil
+}
+
+// SetState sets the "state" field.
+func (m *AttemptMutation) SetState(a attempt.State) {
+	m.state = &a
+}
+
+// State returns the value of the "state" field in the mutation.
+func (m *AttemptMutation) State() (r attempt.State, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldState returns the old "state" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldState(ctx context.Context) (v attempt.State, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldState: %w", err)
+	}
+	return oldValue.State, nil
+}
+
+// ResetState resets all changes to the "state" field.
+func (m *AttemptMutation) ResetState() {
+	m.state = nil
+}
+
+// SetStability sets the "stability" field.
+func (m *AttemptMutation) SetStability(f float64) {
+	m.stability = &f
+	m.addstability = nil
+}
+
+// Stability returns the value of the "stability" field in the mutation.
+func (m *AttemptMutation) Stability() (r float64, exists bool) {
+	v := m.stability
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStability returns the old "stability" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldStability(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStability is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStability requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStability: %w", err)
+	}
+	return oldValue.Stability, nil
+}
+
+// AddStability adds f to the "stability" field.
+func (m *AttemptMutation) AddStability(f float64) {
+	if m.addstability != nil {
+		*m.addstability += f
+	} else {
+		m.addstability = &f
+	}
+}
+
+// AddedStability returns the value that was added to the "stability" field in this mutation.
+func (m *AttemptMutation) AddedStability() (r float64, exists bool) {
+	v := m.addstability
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStability resets all changes to the "stability" field.
+func (m *AttemptMutation) ResetStability() {
+	m.stability = nil
+	m.addstability = nil
+}
+
+// SetDifficulty sets the "difficulty" field.
+func (m *AttemptMutation) SetDifficulty(f float64) {
+	m.difficulty = &f
+	m.adddifficulty = nil
+}
+
+// Difficulty returns the value of the "difficulty" field in the mutation.
+func (m *AttemptMutation) Difficulty() (r float64, exists bool) {
+	v := m.difficulty
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDifficulty returns the old "difficulty" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldDifficulty(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDifficulty is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDifficulty requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDifficulty: %w", err)
+	}
+	return oldValue.Difficulty, nil
+}
+
+// AddDifficulty adds f to the "difficulty" field.
+func (m *AttemptMutation) AddDifficulty(f float64) {
+	if m.adddifficulty != nil {
+		*m.adddifficulty += f
+	} else {
+		m.adddifficulty = &f
+	}
+}
+
+// AddedDifficulty returns the value that was added to the "difficulty" field in this mutation.
+func (m *AttemptMutation) AddedDifficulty() (r float64, exists bool) {
+	v := m.adddifficulty
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDifficulty resets all changes to the "difficulty" field.
+func (m *AttemptMutation) ResetDifficulty() {
+	m.difficulty = nil
+	m.adddifficulty = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AttemptMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AttemptMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AttemptMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetCardID sets the "card_id" field.
+func (m *AttemptMutation) SetCardID(u uuid.UUID) {
+	m.card = &u
+}
+
+// CardID returns the value of the "card_id" field in the mutation.
+func (m *AttemptMutation) CardID() (r uuid.UUID, exists bool) {
+	v := m.card
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCardID returns the old "card_id" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldCardID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCardID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCardID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCardID: %w", err)
+	}
+	return oldValue.CardID, nil
+}
+
+// ResetCardID resets all changes to the "card_id" field.
+func (m *AttemptMutation) ResetCardID() {
+	m.card = nil
+}
+
+// SetIsCorrect sets the "is_correct" field.
+func (m *AttemptMutation) SetIsCorrect(b bool) {
+	m.is_correct = &b
+}
+
+// IsCorrect returns the value of the "is_correct" field in the mutation.
+func (m *AttemptMutation) IsCorrect() (r bool, exists bool) {
+	v := m.is_correct
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsCorrect returns the old "is_correct" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldIsCorrect(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsCorrect is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsCorrect requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsCorrect: %w", err)
+	}
+	return oldValue.IsCorrect, nil
+}
+
+// ResetIsCorrect resets all changes to the "is_correct" field.
+func (m *AttemptMutation) ResetIsCorrect() {
+	m.is_correct = nil
+}
+
+// SetErrorTypeID sets the "error_type_id" field.
+func (m *AttemptMutation) SetErrorTypeID(u uuid.UUID) {
+	m.error_definition = &u
+}
+
+// ErrorTypeID returns the value of the "error_type_id" field in the mutation.
+func (m *AttemptMutation) ErrorTypeID() (r uuid.UUID, exists bool) {
+	v := m.error_definition
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorTypeID returns the old "error_type_id" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldErrorTypeID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorTypeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorTypeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorTypeID: %w", err)
+	}
+	return oldValue.ErrorTypeID, nil
+}
+
+// ClearErrorTypeID clears the value of the "error_type_id" field.
+func (m *AttemptMutation) ClearErrorTypeID() {
+	m.error_definition = nil
+	m.clearedFields[attempt.FieldErrorTypeID] = struct{}{}
+}
+
+// ErrorTypeIDCleared returns if the "error_type_id" field was cleared in this mutation.
+func (m *AttemptMutation) ErrorTypeIDCleared() bool {
+	_, ok := m.clearedFields[attempt.FieldErrorTypeID]
+	return ok
+}
+
+// ResetErrorTypeID resets all changes to the "error_type_id" field.
+func (m *AttemptMutation) ResetErrorTypeID() {
+	m.error_definition = nil
+	delete(m.clearedFields, attempt.FieldErrorTypeID)
+}
+
+// ClearCard clears the "card" edge to the FsrsCard entity.
+func (m *AttemptMutation) ClearCard() {
+	m.clearedcard = true
+	m.clearedFields[attempt.FieldCardID] = struct{}{}
+}
+
+// CardCleared reports if the "card" edge to the FsrsCard entity was cleared.
+func (m *AttemptMutation) CardCleared() bool {
+	return m.clearedcard
+}
+
+// CardIDs returns the "card" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CardID instead. It exists only for internal usage by the builders.
+func (m *AttemptMutation) CardIDs() (ids []uuid.UUID) {
+	if id := m.card; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCard resets all changes to the "card" edge.
+func (m *AttemptMutation) ResetCard() {
+	m.card = nil
+	m.clearedcard = false
+}
+
+// SetErrorDefinitionID sets the "error_definition" edge to the ErrorDefinition entity by id.
+func (m *AttemptMutation) SetErrorDefinitionID(id uuid.UUID) {
+	m.error_definition = &id
+}
+
+// ClearErrorDefinition clears the "error_definition" edge to the ErrorDefinition entity.
+func (m *AttemptMutation) ClearErrorDefinition() {
+	m.clearederror_definition = true
+	m.clearedFields[attempt.FieldErrorTypeID] = struct{}{}
+}
+
+// ErrorDefinitionCleared reports if the "error_definition" edge to the ErrorDefinition entity was cleared.
+func (m *AttemptMutation) ErrorDefinitionCleared() bool {
+	return m.ErrorTypeIDCleared() || m.clearederror_definition
+}
+
+// ErrorDefinitionID returns the "error_definition" edge ID in the mutation.
+func (m *AttemptMutation) ErrorDefinitionID() (id uuid.UUID, exists bool) {
+	if m.error_definition != nil {
+		return *m.error_definition, true
+	}
+	return
+}
+
+// ErrorDefinitionIDs returns the "error_definition" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ErrorDefinitionID instead. It exists only for internal usage by the builders.
+func (m *AttemptMutation) ErrorDefinitionIDs() (ids []uuid.UUID) {
+	if id := m.error_definition; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetErrorDefinition resets all changes to the "error_definition" edge.
+func (m *AttemptMutation) ResetErrorDefinition() {
+	m.error_definition = nil
+	m.clearederror_definition = false
 }
 
 // Where appends a list predicates to the AttemptMutation builder.
@@ -182,7 +689,34 @@ func (m *AttemptMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AttemptMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 9)
+	if m.rating != nil {
+		fields = append(fields, attempt.FieldRating)
+	}
+	if m.duration_ms != nil {
+		fields = append(fields, attempt.FieldDurationMs)
+	}
+	if m.state != nil {
+		fields = append(fields, attempt.FieldState)
+	}
+	if m.stability != nil {
+		fields = append(fields, attempt.FieldStability)
+	}
+	if m.difficulty != nil {
+		fields = append(fields, attempt.FieldDifficulty)
+	}
+	if m.created_at != nil {
+		fields = append(fields, attempt.FieldCreatedAt)
+	}
+	if m.card != nil {
+		fields = append(fields, attempt.FieldCardID)
+	}
+	if m.is_correct != nil {
+		fields = append(fields, attempt.FieldIsCorrect)
+	}
+	if m.error_definition != nil {
+		fields = append(fields, attempt.FieldErrorTypeID)
+	}
 	return fields
 }
 
@@ -190,6 +724,26 @@ func (m *AttemptMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *AttemptMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case attempt.FieldRating:
+		return m.Rating()
+	case attempt.FieldDurationMs:
+		return m.DurationMs()
+	case attempt.FieldState:
+		return m.State()
+	case attempt.FieldStability:
+		return m.Stability()
+	case attempt.FieldDifficulty:
+		return m.Difficulty()
+	case attempt.FieldCreatedAt:
+		return m.CreatedAt()
+	case attempt.FieldCardID:
+		return m.CardID()
+	case attempt.FieldIsCorrect:
+		return m.IsCorrect()
+	case attempt.FieldErrorTypeID:
+		return m.ErrorTypeID()
+	}
 	return nil, false
 }
 
@@ -197,6 +751,26 @@ func (m *AttemptMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *AttemptMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case attempt.FieldRating:
+		return m.OldRating(ctx)
+	case attempt.FieldDurationMs:
+		return m.OldDurationMs(ctx)
+	case attempt.FieldState:
+		return m.OldState(ctx)
+	case attempt.FieldStability:
+		return m.OldStability(ctx)
+	case attempt.FieldDifficulty:
+		return m.OldDifficulty(ctx)
+	case attempt.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case attempt.FieldCardID:
+		return m.OldCardID(ctx)
+	case attempt.FieldIsCorrect:
+		return m.OldIsCorrect(ctx)
+	case attempt.FieldErrorTypeID:
+		return m.OldErrorTypeID(ctx)
+	}
 	return nil, fmt.Errorf("unknown Attempt field %s", name)
 }
 
@@ -205,6 +779,69 @@ func (m *AttemptMutation) OldField(ctx context.Context, name string) (ent.Value,
 // type.
 func (m *AttemptMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case attempt.FieldRating:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRating(v)
+		return nil
+	case attempt.FieldDurationMs:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDurationMs(v)
+		return nil
+	case attempt.FieldState:
+		v, ok := value.(attempt.State)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetState(v)
+		return nil
+	case attempt.FieldStability:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStability(v)
+		return nil
+	case attempt.FieldDifficulty:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDifficulty(v)
+		return nil
+	case attempt.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case attempt.FieldCardID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCardID(v)
+		return nil
+	case attempt.FieldIsCorrect:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsCorrect(v)
+		return nil
+	case attempt.FieldErrorTypeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorTypeID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Attempt field %s", name)
 }
@@ -212,13 +849,36 @@ func (m *AttemptMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *AttemptMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addrating != nil {
+		fields = append(fields, attempt.FieldRating)
+	}
+	if m.addduration_ms != nil {
+		fields = append(fields, attempt.FieldDurationMs)
+	}
+	if m.addstability != nil {
+		fields = append(fields, attempt.FieldStability)
+	}
+	if m.adddifficulty != nil {
+		fields = append(fields, attempt.FieldDifficulty)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *AttemptMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case attempt.FieldRating:
+		return m.AddedRating()
+	case attempt.FieldDurationMs:
+		return m.AddedDurationMs()
+	case attempt.FieldStability:
+		return m.AddedStability()
+	case attempt.FieldDifficulty:
+		return m.AddedDifficulty()
+	}
 	return nil, false
 }
 
@@ -226,13 +886,47 @@ func (m *AttemptMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *AttemptMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case attempt.FieldRating:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRating(v)
+		return nil
+	case attempt.FieldDurationMs:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDurationMs(v)
+		return nil
+	case attempt.FieldStability:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStability(v)
+		return nil
+	case attempt.FieldDifficulty:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDifficulty(v)
+		return nil
+	}
 	return fmt.Errorf("unknown Attempt numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *AttemptMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(attempt.FieldErrorTypeID) {
+		fields = append(fields, attempt.FieldErrorTypeID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -245,30 +939,80 @@ func (m *AttemptMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *AttemptMutation) ClearField(name string) error {
+	switch name {
+	case attempt.FieldErrorTypeID:
+		m.ClearErrorTypeID()
+		return nil
+	}
 	return fmt.Errorf("unknown Attempt nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *AttemptMutation) ResetField(name string) error {
+	switch name {
+	case attempt.FieldRating:
+		m.ResetRating()
+		return nil
+	case attempt.FieldDurationMs:
+		m.ResetDurationMs()
+		return nil
+	case attempt.FieldState:
+		m.ResetState()
+		return nil
+	case attempt.FieldStability:
+		m.ResetStability()
+		return nil
+	case attempt.FieldDifficulty:
+		m.ResetDifficulty()
+		return nil
+	case attempt.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case attempt.FieldCardID:
+		m.ResetCardID()
+		return nil
+	case attempt.FieldIsCorrect:
+		m.ResetIsCorrect()
+		return nil
+	case attempt.FieldErrorTypeID:
+		m.ResetErrorTypeID()
+		return nil
+	}
 	return fmt.Errorf("unknown Attempt field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *AttemptMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.card != nil {
+		edges = append(edges, attempt.EdgeCard)
+	}
+	if m.error_definition != nil {
+		edges = append(edges, attempt.EdgeErrorDefinition)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *AttemptMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case attempt.EdgeCard:
+		if id := m.card; id != nil {
+			return []ent.Value{*id}
+		}
+	case attempt.EdgeErrorDefinition:
+		if id := m.error_definition; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *AttemptMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
 	return edges
 }
 
@@ -280,26 +1024,623 @@ func (m *AttemptMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *AttemptMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.clearedcard {
+		edges = append(edges, attempt.EdgeCard)
+	}
+	if m.clearederror_definition {
+		edges = append(edges, attempt.EdgeErrorDefinition)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *AttemptMutation) EdgeCleared(name string) bool {
+	switch name {
+	case attempt.EdgeCard:
+		return m.clearedcard
+	case attempt.EdgeErrorDefinition:
+		return m.clearederror_definition
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *AttemptMutation) ClearEdge(name string) error {
+	switch name {
+	case attempt.EdgeCard:
+		m.ClearCard()
+		return nil
+	case attempt.EdgeErrorDefinition:
+		m.ClearErrorDefinition()
+		return nil
+	}
 	return fmt.Errorf("unknown Attempt unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *AttemptMutation) ResetEdge(name string) error {
+	switch name {
+	case attempt.EdgeCard:
+		m.ResetCard()
+		return nil
+	case attempt.EdgeErrorDefinition:
+		m.ResetErrorDefinition()
+		return nil
+	}
 	return fmt.Errorf("unknown Attempt edge %s", name)
+}
+
+// ErrorDefinitionMutation represents an operation that mutates the ErrorDefinition nodes in the graph.
+type ErrorDefinitionMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *uuid.UUID
+	label           *string
+	base_weight     *float64
+	addbase_weight  *float64
+	is_system       *bool
+	clearedFields   map[string]struct{}
+	attempts        map[uuid.UUID]struct{}
+	removedattempts map[uuid.UUID]struct{}
+	clearedattempts bool
+	done            bool
+	oldValue        func(context.Context) (*ErrorDefinition, error)
+	predicates      []predicate.ErrorDefinition
+}
+
+var _ ent.Mutation = (*ErrorDefinitionMutation)(nil)
+
+// errordefinitionOption allows management of the mutation configuration using functional options.
+type errordefinitionOption func(*ErrorDefinitionMutation)
+
+// newErrorDefinitionMutation creates new mutation for the ErrorDefinition entity.
+func newErrorDefinitionMutation(c config, op Op, opts ...errordefinitionOption) *ErrorDefinitionMutation {
+	m := &ErrorDefinitionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeErrorDefinition,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withErrorDefinitionID sets the ID field of the mutation.
+func withErrorDefinitionID(id uuid.UUID) errordefinitionOption {
+	return func(m *ErrorDefinitionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ErrorDefinition
+		)
+		m.oldValue = func(ctx context.Context) (*ErrorDefinition, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ErrorDefinition.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withErrorDefinition sets the old ErrorDefinition of the mutation.
+func withErrorDefinition(node *ErrorDefinition) errordefinitionOption {
+	return func(m *ErrorDefinitionMutation) {
+		m.oldValue = func(context.Context) (*ErrorDefinition, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ErrorDefinitionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ErrorDefinitionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ErrorDefinition entities.
+func (m *ErrorDefinitionMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ErrorDefinitionMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ErrorDefinitionMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ErrorDefinition.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetLabel sets the "label" field.
+func (m *ErrorDefinitionMutation) SetLabel(s string) {
+	m.label = &s
+}
+
+// Label returns the value of the "label" field in the mutation.
+func (m *ErrorDefinitionMutation) Label() (r string, exists bool) {
+	v := m.label
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLabel returns the old "label" field's value of the ErrorDefinition entity.
+// If the ErrorDefinition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorDefinitionMutation) OldLabel(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLabel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLabel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLabel: %w", err)
+	}
+	return oldValue.Label, nil
+}
+
+// ResetLabel resets all changes to the "label" field.
+func (m *ErrorDefinitionMutation) ResetLabel() {
+	m.label = nil
+}
+
+// SetBaseWeight sets the "base_weight" field.
+func (m *ErrorDefinitionMutation) SetBaseWeight(f float64) {
+	m.base_weight = &f
+	m.addbase_weight = nil
+}
+
+// BaseWeight returns the value of the "base_weight" field in the mutation.
+func (m *ErrorDefinitionMutation) BaseWeight() (r float64, exists bool) {
+	v := m.base_weight
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBaseWeight returns the old "base_weight" field's value of the ErrorDefinition entity.
+// If the ErrorDefinition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorDefinitionMutation) OldBaseWeight(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBaseWeight is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBaseWeight requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBaseWeight: %w", err)
+	}
+	return oldValue.BaseWeight, nil
+}
+
+// AddBaseWeight adds f to the "base_weight" field.
+func (m *ErrorDefinitionMutation) AddBaseWeight(f float64) {
+	if m.addbase_weight != nil {
+		*m.addbase_weight += f
+	} else {
+		m.addbase_weight = &f
+	}
+}
+
+// AddedBaseWeight returns the value that was added to the "base_weight" field in this mutation.
+func (m *ErrorDefinitionMutation) AddedBaseWeight() (r float64, exists bool) {
+	v := m.addbase_weight
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBaseWeight resets all changes to the "base_weight" field.
+func (m *ErrorDefinitionMutation) ResetBaseWeight() {
+	m.base_weight = nil
+	m.addbase_weight = nil
+}
+
+// SetIsSystem sets the "is_system" field.
+func (m *ErrorDefinitionMutation) SetIsSystem(b bool) {
+	m.is_system = &b
+}
+
+// IsSystem returns the value of the "is_system" field in the mutation.
+func (m *ErrorDefinitionMutation) IsSystem() (r bool, exists bool) {
+	v := m.is_system
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsSystem returns the old "is_system" field's value of the ErrorDefinition entity.
+// If the ErrorDefinition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorDefinitionMutation) OldIsSystem(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsSystem is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsSystem requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsSystem: %w", err)
+	}
+	return oldValue.IsSystem, nil
+}
+
+// ResetIsSystem resets all changes to the "is_system" field.
+func (m *ErrorDefinitionMutation) ResetIsSystem() {
+	m.is_system = nil
+}
+
+// AddAttemptIDs adds the "attempts" edge to the Attempt entity by ids.
+func (m *ErrorDefinitionMutation) AddAttemptIDs(ids ...uuid.UUID) {
+	if m.attempts == nil {
+		m.attempts = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.attempts[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAttempts clears the "attempts" edge to the Attempt entity.
+func (m *ErrorDefinitionMutation) ClearAttempts() {
+	m.clearedattempts = true
+}
+
+// AttemptsCleared reports if the "attempts" edge to the Attempt entity was cleared.
+func (m *ErrorDefinitionMutation) AttemptsCleared() bool {
+	return m.clearedattempts
+}
+
+// RemoveAttemptIDs removes the "attempts" edge to the Attempt entity by IDs.
+func (m *ErrorDefinitionMutation) RemoveAttemptIDs(ids ...uuid.UUID) {
+	if m.removedattempts == nil {
+		m.removedattempts = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.attempts, ids[i])
+		m.removedattempts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAttempts returns the removed IDs of the "attempts" edge to the Attempt entity.
+func (m *ErrorDefinitionMutation) RemovedAttemptsIDs() (ids []uuid.UUID) {
+	for id := range m.removedattempts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AttemptsIDs returns the "attempts" edge IDs in the mutation.
+func (m *ErrorDefinitionMutation) AttemptsIDs() (ids []uuid.UUID) {
+	for id := range m.attempts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAttempts resets all changes to the "attempts" edge.
+func (m *ErrorDefinitionMutation) ResetAttempts() {
+	m.attempts = nil
+	m.clearedattempts = false
+	m.removedattempts = nil
+}
+
+// Where appends a list predicates to the ErrorDefinitionMutation builder.
+func (m *ErrorDefinitionMutation) Where(ps ...predicate.ErrorDefinition) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ErrorDefinitionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ErrorDefinitionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ErrorDefinition, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ErrorDefinitionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ErrorDefinitionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ErrorDefinition).
+func (m *ErrorDefinitionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ErrorDefinitionMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.label != nil {
+		fields = append(fields, errordefinition.FieldLabel)
+	}
+	if m.base_weight != nil {
+		fields = append(fields, errordefinition.FieldBaseWeight)
+	}
+	if m.is_system != nil {
+		fields = append(fields, errordefinition.FieldIsSystem)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ErrorDefinitionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case errordefinition.FieldLabel:
+		return m.Label()
+	case errordefinition.FieldBaseWeight:
+		return m.BaseWeight()
+	case errordefinition.FieldIsSystem:
+		return m.IsSystem()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ErrorDefinitionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case errordefinition.FieldLabel:
+		return m.OldLabel(ctx)
+	case errordefinition.FieldBaseWeight:
+		return m.OldBaseWeight(ctx)
+	case errordefinition.FieldIsSystem:
+		return m.OldIsSystem(ctx)
+	}
+	return nil, fmt.Errorf("unknown ErrorDefinition field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ErrorDefinitionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case errordefinition.FieldLabel:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLabel(v)
+		return nil
+	case errordefinition.FieldBaseWeight:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBaseWeight(v)
+		return nil
+	case errordefinition.FieldIsSystem:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsSystem(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ErrorDefinition field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ErrorDefinitionMutation) AddedFields() []string {
+	var fields []string
+	if m.addbase_weight != nil {
+		fields = append(fields, errordefinition.FieldBaseWeight)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ErrorDefinitionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case errordefinition.FieldBaseWeight:
+		return m.AddedBaseWeight()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ErrorDefinitionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case errordefinition.FieldBaseWeight:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBaseWeight(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ErrorDefinition numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ErrorDefinitionMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ErrorDefinitionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ErrorDefinitionMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ErrorDefinition nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ErrorDefinitionMutation) ResetField(name string) error {
+	switch name {
+	case errordefinition.FieldLabel:
+		m.ResetLabel()
+		return nil
+	case errordefinition.FieldBaseWeight:
+		m.ResetBaseWeight()
+		return nil
+	case errordefinition.FieldIsSystem:
+		m.ResetIsSystem()
+		return nil
+	}
+	return fmt.Errorf("unknown ErrorDefinition field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ErrorDefinitionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.attempts != nil {
+		edges = append(edges, errordefinition.EdgeAttempts)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ErrorDefinitionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case errordefinition.EdgeAttempts:
+		ids := make([]ent.Value, 0, len(m.attempts))
+		for id := range m.attempts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ErrorDefinitionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedattempts != nil {
+		edges = append(edges, errordefinition.EdgeAttempts)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ErrorDefinitionMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case errordefinition.EdgeAttempts:
+		ids := make([]ent.Value, 0, len(m.removedattempts))
+		for id := range m.removedattempts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ErrorDefinitionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedattempts {
+		edges = append(edges, errordefinition.EdgeAttempts)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ErrorDefinitionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case errordefinition.EdgeAttempts:
+		return m.clearedattempts
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ErrorDefinitionMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ErrorDefinition unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ErrorDefinitionMutation) ResetEdge(name string) error {
+	switch name {
+	case errordefinition.EdgeAttempts:
+		m.ResetAttempts()
+		return nil
+	}
+	return fmt.Errorf("unknown ErrorDefinition edge %s", name)
 }
 
 // ErrorResolutionMutation represents an operation that mutates the ErrorResolution nodes in the graph.
@@ -314,6 +1655,7 @@ type ErrorResolutionMutation struct {
 	is_resolved      *bool
 	created_at       *time.Time
 	resolved_at      *time.Time
+	error_type_id    *uuid.UUID
 	clearedFields    map[string]struct{}
 	node             *uuid.UUID
 	clearednode      bool
@@ -675,6 +2017,42 @@ func (m *ErrorResolutionMutation) ResetResolvedAt() {
 	delete(m.clearedFields, errorresolution.FieldResolvedAt)
 }
 
+// SetErrorTypeID sets the "error_type_id" field.
+func (m *ErrorResolutionMutation) SetErrorTypeID(u uuid.UUID) {
+	m.error_type_id = &u
+}
+
+// ErrorTypeID returns the value of the "error_type_id" field in the mutation.
+func (m *ErrorResolutionMutation) ErrorTypeID() (r uuid.UUID, exists bool) {
+	v := m.error_type_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorTypeID returns the old "error_type_id" field's value of the ErrorResolution entity.
+// If the ErrorResolution object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ErrorResolutionMutation) OldErrorTypeID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorTypeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorTypeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorTypeID: %w", err)
+	}
+	return oldValue.ErrorTypeID, nil
+}
+
+// ResetErrorTypeID resets all changes to the "error_type_id" field.
+func (m *ErrorResolutionMutation) ResetErrorTypeID() {
+	m.error_type_id = nil
+}
+
 // ClearNode clears the "node" edge to the Node entity.
 func (m *ErrorResolutionMutation) ClearNode() {
 	m.clearednode = true
@@ -736,7 +2114,7 @@ func (m *ErrorResolutionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ErrorResolutionMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.node != nil {
 		fields = append(fields, errorresolution.FieldNodeID)
 	}
@@ -754,6 +2132,9 @@ func (m *ErrorResolutionMutation) Fields() []string {
 	}
 	if m.resolved_at != nil {
 		fields = append(fields, errorresolution.FieldResolvedAt)
+	}
+	if m.error_type_id != nil {
+		fields = append(fields, errorresolution.FieldErrorTypeID)
 	}
 	return fields
 }
@@ -775,6 +2156,8 @@ func (m *ErrorResolutionMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case errorresolution.FieldResolvedAt:
 		return m.ResolvedAt()
+	case errorresolution.FieldErrorTypeID:
+		return m.ErrorTypeID()
 	}
 	return nil, false
 }
@@ -796,6 +2179,8 @@ func (m *ErrorResolutionMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCreatedAt(ctx)
 	case errorresolution.FieldResolvedAt:
 		return m.OldResolvedAt(ctx)
+	case errorresolution.FieldErrorTypeID:
+		return m.OldErrorTypeID(ctx)
 	}
 	return nil, fmt.Errorf("unknown ErrorResolution field %s", name)
 }
@@ -846,6 +2231,13 @@ func (m *ErrorResolutionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetResolvedAt(v)
+		return nil
+	case errorresolution.FieldErrorTypeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorTypeID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown ErrorResolution field %s", name)
@@ -938,6 +2330,9 @@ func (m *ErrorResolutionMutation) ResetField(name string) error {
 	case errorresolution.FieldResolvedAt:
 		m.ResetResolvedAt()
 		return nil
+	case errorresolution.FieldErrorTypeID:
+		m.ResetErrorTypeID()
+		return nil
 	}
 	return fmt.Errorf("unknown ErrorResolution field %s", name)
 }
@@ -1016,270 +2411,6 @@ func (m *ErrorResolutionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown ErrorResolution edge %s", name)
 }
 
-// ErrorTypeMutation represents an operation that mutates the ErrorType nodes in the graph.
-type ErrorTypeMutation struct {
-	config
-	op            Op
-	typ           string
-	id            *int
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*ErrorType, error)
-	predicates    []predicate.ErrorType
-}
-
-var _ ent.Mutation = (*ErrorTypeMutation)(nil)
-
-// errortypeOption allows management of the mutation configuration using functional options.
-type errortypeOption func(*ErrorTypeMutation)
-
-// newErrorTypeMutation creates new mutation for the ErrorType entity.
-func newErrorTypeMutation(c config, op Op, opts ...errortypeOption) *ErrorTypeMutation {
-	m := &ErrorTypeMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeErrorType,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withErrorTypeID sets the ID field of the mutation.
-func withErrorTypeID(id int) errortypeOption {
-	return func(m *ErrorTypeMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *ErrorType
-		)
-		m.oldValue = func(ctx context.Context) (*ErrorType, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().ErrorType.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withErrorType sets the old ErrorType of the mutation.
-func withErrorType(node *ErrorType) errortypeOption {
-	return func(m *ErrorTypeMutation) {
-		m.oldValue = func(context.Context) (*ErrorType, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m ErrorTypeMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m ErrorTypeMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *ErrorTypeMutation) ID() (id int, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *ErrorTypeMutation) IDs(ctx context.Context) ([]int, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []int{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().ErrorType.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// Where appends a list predicates to the ErrorTypeMutation builder.
-func (m *ErrorTypeMutation) Where(ps ...predicate.ErrorType) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the ErrorTypeMutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *ErrorTypeMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.ErrorType, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *ErrorTypeMutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *ErrorTypeMutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (ErrorType).
-func (m *ErrorTypeMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *ErrorTypeMutation) Fields() []string {
-	fields := make([]string, 0, 0)
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *ErrorTypeMutation) Field(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *ErrorTypeMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	return nil, fmt.Errorf("unknown ErrorType field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *ErrorTypeMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown ErrorType field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *ErrorTypeMutation) AddedFields() []string {
-	return nil
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *ErrorTypeMutation) AddedField(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *ErrorTypeMutation) AddField(name string, value ent.Value) error {
-	return fmt.Errorf("unknown ErrorType numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *ErrorTypeMutation) ClearedFields() []string {
-	return nil
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *ErrorTypeMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *ErrorTypeMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown ErrorType nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *ErrorTypeMutation) ResetField(name string) error {
-	return fmt.Errorf("unknown ErrorType field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *ErrorTypeMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *ErrorTypeMutation) AddedIDs(name string) []ent.Value {
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *ErrorTypeMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *ErrorTypeMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *ErrorTypeMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *ErrorTypeMutation) EdgeCleared(name string) bool {
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *ErrorTypeMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown ErrorType unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *ErrorTypeMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown ErrorType edge %s", name)
-}
-
 // FsrsCardMutation represents an operation that mutates the FsrsCard nodes in the graph.
 type FsrsCardMutation struct {
 	config
@@ -1304,6 +2435,9 @@ type FsrsCardMutation struct {
 	clearedFields     map[string]struct{}
 	node              *uuid.UUID
 	clearednode       bool
+	attempts          map[uuid.UUID]struct{}
+	removedattempts   map[uuid.UUID]struct{}
+	clearedattempts   bool
 	done              bool
 	oldValue          func(context.Context) (*FsrsCard, error)
 	predicates        []predicate.FsrsCard
@@ -1933,6 +3067,60 @@ func (m *FsrsCardMutation) ResetNode() {
 	m.clearednode = false
 }
 
+// AddAttemptIDs adds the "attempts" edge to the Attempt entity by ids.
+func (m *FsrsCardMutation) AddAttemptIDs(ids ...uuid.UUID) {
+	if m.attempts == nil {
+		m.attempts = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.attempts[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAttempts clears the "attempts" edge to the Attempt entity.
+func (m *FsrsCardMutation) ClearAttempts() {
+	m.clearedattempts = true
+}
+
+// AttemptsCleared reports if the "attempts" edge to the Attempt entity was cleared.
+func (m *FsrsCardMutation) AttemptsCleared() bool {
+	return m.clearedattempts
+}
+
+// RemoveAttemptIDs removes the "attempts" edge to the Attempt entity by IDs.
+func (m *FsrsCardMutation) RemoveAttemptIDs(ids ...uuid.UUID) {
+	if m.removedattempts == nil {
+		m.removedattempts = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.attempts, ids[i])
+		m.removedattempts[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAttempts returns the removed IDs of the "attempts" edge to the Attempt entity.
+func (m *FsrsCardMutation) RemovedAttemptsIDs() (ids []uuid.UUID) {
+	for id := range m.removedattempts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AttemptsIDs returns the "attempts" edge IDs in the mutation.
+func (m *FsrsCardMutation) AttemptsIDs() (ids []uuid.UUID) {
+	for id := range m.attempts {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAttempts resets all changes to the "attempts" edge.
+func (m *FsrsCardMutation) ResetAttempts() {
+	m.attempts = nil
+	m.clearedattempts = false
+	m.removedattempts = nil
+}
+
 // Where appends a list predicates to the FsrsCardMutation builder.
 func (m *FsrsCardMutation) Where(ps ...predicate.FsrsCard) {
 	m.predicates = append(m.predicates, ps...)
@@ -2303,9 +3491,12 @@ func (m *FsrsCardMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *FsrsCardMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.node != nil {
 		edges = append(edges, fsrscard.EdgeNode)
+	}
+	if m.attempts != nil {
+		edges = append(edges, fsrscard.EdgeAttempts)
 	}
 	return edges
 }
@@ -2318,27 +3509,47 @@ func (m *FsrsCardMutation) AddedIDs(name string) []ent.Value {
 		if id := m.node; id != nil {
 			return []ent.Value{*id}
 		}
+	case fsrscard.EdgeAttempts:
+		ids := make([]ent.Value, 0, len(m.attempts))
+		for id := range m.attempts {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *FsrsCardMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.removedattempts != nil {
+		edges = append(edges, fsrscard.EdgeAttempts)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *FsrsCardMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case fsrscard.EdgeAttempts:
+		ids := make([]ent.Value, 0, len(m.removedattempts))
+		for id := range m.removedattempts {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *FsrsCardMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearednode {
 		edges = append(edges, fsrscard.EdgeNode)
+	}
+	if m.clearedattempts {
+		edges = append(edges, fsrscard.EdgeAttempts)
 	}
 	return edges
 }
@@ -2349,6 +3560,8 @@ func (m *FsrsCardMutation) EdgeCleared(name string) bool {
 	switch name {
 	case fsrscard.EdgeNode:
 		return m.clearednode
+	case fsrscard.EdgeAttempts:
+		return m.clearedattempts
 	}
 	return false
 }
@@ -2370,6 +3583,9 @@ func (m *FsrsCardMutation) ResetEdge(name string) error {
 	switch name {
 	case fsrscard.EdgeNode:
 		m.ResetNode()
+		return nil
+	case fsrscard.EdgeAttempts:
+		m.ResetAttempts()
 		return nil
 	}
 	return fmt.Errorf("unknown FsrsCard edge %s", name)

@@ -11,13 +11,49 @@ import (
 var (
 	// AttemptsColumns holds the columns for the "attempts" table.
 	AttemptsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "attempt_id", Type: field.TypeUUID},
+		{Name: "rating", Type: field.TypeInt},
+		{Name: "duration_ms", Type: field.TypeInt, Default: 0},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"new", "learning", "review", "relearning"}},
+		{Name: "stability", Type: field.TypeFloat64},
+		{Name: "difficulty", Type: field.TypeFloat64},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "is_correct", Type: field.TypeBool},
+		{Name: "error_type_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "card_id", Type: field.TypeUUID},
 	}
 	// AttemptsTable holds the schema information for the "attempts" table.
 	AttemptsTable = &schema.Table{
 		Name:       "attempts",
 		Columns:    AttemptsColumns,
 		PrimaryKey: []*schema.Column{AttemptsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "attempts_error_definitions_attempts",
+				Columns:    []*schema.Column{AttemptsColumns[8]},
+				RefColumns: []*schema.Column{ErrorDefinitionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "attempts_fsrs_cards_attempts",
+				Columns:    []*schema.Column{AttemptsColumns[9]},
+				RefColumns: []*schema.Column{FsrsCardsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// ErrorDefinitionsColumns holds the columns for the "error_definitions" table.
+	ErrorDefinitionsColumns = []*schema.Column{
+		{Name: "error_type_id", Type: field.TypeUUID},
+		{Name: "label", Type: field.TypeString, Unique: true},
+		{Name: "base_weight", Type: field.TypeFloat64, Default: 1},
+		{Name: "is_system", Type: field.TypeBool, Default: false},
+	}
+	// ErrorDefinitionsTable holds the schema information for the "error_definitions" table.
+	ErrorDefinitionsTable = &schema.Table{
+		Name:       "error_definitions",
+		Columns:    ErrorDefinitionsColumns,
+		PrimaryKey: []*schema.Column{ErrorDefinitionsColumns[0]},
 	}
 	// ErrorResolutionsColumns holds the columns for the "error_resolutions" table.
 	ErrorResolutionsColumns = []*schema.Column{
@@ -27,6 +63,7 @@ var (
 		{Name: "is_resolved", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "resolved_at", Type: field.TypeTime, Nullable: true},
+		{Name: "error_type_id", Type: field.TypeUUID},
 		{Name: "node_id", Type: field.TypeUUID},
 	}
 	// ErrorResolutionsTable holds the schema information for the "error_resolutions" table.
@@ -37,21 +74,11 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "error_resolutions_nodes_error_resolutions",
-				Columns:    []*schema.Column{ErrorResolutionsColumns[6]},
+				Columns:    []*schema.Column{ErrorResolutionsColumns[7]},
 				RefColumns: []*schema.Column{NodesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
-	}
-	// ErrorTypesColumns holds the columns for the "error_types" table.
-	ErrorTypesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-	}
-	// ErrorTypesTable holds the schema information for the "error_types" table.
-	ErrorTypesTable = &schema.Table{
-		Name:       "error_types",
-		Columns:    ErrorTypesColumns,
-		PrimaryKey: []*schema.Column{ErrorTypesColumns[0]},
 	}
 	// FsrsCardsColumns holds the columns for the "fsrs_cards" table.
 	FsrsCardsColumns = []*schema.Column{
@@ -175,8 +202,8 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AttemptsTable,
+		ErrorDefinitionsTable,
 		ErrorResolutionsTable,
-		ErrorTypesTable,
 		FsrsCardsTable,
 		NodesTable,
 		NodeAssociationsTable,
@@ -185,6 +212,8 @@ var (
 )
 
 func init() {
+	AttemptsTable.ForeignKeys[0].RefTable = ErrorDefinitionsTable
+	AttemptsTable.ForeignKeys[1].RefTable = FsrsCardsTable
 	ErrorResolutionsTable.ForeignKeys[0].RefTable = NodesTable
 	FsrsCardsTable.ForeignKeys[0].RefTable = NodesTable
 	NodesTable.ForeignKeys[0].RefTable = NodesTable

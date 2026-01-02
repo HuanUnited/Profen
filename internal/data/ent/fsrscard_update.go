@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/attempt"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/predicate"
@@ -224,6 +225,21 @@ func (_u *FsrsCardUpdate) SetNode(v *Node) *FsrsCardUpdate {
 	return _u.SetNodeID(v.ID)
 }
 
+// AddAttemptIDs adds the "attempts" edge to the Attempt entity by IDs.
+func (_u *FsrsCardUpdate) AddAttemptIDs(ids ...uuid.UUID) *FsrsCardUpdate {
+	_u.mutation.AddAttemptIDs(ids...)
+	return _u
+}
+
+// AddAttempts adds the "attempts" edges to the Attempt entity.
+func (_u *FsrsCardUpdate) AddAttempts(v ...*Attempt) *FsrsCardUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAttemptIDs(ids...)
+}
+
 // Mutation returns the FsrsCardMutation object of the builder.
 func (_u *FsrsCardUpdate) Mutation() *FsrsCardMutation {
 	return _u.mutation
@@ -233,6 +249,27 @@ func (_u *FsrsCardUpdate) Mutation() *FsrsCardMutation {
 func (_u *FsrsCardUpdate) ClearNode() *FsrsCardUpdate {
 	_u.mutation.ClearNode()
 	return _u
+}
+
+// ClearAttempts clears all "attempts" edges to the Attempt entity.
+func (_u *FsrsCardUpdate) ClearAttempts() *FsrsCardUpdate {
+	_u.mutation.ClearAttempts()
+	return _u
+}
+
+// RemoveAttemptIDs removes the "attempts" edge to Attempt entities by IDs.
+func (_u *FsrsCardUpdate) RemoveAttemptIDs(ids ...uuid.UUID) *FsrsCardUpdate {
+	_u.mutation.RemoveAttemptIDs(ids...)
+	return _u
+}
+
+// RemoveAttempts removes "attempts" edges to Attempt entities.
+func (_u *FsrsCardUpdate) RemoveAttempts(v ...*Attempt) *FsrsCardUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAttemptIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -363,6 +400,51 @@ func (_u *FsrsCardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AttemptsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fsrscard.AttemptsTable,
+			Columns: []string{fsrscard.AttemptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAttemptsIDs(); len(nodes) > 0 && !_u.mutation.AttemptsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fsrscard.AttemptsTable,
+			Columns: []string{fsrscard.AttemptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AttemptsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fsrscard.AttemptsTable,
+			Columns: []string{fsrscard.AttemptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -585,6 +667,21 @@ func (_u *FsrsCardUpdateOne) SetNode(v *Node) *FsrsCardUpdateOne {
 	return _u.SetNodeID(v.ID)
 }
 
+// AddAttemptIDs adds the "attempts" edge to the Attempt entity by IDs.
+func (_u *FsrsCardUpdateOne) AddAttemptIDs(ids ...uuid.UUID) *FsrsCardUpdateOne {
+	_u.mutation.AddAttemptIDs(ids...)
+	return _u
+}
+
+// AddAttempts adds the "attempts" edges to the Attempt entity.
+func (_u *FsrsCardUpdateOne) AddAttempts(v ...*Attempt) *FsrsCardUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAttemptIDs(ids...)
+}
+
 // Mutation returns the FsrsCardMutation object of the builder.
 func (_u *FsrsCardUpdateOne) Mutation() *FsrsCardMutation {
 	return _u.mutation
@@ -594,6 +691,27 @@ func (_u *FsrsCardUpdateOne) Mutation() *FsrsCardMutation {
 func (_u *FsrsCardUpdateOne) ClearNode() *FsrsCardUpdateOne {
 	_u.mutation.ClearNode()
 	return _u
+}
+
+// ClearAttempts clears all "attempts" edges to the Attempt entity.
+func (_u *FsrsCardUpdateOne) ClearAttempts() *FsrsCardUpdateOne {
+	_u.mutation.ClearAttempts()
+	return _u
+}
+
+// RemoveAttemptIDs removes the "attempts" edge to Attempt entities by IDs.
+func (_u *FsrsCardUpdateOne) RemoveAttemptIDs(ids ...uuid.UUID) *FsrsCardUpdateOne {
+	_u.mutation.RemoveAttemptIDs(ids...)
+	return _u
+}
+
+// RemoveAttempts removes "attempts" edges to Attempt entities.
+func (_u *FsrsCardUpdateOne) RemoveAttempts(v ...*Attempt) *FsrsCardUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAttemptIDs(ids...)
 }
 
 // Where appends a list predicates to the FsrsCardUpdate builder.
@@ -754,6 +872,51 @@ func (_u *FsrsCardUpdateOne) sqlSave(ctx context.Context) (_node *FsrsCard, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AttemptsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fsrscard.AttemptsTable,
+			Columns: []string{fsrscard.AttemptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAttemptsIDs(); len(nodes) > 0 && !_u.mutation.AttemptsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fsrscard.AttemptsTable,
+			Columns: []string{fsrscard.AttemptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AttemptsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fsrscard.AttemptsTable,
+			Columns: []string{fsrscard.AttemptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

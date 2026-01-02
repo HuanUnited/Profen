@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"math"
 	"profen/internal/data/ent/attempt"
-	"profen/internal/data/ent/fsrscard"
-	"profen/internal/data/ent/node"
+	"profen/internal/data/ent/errordefinition"
 	"profen/internal/data/ent/predicate"
 
 	"entgo.io/ent"
@@ -19,14 +18,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// FsrsCardQuery is the builder for querying FsrsCard entities.
-type FsrsCardQuery struct {
+// ErrorDefinitionQuery is the builder for querying ErrorDefinition entities.
+type ErrorDefinitionQuery struct {
 	config
 	ctx          *QueryContext
-	order        []fsrscard.OrderOption
+	order        []errordefinition.OrderOption
 	inters       []Interceptor
-	predicates   []predicate.FsrsCard
-	withNode     *NodeQuery
+	predicates   []predicate.ErrorDefinition
 	withAttempts *AttemptQuery
 	modifiers    []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -34,61 +32,39 @@ type FsrsCardQuery struct {
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the FsrsCardQuery builder.
-func (_q *FsrsCardQuery) Where(ps ...predicate.FsrsCard) *FsrsCardQuery {
+// Where adds a new predicate for the ErrorDefinitionQuery builder.
+func (_q *ErrorDefinitionQuery) Where(ps ...predicate.ErrorDefinition) *ErrorDefinitionQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *FsrsCardQuery) Limit(limit int) *FsrsCardQuery {
+func (_q *ErrorDefinitionQuery) Limit(limit int) *ErrorDefinitionQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *FsrsCardQuery) Offset(offset int) *FsrsCardQuery {
+func (_q *ErrorDefinitionQuery) Offset(offset int) *ErrorDefinitionQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *FsrsCardQuery) Unique(unique bool) *FsrsCardQuery {
+func (_q *ErrorDefinitionQuery) Unique(unique bool) *ErrorDefinitionQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *FsrsCardQuery) Order(o ...fsrscard.OrderOption) *FsrsCardQuery {
+func (_q *ErrorDefinitionQuery) Order(o ...errordefinition.OrderOption) *ErrorDefinitionQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryNode chains the current query on the "node" edge.
-func (_q *FsrsCardQuery) QueryNode() *NodeQuery {
-	query := (&NodeClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(fsrscard.Table, fsrscard.FieldID, selector),
-			sqlgraph.To(node.Table, node.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, fsrscard.NodeTable, fsrscard.NodeColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
 // QueryAttempts chains the current query on the "attempts" edge.
-func (_q *FsrsCardQuery) QueryAttempts() *AttemptQuery {
+func (_q *ErrorDefinitionQuery) QueryAttempts() *AttemptQuery {
 	query := (&AttemptClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -99,9 +75,9 @@ func (_q *FsrsCardQuery) QueryAttempts() *AttemptQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(fsrscard.Table, fsrscard.FieldID, selector),
+			sqlgraph.From(errordefinition.Table, errordefinition.FieldID, selector),
 			sqlgraph.To(attempt.Table, attempt.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, fsrscard.AttemptsTable, fsrscard.AttemptsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, errordefinition.AttemptsTable, errordefinition.AttemptsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -109,21 +85,21 @@ func (_q *FsrsCardQuery) QueryAttempts() *AttemptQuery {
 	return query
 }
 
-// First returns the first FsrsCard entity from the query.
-// Returns a *NotFoundError when no FsrsCard was found.
-func (_q *FsrsCardQuery) First(ctx context.Context) (*FsrsCard, error) {
+// First returns the first ErrorDefinition entity from the query.
+// Returns a *NotFoundError when no ErrorDefinition was found.
+func (_q *ErrorDefinitionQuery) First(ctx context.Context) (*ErrorDefinition, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{fsrscard.Label}
+		return nil, &NotFoundError{errordefinition.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *FsrsCardQuery) FirstX(ctx context.Context) *FsrsCard {
+func (_q *ErrorDefinitionQuery) FirstX(ctx context.Context) *ErrorDefinition {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -131,22 +107,22 @@ func (_q *FsrsCardQuery) FirstX(ctx context.Context) *FsrsCard {
 	return node
 }
 
-// FirstID returns the first FsrsCard ID from the query.
-// Returns a *NotFoundError when no FsrsCard ID was found.
-func (_q *FsrsCardQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first ErrorDefinition ID from the query.
+// Returns a *NotFoundError when no ErrorDefinition ID was found.
+func (_q *ErrorDefinitionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{fsrscard.Label}
+		err = &NotFoundError{errordefinition.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *FsrsCardQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *ErrorDefinitionQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -154,10 +130,10 @@ func (_q *FsrsCardQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single FsrsCard entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one FsrsCard entity is found.
-// Returns a *NotFoundError when no FsrsCard entities are found.
-func (_q *FsrsCardQuery) Only(ctx context.Context) (*FsrsCard, error) {
+// Only returns a single ErrorDefinition entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one ErrorDefinition entity is found.
+// Returns a *NotFoundError when no ErrorDefinition entities are found.
+func (_q *ErrorDefinitionQuery) Only(ctx context.Context) (*ErrorDefinition, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -166,14 +142,14 @@ func (_q *FsrsCardQuery) Only(ctx context.Context) (*FsrsCard, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{fsrscard.Label}
+		return nil, &NotFoundError{errordefinition.Label}
 	default:
-		return nil, &NotSingularError{fsrscard.Label}
+		return nil, &NotSingularError{errordefinition.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *FsrsCardQuery) OnlyX(ctx context.Context) *FsrsCard {
+func (_q *ErrorDefinitionQuery) OnlyX(ctx context.Context) *ErrorDefinition {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -181,10 +157,10 @@ func (_q *FsrsCardQuery) OnlyX(ctx context.Context) *FsrsCard {
 	return node
 }
 
-// OnlyID is like Only, but returns the only FsrsCard ID in the query.
-// Returns a *NotSingularError when more than one FsrsCard ID is found.
+// OnlyID is like Only, but returns the only ErrorDefinition ID in the query.
+// Returns a *NotSingularError when more than one ErrorDefinition ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *FsrsCardQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *ErrorDefinitionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -193,15 +169,15 @@ func (_q *FsrsCardQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{fsrscard.Label}
+		err = &NotFoundError{errordefinition.Label}
 	default:
-		err = &NotSingularError{fsrscard.Label}
+		err = &NotSingularError{errordefinition.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *FsrsCardQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *ErrorDefinitionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -209,18 +185,18 @@ func (_q *FsrsCardQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of FsrsCards.
-func (_q *FsrsCardQuery) All(ctx context.Context) ([]*FsrsCard, error) {
+// All executes the query and returns a list of ErrorDefinitions.
+func (_q *ErrorDefinitionQuery) All(ctx context.Context) ([]*ErrorDefinition, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*FsrsCard, *FsrsCardQuery]()
-	return withInterceptors[[]*FsrsCard](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*ErrorDefinition, *ErrorDefinitionQuery]()
+	return withInterceptors[[]*ErrorDefinition](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *FsrsCardQuery) AllX(ctx context.Context) []*FsrsCard {
+func (_q *ErrorDefinitionQuery) AllX(ctx context.Context) []*ErrorDefinition {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -228,20 +204,20 @@ func (_q *FsrsCardQuery) AllX(ctx context.Context) []*FsrsCard {
 	return nodes
 }
 
-// IDs executes the query and returns a list of FsrsCard IDs.
-func (_q *FsrsCardQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of ErrorDefinition IDs.
+func (_q *ErrorDefinitionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(fsrscard.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(errordefinition.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *FsrsCardQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *ErrorDefinitionQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -250,16 +226,16 @@ func (_q *FsrsCardQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *FsrsCardQuery) Count(ctx context.Context) (int, error) {
+func (_q *ErrorDefinitionQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*FsrsCardQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*ErrorDefinitionQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *FsrsCardQuery) CountX(ctx context.Context) int {
+func (_q *ErrorDefinitionQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -268,7 +244,7 @@ func (_q *FsrsCardQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *FsrsCardQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *ErrorDefinitionQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -281,7 +257,7 @@ func (_q *FsrsCardQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *FsrsCardQuery) ExistX(ctx context.Context) bool {
+func (_q *ErrorDefinitionQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -289,19 +265,18 @@ func (_q *FsrsCardQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the FsrsCardQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the ErrorDefinitionQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *FsrsCardQuery) Clone() *FsrsCardQuery {
+func (_q *ErrorDefinitionQuery) Clone() *ErrorDefinitionQuery {
 	if _q == nil {
 		return nil
 	}
-	return &FsrsCardQuery{
+	return &ErrorDefinitionQuery{
 		config:       _q.config,
 		ctx:          _q.ctx.Clone(),
-		order:        append([]fsrscard.OrderOption{}, _q.order...),
+		order:        append([]errordefinition.OrderOption{}, _q.order...),
 		inters:       append([]Interceptor{}, _q.inters...),
-		predicates:   append([]predicate.FsrsCard{}, _q.predicates...),
-		withNode:     _q.withNode.Clone(),
+		predicates:   append([]predicate.ErrorDefinition{}, _q.predicates...),
 		withAttempts: _q.withAttempts.Clone(),
 		// clone intermediate query.
 		sql:       _q.sql.Clone(),
@@ -310,20 +285,9 @@ func (_q *FsrsCardQuery) Clone() *FsrsCardQuery {
 	}
 }
 
-// WithNode tells the query-builder to eager-load the nodes that are connected to
-// the "node" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *FsrsCardQuery) WithNode(opts ...func(*NodeQuery)) *FsrsCardQuery {
-	query := (&NodeClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withNode = query
-	return _q
-}
-
 // WithAttempts tells the query-builder to eager-load the nodes that are connected to
 // the "attempts" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *FsrsCardQuery) WithAttempts(opts ...func(*AttemptQuery)) *FsrsCardQuery {
+func (_q *ErrorDefinitionQuery) WithAttempts(opts ...func(*AttemptQuery)) *ErrorDefinitionQuery {
 	query := (&AttemptClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -338,19 +302,19 @@ func (_q *FsrsCardQuery) WithAttempts(opts ...func(*AttemptQuery)) *FsrsCardQuer
 // Example:
 //
 //	var v []struct {
-//		Stability float64 `json:"stability,omitempty"`
+//		Label string `json:"label,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.FsrsCard.Query().
-//		GroupBy(fsrscard.FieldStability).
+//	client.ErrorDefinition.Query().
+//		GroupBy(errordefinition.FieldLabel).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *FsrsCardQuery) GroupBy(field string, fields ...string) *FsrsCardGroupBy {
+func (_q *ErrorDefinitionQuery) GroupBy(field string, fields ...string) *ErrorDefinitionGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &FsrsCardGroupBy{build: _q}
+	grbuild := &ErrorDefinitionGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = fsrscard.Label
+	grbuild.label = errordefinition.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -361,26 +325,26 @@ func (_q *FsrsCardQuery) GroupBy(field string, fields ...string) *FsrsCardGroupB
 // Example:
 //
 //	var v []struct {
-//		Stability float64 `json:"stability,omitempty"`
+//		Label string `json:"label,omitempty"`
 //	}
 //
-//	client.FsrsCard.Query().
-//		Select(fsrscard.FieldStability).
+//	client.ErrorDefinition.Query().
+//		Select(errordefinition.FieldLabel).
 //		Scan(ctx, &v)
-func (_q *FsrsCardQuery) Select(fields ...string) *FsrsCardSelect {
+func (_q *ErrorDefinitionQuery) Select(fields ...string) *ErrorDefinitionSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &FsrsCardSelect{FsrsCardQuery: _q}
-	sbuild.label = fsrscard.Label
+	sbuild := &ErrorDefinitionSelect{ErrorDefinitionQuery: _q}
+	sbuild.label = errordefinition.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a FsrsCardSelect configured with the given aggregations.
-func (_q *FsrsCardQuery) Aggregate(fns ...AggregateFunc) *FsrsCardSelect {
+// Aggregate returns a ErrorDefinitionSelect configured with the given aggregations.
+func (_q *ErrorDefinitionQuery) Aggregate(fns ...AggregateFunc) *ErrorDefinitionSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *FsrsCardQuery) prepareQuery(ctx context.Context) error {
+func (_q *ErrorDefinitionQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -392,7 +356,7 @@ func (_q *FsrsCardQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !fsrscard.ValidColumn(f) {
+		if !errordefinition.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -406,20 +370,19 @@ func (_q *FsrsCardQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *FsrsCardQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*FsrsCard, error) {
+func (_q *ErrorDefinitionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ErrorDefinition, error) {
 	var (
-		nodes       = []*FsrsCard{}
+		nodes       = []*ErrorDefinition{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
-			_q.withNode != nil,
+		loadedTypes = [1]bool{
 			_q.withAttempts != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*FsrsCard).scanValues(nil, columns)
+		return (*ErrorDefinition).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &FsrsCard{config: _q.config}
+		node := &ErrorDefinition{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -436,54 +399,19 @@ func (_q *FsrsCardQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Fsr
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withNode; query != nil {
-		if err := _q.loadNode(ctx, query, nodes, nil,
-			func(n *FsrsCard, e *Node) { n.Edges.Node = e }); err != nil {
-			return nil, err
-		}
-	}
 	if query := _q.withAttempts; query != nil {
 		if err := _q.loadAttempts(ctx, query, nodes,
-			func(n *FsrsCard) { n.Edges.Attempts = []*Attempt{} },
-			func(n *FsrsCard, e *Attempt) { n.Edges.Attempts = append(n.Edges.Attempts, e) }); err != nil {
+			func(n *ErrorDefinition) { n.Edges.Attempts = []*Attempt{} },
+			func(n *ErrorDefinition, e *Attempt) { n.Edges.Attempts = append(n.Edges.Attempts, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *FsrsCardQuery) loadNode(ctx context.Context, query *NodeQuery, nodes []*FsrsCard, init func(*FsrsCard), assign func(*FsrsCard, *Node)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*FsrsCard)
-	for i := range nodes {
-		fk := nodes[i].NodeID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(node.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "node_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *FsrsCardQuery) loadAttempts(ctx context.Context, query *AttemptQuery, nodes []*FsrsCard, init func(*FsrsCard), assign func(*FsrsCard, *Attempt)) error {
+func (_q *ErrorDefinitionQuery) loadAttempts(ctx context.Context, query *AttemptQuery, nodes []*ErrorDefinition, init func(*ErrorDefinition), assign func(*ErrorDefinition, *Attempt)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*FsrsCard)
+	nodeids := make(map[uuid.UUID]*ErrorDefinition)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -492,27 +420,30 @@ func (_q *FsrsCardQuery) loadAttempts(ctx context.Context, query *AttemptQuery, 
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(attempt.FieldCardID)
+		query.ctx.AppendFieldOnce(attempt.FieldErrorTypeID)
 	}
 	query.Where(predicate.Attempt(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(fsrscard.AttemptsColumn), fks...))
+		s.Where(sql.InValues(s.C(errordefinition.AttemptsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.CardID
-		node, ok := nodeids[fk]
+		fk := n.ErrorTypeID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "error_type_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "card_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "error_type_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
 
-func (_q *FsrsCardQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *ErrorDefinitionQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	if len(_q.modifiers) > 0 {
 		_spec.Modifiers = _q.modifiers
@@ -524,8 +455,8 @@ func (_q *FsrsCardQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *FsrsCardQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(fsrscard.Table, fsrscard.Columns, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID))
+func (_q *ErrorDefinitionQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(errordefinition.Table, errordefinition.Columns, sqlgraph.NewFieldSpec(errordefinition.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -534,14 +465,11 @@ func (_q *FsrsCardQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, fsrscard.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, errordefinition.FieldID)
 		for i := range fields {
-			if fields[i] != fsrscard.FieldID {
+			if fields[i] != errordefinition.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
-		}
-		if _q.withNode != nil {
-			_spec.Node.AddColumnOnce(fsrscard.FieldNodeID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -567,12 +495,12 @@ func (_q *FsrsCardQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *FsrsCardQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *ErrorDefinitionQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(fsrscard.Table)
+	t1 := builder.Table(errordefinition.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = fsrscard.Columns
+		columns = errordefinition.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -603,33 +531,33 @@ func (_q *FsrsCardQuery) sqlQuery(ctx context.Context) *sql.Selector {
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_q *FsrsCardQuery) Modify(modifiers ...func(s *sql.Selector)) *FsrsCardSelect {
+func (_q *ErrorDefinitionQuery) Modify(modifiers ...func(s *sql.Selector)) *ErrorDefinitionSelect {
 	_q.modifiers = append(_q.modifiers, modifiers...)
 	return _q.Select()
 }
 
-// FsrsCardGroupBy is the group-by builder for FsrsCard entities.
-type FsrsCardGroupBy struct {
+// ErrorDefinitionGroupBy is the group-by builder for ErrorDefinition entities.
+type ErrorDefinitionGroupBy struct {
 	selector
-	build *FsrsCardQuery
+	build *ErrorDefinitionQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *FsrsCardGroupBy) Aggregate(fns ...AggregateFunc) *FsrsCardGroupBy {
+func (_g *ErrorDefinitionGroupBy) Aggregate(fns ...AggregateFunc) *ErrorDefinitionGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *FsrsCardGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *ErrorDefinitionGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*FsrsCardQuery, *FsrsCardGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*ErrorDefinitionQuery, *ErrorDefinitionGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *FsrsCardGroupBy) sqlScan(ctx context.Context, root *FsrsCardQuery, v any) error {
+func (_g *ErrorDefinitionGroupBy) sqlScan(ctx context.Context, root *ErrorDefinitionQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -656,28 +584,28 @@ func (_g *FsrsCardGroupBy) sqlScan(ctx context.Context, root *FsrsCardQuery, v a
 	return sql.ScanSlice(rows, v)
 }
 
-// FsrsCardSelect is the builder for selecting fields of FsrsCard entities.
-type FsrsCardSelect struct {
-	*FsrsCardQuery
+// ErrorDefinitionSelect is the builder for selecting fields of ErrorDefinition entities.
+type ErrorDefinitionSelect struct {
+	*ErrorDefinitionQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *FsrsCardSelect) Aggregate(fns ...AggregateFunc) *FsrsCardSelect {
+func (_s *ErrorDefinitionSelect) Aggregate(fns ...AggregateFunc) *ErrorDefinitionSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *FsrsCardSelect) Scan(ctx context.Context, v any) error {
+func (_s *ErrorDefinitionSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*FsrsCardQuery, *FsrsCardSelect](ctx, _s.FsrsCardQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*ErrorDefinitionQuery, *ErrorDefinitionSelect](ctx, _s.ErrorDefinitionQuery, _s, _s.inters, v)
 }
 
-func (_s *FsrsCardSelect) sqlScan(ctx context.Context, root *FsrsCardQuery, v any) error {
+func (_s *ErrorDefinitionSelect) sqlScan(ctx context.Context, root *ErrorDefinitionQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {
@@ -699,7 +627,7 @@ func (_s *FsrsCardSelect) sqlScan(ctx context.Context, root *FsrsCardQuery, v an
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (_s *FsrsCardSelect) Modify(modifiers ...func(s *sql.Selector)) *FsrsCardSelect {
+func (_s *ErrorDefinitionSelect) Modify(modifiers ...func(s *sql.Selector)) *ErrorDefinitionSelect {
 	_s.modifiers = append(_s.modifiers, modifiers...)
 	return _s
 }

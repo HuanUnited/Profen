@@ -4,11 +4,16 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"profen/internal/data/ent/attempt"
+	"profen/internal/data/ent/errordefinition"
+	"profen/internal/data/ent/fsrscard"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // AttemptCreate is the builder for creating a Attempt entity.
@@ -18,6 +23,122 @@ type AttemptCreate struct {
 	hooks    []Hook
 }
 
+// SetRating sets the "rating" field.
+func (_c *AttemptCreate) SetRating(v int) *AttemptCreate {
+	_c.mutation.SetRating(v)
+	return _c
+}
+
+// SetDurationMs sets the "duration_ms" field.
+func (_c *AttemptCreate) SetDurationMs(v int) *AttemptCreate {
+	_c.mutation.SetDurationMs(v)
+	return _c
+}
+
+// SetNillableDurationMs sets the "duration_ms" field if the given value is not nil.
+func (_c *AttemptCreate) SetNillableDurationMs(v *int) *AttemptCreate {
+	if v != nil {
+		_c.SetDurationMs(*v)
+	}
+	return _c
+}
+
+// SetState sets the "state" field.
+func (_c *AttemptCreate) SetState(v attempt.State) *AttemptCreate {
+	_c.mutation.SetState(v)
+	return _c
+}
+
+// SetStability sets the "stability" field.
+func (_c *AttemptCreate) SetStability(v float64) *AttemptCreate {
+	_c.mutation.SetStability(v)
+	return _c
+}
+
+// SetDifficulty sets the "difficulty" field.
+func (_c *AttemptCreate) SetDifficulty(v float64) *AttemptCreate {
+	_c.mutation.SetDifficulty(v)
+	return _c
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (_c *AttemptCreate) SetCreatedAt(v time.Time) *AttemptCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *AttemptCreate) SetNillableCreatedAt(v *time.Time) *AttemptCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetCardID sets the "card_id" field.
+func (_c *AttemptCreate) SetCardID(v uuid.UUID) *AttemptCreate {
+	_c.mutation.SetCardID(v)
+	return _c
+}
+
+// SetIsCorrect sets the "is_correct" field.
+func (_c *AttemptCreate) SetIsCorrect(v bool) *AttemptCreate {
+	_c.mutation.SetIsCorrect(v)
+	return _c
+}
+
+// SetErrorTypeID sets the "error_type_id" field.
+func (_c *AttemptCreate) SetErrorTypeID(v uuid.UUID) *AttemptCreate {
+	_c.mutation.SetErrorTypeID(v)
+	return _c
+}
+
+// SetNillableErrorTypeID sets the "error_type_id" field if the given value is not nil.
+func (_c *AttemptCreate) SetNillableErrorTypeID(v *uuid.UUID) *AttemptCreate {
+	if v != nil {
+		_c.SetErrorTypeID(*v)
+	}
+	return _c
+}
+
+// SetID sets the "id" field.
+func (_c *AttemptCreate) SetID(v uuid.UUID) *AttemptCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (_c *AttemptCreate) SetNillableID(v *uuid.UUID) *AttemptCreate {
+	if v != nil {
+		_c.SetID(*v)
+	}
+	return _c
+}
+
+// SetCard sets the "card" edge to the FsrsCard entity.
+func (_c *AttemptCreate) SetCard(v *FsrsCard) *AttemptCreate {
+	return _c.SetCardID(v.ID)
+}
+
+// SetErrorDefinitionID sets the "error_definition" edge to the ErrorDefinition entity by ID.
+func (_c *AttemptCreate) SetErrorDefinitionID(id uuid.UUID) *AttemptCreate {
+	_c.mutation.SetErrorDefinitionID(id)
+	return _c
+}
+
+// SetNillableErrorDefinitionID sets the "error_definition" edge to the ErrorDefinition entity by ID if the given value is not nil.
+func (_c *AttemptCreate) SetNillableErrorDefinitionID(id *uuid.UUID) *AttemptCreate {
+	if id != nil {
+		_c = _c.SetErrorDefinitionID(*id)
+	}
+	return _c
+}
+
+// SetErrorDefinition sets the "error_definition" edge to the ErrorDefinition entity.
+func (_c *AttemptCreate) SetErrorDefinition(v *ErrorDefinition) *AttemptCreate {
+	return _c.SetErrorDefinitionID(v.ID)
+}
+
 // Mutation returns the AttemptMutation object of the builder.
 func (_c *AttemptCreate) Mutation() *AttemptMutation {
 	return _c.mutation
@@ -25,6 +146,7 @@ func (_c *AttemptCreate) Mutation() *AttemptMutation {
 
 // Save creates the Attempt in the database.
 func (_c *AttemptCreate) Save(ctx context.Context) (*Attempt, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -50,8 +172,56 @@ func (_c *AttemptCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *AttemptCreate) defaults() {
+	if _, ok := _c.mutation.DurationMs(); !ok {
+		v := attempt.DefaultDurationMs
+		_c.mutation.SetDurationMs(v)
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := attempt.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
+	if _, ok := _c.mutation.ID(); !ok {
+		v := attempt.DefaultID()
+		_c.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *AttemptCreate) check() error {
+	if _, ok := _c.mutation.Rating(); !ok {
+		return &ValidationError{Name: "rating", err: errors.New(`ent: missing required field "Attempt.rating"`)}
+	}
+	if _, ok := _c.mutation.DurationMs(); !ok {
+		return &ValidationError{Name: "duration_ms", err: errors.New(`ent: missing required field "Attempt.duration_ms"`)}
+	}
+	if _, ok := _c.mutation.State(); !ok {
+		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "Attempt.state"`)}
+	}
+	if v, ok := _c.mutation.State(); ok {
+		if err := attempt.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "Attempt.state": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Stability(); !ok {
+		return &ValidationError{Name: "stability", err: errors.New(`ent: missing required field "Attempt.stability"`)}
+	}
+	if _, ok := _c.mutation.Difficulty(); !ok {
+		return &ValidationError{Name: "difficulty", err: errors.New(`ent: missing required field "Attempt.difficulty"`)}
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Attempt.created_at"`)}
+	}
+	if _, ok := _c.mutation.CardID(); !ok {
+		return &ValidationError{Name: "card_id", err: errors.New(`ent: missing required field "Attempt.card_id"`)}
+	}
+	if _, ok := _c.mutation.IsCorrect(); !ok {
+		return &ValidationError{Name: "is_correct", err: errors.New(`ent: missing required field "Attempt.is_correct"`)}
+	}
+	if len(_c.mutation.CardIDs()) == 0 {
+		return &ValidationError{Name: "card", err: errors.New(`ent: missing required edge "Attempt.card"`)}
+	}
 	return nil
 }
 
@@ -66,8 +236,13 @@ func (_c *AttemptCreate) sqlSave(ctx context.Context) (*Attempt, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -76,8 +251,74 @@ func (_c *AttemptCreate) sqlSave(ctx context.Context) (*Attempt, error) {
 func (_c *AttemptCreate) createSpec() (*Attempt, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Attempt{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(attempt.Table, sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(attempt.Table, sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.Rating(); ok {
+		_spec.SetField(attempt.FieldRating, field.TypeInt, value)
+		_node.Rating = value
+	}
+	if value, ok := _c.mutation.DurationMs(); ok {
+		_spec.SetField(attempt.FieldDurationMs, field.TypeInt, value)
+		_node.DurationMs = value
+	}
+	if value, ok := _c.mutation.State(); ok {
+		_spec.SetField(attempt.FieldState, field.TypeEnum, value)
+		_node.State = value
+	}
+	if value, ok := _c.mutation.Stability(); ok {
+		_spec.SetField(attempt.FieldStability, field.TypeFloat64, value)
+		_node.Stability = value
+	}
+	if value, ok := _c.mutation.Difficulty(); ok {
+		_spec.SetField(attempt.FieldDifficulty, field.TypeFloat64, value)
+		_node.Difficulty = value
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(attempt.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.IsCorrect(); ok {
+		_spec.SetField(attempt.FieldIsCorrect, field.TypeBool, value)
+		_node.IsCorrect = value
+	}
+	if nodes := _c.mutation.CardIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.CardTable,
+			Columns: []string{attempt.CardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.CardID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ErrorDefinitionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   attempt.ErrorDefinitionTable,
+			Columns: []string{attempt.ErrorDefinitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(errordefinition.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ErrorTypeID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -99,6 +340,7 @@ func (_c *AttemptCreateBulk) Save(ctx context.Context) ([]*Attempt, error) {
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*AttemptMutation)
 				if !ok {
@@ -125,10 +367,6 @@ func (_c *AttemptCreateBulk) Save(ctx context.Context) ([]*Attempt, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

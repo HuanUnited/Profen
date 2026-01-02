@@ -77,5 +77,8 @@ func (FsrsCard) Edges() []ent.Edge {
 			Field("node_id").
 			Unique().
 			Required(),
+
+		// Block 7: History
+		edge.To("attempts", Attempt.Type),
 	}
 }

@@ -9,11 +9,11 @@ import (
 // Attempt is the predicate function for attempt builders.
 type Attempt func(*sql.Selector)
 
+// ErrorDefinition is the predicate function for errordefinition builders.
+type ErrorDefinition func(*sql.Selector)
+
 // ErrorResolution is the predicate function for errorresolution builders.
 type ErrorResolution func(*sql.Selector)
-
-// ErrorType is the predicate function for errortype builders.
-type ErrorType func(*sql.Selector)
 
 // FsrsCard is the predicate function for fsrscard builders.
 type FsrsCard func(*sql.Selector)

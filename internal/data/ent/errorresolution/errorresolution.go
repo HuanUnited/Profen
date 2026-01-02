@@ -27,6 +27,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldResolvedAt holds the string denoting the resolved_at field in the database.
 	FieldResolvedAt = "resolved_at"
+	// FieldErrorTypeID holds the string denoting the error_type_id field in the database.
+	FieldErrorTypeID = "error_type_id"
 	// EdgeNode holds the string denoting the node edge name in mutations.
 	EdgeNode = "node"
 	// NodeFieldID holds the string denoting the ID field of the Node.
@@ -51,6 +53,7 @@ var Columns = []string{
 	FieldIsResolved,
 	FieldCreatedAt,
 	FieldResolvedAt,
+	FieldErrorTypeID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -112,6 +115,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByResolvedAt orders the results by the resolved_at field.
 func ByResolvedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldResolvedAt, opts...).ToFunc()
+}
+
+// ByErrorTypeID orders the results by the error_type_id field.
+func ByErrorTypeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldErrorTypeID, opts...).ToFunc()
 }
 
 // ByNodeField orders the results by node field.

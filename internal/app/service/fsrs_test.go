@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"profen/internal/app/service"
+	"profen/internal/data/ent/attempt"
 	"profen/internal/data/ent/enttest"
+	"profen/internal/data/ent/errorresolution"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/hooks"
@@ -56,7 +58,7 @@ func TestReviewCard_Flow(t *testing.T) {
 	// ======================================================
 	// User sees the card and answers correctly.
 
-	updatedCard, err := fsrsService.ReviewCard(ctx, card.ID, service.GradeGood)
+	updatedCard, err := fsrsService.ReviewCard(ctx, card.ID, service.GradeGood, 1000, nil)
 	require.NoError(t, err)
 
 	// Assertions for First Review
@@ -77,26 +79,31 @@ func TestReviewCard_Flow(t *testing.T) {
 	// Let's pretend time passed (or we are reviewing immediately).
 	// User forgot the answer.
 
-	failedCard, err := fsrsService.ReviewCard(ctx, card.ID, service.GradeAgain)
+	// 1. Create an Error Definition first (since we need an ID)
+	errDef, _ := client.ErrorDefinition.Create().
+		SetLabel("Test Error").
+		SetBaseWeight(2.5).
+		Save(ctx)
+
+	failedCard, err := fsrsService.ReviewCard(ctx, card.ID, service.GradeAgain, 5000, &errDef.ID)
 	require.NoError(t, err)
 
-	t.Logf("After Again: State=%s, Reps=%d, Lapses=%d", failedCard.State, failedCard.Reps, failedCard.Lapses)
+	// Shut up, compiler
+	assert.Equal(t, 2, failedCard.Reps)
 
-	// Assertions for Failure
-	assert.Equal(t, 2, failedCard.Reps, "Reps should increment to 2")
+	// Verify Attempt Log
+	attempts, _ := client.Attempt.Query().
+		Where(attempt.CardID(card.ID)).
+		All(ctx)
+	assert.Len(t, attempts, 2, "Should have 2 attempts logged")
+	assert.Equal(t, 5000, attempts[1].DurationMs)
+	assert.Equal(t, errDef.ID, *attempts[1].ErrorTypeID)
 
-	// Conditional Assertion: Only check Lapses if we were in Review state
-	if updatedCard.State == fsrscard.StateReview {
-		assert.Equal(t, 1, failedCard.Lapses, "Lapses should increment if we forgot a Review card")
-	} else {
-		// If we were in Learning, Lapses might stay 0, but Stability should drop/reset
-		assert.LessOrEqual(t, failedCard.Stability, updatedCard.Stability)
-	}
+	// Verify Error Resolution (Diagnostic)
+	res, _ := client.ErrorResolution.Query().
+		Where(errorresolution.NodeID(problem.ID)). // Note: Link to Node, not Card
+		Only(ctx)
 
-	// 'Again' typically resets stability or lowers it significantly
-	assert.Less(t, failedCard.Stability, updatedCard.Stability, "Stability should decrease on failure")
-
-	// 'Again' usually schedules very short term (e.g. 5 min or 1 day depending on steps)
-	// But definitively check that Due date changed
-	assert.NotEqual(t, updatedCard.Due, failedCard.Due)
+	assert.Equal(t, 2.5, res.WeightImpact, "Should use the weight from definition")
+	assert.False(t, res.IsResolved)
 }

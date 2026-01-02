@@ -49,9 +49,11 @@ type FsrsCard struct {
 type FsrsCardEdges struct {
 	// Node holds the value of the node edge.
 	Node *Node `json:"node,omitempty"`
+	// Attempts holds the value of the attempts edge.
+	Attempts []*Attempt `json:"attempts,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // NodeOrErr returns the Node value or an error if the edge
@@ -63,6 +65,15 @@ func (e FsrsCardEdges) NodeOrErr() (*Node, error) {
 		return nil, &NotFoundError{label: node.Label}
 	}
 	return nil, &NotLoadedError{edge: "node"}
+}
+
+// AttemptsOrErr returns the Attempts value or an error if the edge
+// was not loaded in eager-loading.
+func (e FsrsCardEdges) AttemptsOrErr() ([]*Attempt, error) {
+	if e.loadedTypes[1] {
+		return e.Attempts, nil
+	}
+	return nil, &NotLoadedError{edge: "attempts"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -178,6 +189,11 @@ func (_m *FsrsCard) Value(name string) (ent.Value, error) {
 // QueryNode queries the "node" edge of the FsrsCard entity.
 func (_m *FsrsCard) QueryNode() *NodeQuery {
 	return NewFsrsCardClient(_m.config).QueryNode(_m)
+}
+
+// QueryAttempts queries the "attempts" edge of the FsrsCard entity.
+func (_m *FsrsCard) QueryAttempts() *AttemptQuery {
+	return NewFsrsCardClient(_m.config).QueryAttempts(_m)
 }
 
 // Update returns a builder for updating this FsrsCard.

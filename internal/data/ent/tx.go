@@ -14,10 +14,10 @@ type Tx struct {
 	config
 	// Attempt is the client for interacting with the Attempt builders.
 	Attempt *AttemptClient
+	// ErrorDefinition is the client for interacting with the ErrorDefinition builders.
+	ErrorDefinition *ErrorDefinitionClient
 	// ErrorResolution is the client for interacting with the ErrorResolution builders.
 	ErrorResolution *ErrorResolutionClient
-	// ErrorType is the client for interacting with the ErrorType builders.
-	ErrorType *ErrorTypeClient
 	// FsrsCard is the client for interacting with the FsrsCard builders.
 	FsrsCard *FsrsCardClient
 	// Node is the client for interacting with the Node builders.
@@ -158,8 +158,8 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Attempt = NewAttemptClient(tx.config)
+	tx.ErrorDefinition = NewErrorDefinitionClient(tx.config)
 	tx.ErrorResolution = NewErrorResolutionClient(tx.config)
-	tx.ErrorType = NewErrorTypeClient(tx.config)
 	tx.FsrsCard = NewFsrsCardClient(tx.config)
 	tx.Node = NewNodeClient(tx.config)
 	tx.NodeAssociation = NewNodeAssociationClient(tx.config)

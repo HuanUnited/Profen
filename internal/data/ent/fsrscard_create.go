@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/attempt"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"time"
@@ -171,6 +172,21 @@ func (_c *FsrsCardCreate) SetNillableID(v *uuid.UUID) *FsrsCardCreate {
 // SetNode sets the "node" edge to the Node entity.
 func (_c *FsrsCardCreate) SetNode(v *Node) *FsrsCardCreate {
 	return _c.SetNodeID(v.ID)
+}
+
+// AddAttemptIDs adds the "attempts" edge to the Attempt entity by IDs.
+func (_c *FsrsCardCreate) AddAttemptIDs(ids ...uuid.UUID) *FsrsCardCreate {
+	_c.mutation.AddAttemptIDs(ids...)
+	return _c
+}
+
+// AddAttempts adds the "attempts" edges to the Attempt entity.
+func (_c *FsrsCardCreate) AddAttempts(v ...*Attempt) *FsrsCardCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAttemptIDs(ids...)
 }
 
 // Mutation returns the FsrsCardMutation object of the builder.
@@ -369,6 +385,22 @@ func (_c *FsrsCardCreate) createSpec() (*FsrsCard, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.NodeID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AttemptsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   fsrscard.AttemptsTable,
+			Columns: []string{fsrscard.AttemptsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attempt.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

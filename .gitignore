@@ -1,3 +1,19 @@
 build/bin
 node_modules
 frontend/dist
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.conda/
+*.json # CAREFUL: Only ignore generated data exports, not config
+revlog_export.json
+
+# Go
+bin/
+dist/
+profen.exe
+profen
+

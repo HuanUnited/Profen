@@ -3,6 +3,8 @@
 package ent
 
 import (
+	"profen/internal/data/ent/attempt"
+	"profen/internal/data/ent/errordefinition"
 	"profen/internal/data/ent/errorresolution"
 	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
@@ -16,6 +18,38 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	attemptFields := schema.Attempt{}.Fields()
+	_ = attemptFields
+	// attemptDescDurationMs is the schema descriptor for duration_ms field.
+	attemptDescDurationMs := attemptFields[2].Descriptor()
+	// attempt.DefaultDurationMs holds the default value on creation for the duration_ms field.
+	attempt.DefaultDurationMs = attemptDescDurationMs.Default.(int)
+	// attemptDescCreatedAt is the schema descriptor for created_at field.
+	attemptDescCreatedAt := attemptFields[6].Descriptor()
+	// attempt.DefaultCreatedAt holds the default value on creation for the created_at field.
+	attempt.DefaultCreatedAt = attemptDescCreatedAt.Default.(func() time.Time)
+	// attemptDescID is the schema descriptor for id field.
+	attemptDescID := attemptFields[0].Descriptor()
+	// attempt.DefaultID holds the default value on creation for the id field.
+	attempt.DefaultID = attemptDescID.Default.(func() uuid.UUID)
+	errordefinitionFields := schema.ErrorDefinition{}.Fields()
+	_ = errordefinitionFields
+	// errordefinitionDescLabel is the schema descriptor for label field.
+	errordefinitionDescLabel := errordefinitionFields[1].Descriptor()
+	// errordefinition.LabelValidator is a validator for the "label" field. It is called by the builders before save.
+	errordefinition.LabelValidator = errordefinitionDescLabel.Validators[0].(func(string) error)
+	// errordefinitionDescBaseWeight is the schema descriptor for base_weight field.
+	errordefinitionDescBaseWeight := errordefinitionFields[2].Descriptor()
+	// errordefinition.DefaultBaseWeight holds the default value on creation for the base_weight field.
+	errordefinition.DefaultBaseWeight = errordefinitionDescBaseWeight.Default.(float64)
+	// errordefinitionDescIsSystem is the schema descriptor for is_system field.
+	errordefinitionDescIsSystem := errordefinitionFields[3].Descriptor()
+	// errordefinition.DefaultIsSystem holds the default value on creation for the is_system field.
+	errordefinition.DefaultIsSystem = errordefinitionDescIsSystem.Default.(bool)
+	// errordefinitionDescID is the schema descriptor for id field.
+	errordefinitionDescID := errordefinitionFields[0].Descriptor()
+	// errordefinition.DefaultID holds the default value on creation for the id field.
+	errordefinition.DefaultID = errordefinitionDescID.Default.(func() uuid.UUID)
 	errorresolutionFields := schema.ErrorResolution{}.Fields()
 	_ = errorresolutionFields
 	// errorresolutionDescErrorType is the schema descriptor for error_type field.
