@@ -1,14 +1,12 @@
-import Dashboard from "./components/layouts/Dashboard";
-import { AppProviders } from "./providers/AppProviders";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css' // <--- Crucial
 
-function App() {
-    return (
-        <AppProviders>
-            <div className="min-h-screen bg-slate-900 text-slate-100">
-                <Dashboard />
-            </div>
-        </AppProviders>
-    );
-}
+ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>
+)
 
 export default App;

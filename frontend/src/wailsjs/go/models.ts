@@ -104,6 +104,7 @@ export namespace ent {
 	    error_type_id?: number[];
 	    weight_impact?: number;
 	    is_resolved?: boolean;
+	    resolution_notes?: string;
 	    // Go type: time
 	    created_at?: any;
 	    // Go type: time
@@ -121,6 +122,7 @@ export namespace ent {
 	        this.error_type_id = source["error_type_id"];
 	        this.weight_impact = source["weight_impact"];
 	        this.is_resolved = source["is_resolved"];
+	        this.resolution_notes = source["resolution_notes"];
 	        this.created_at = this.convertValues(source["created_at"], null);
 	        this.resolved_at = this.convertValues(source["resolved_at"], null);
 	        this.edges = this.convertValues(source["edges"], ErrorResolutionEdges);
@@ -501,6 +503,7 @@ export namespace ent {
 	    card_id?: number[];
 	    is_correct?: boolean;
 	    error_type_id?: number[];
+	    user_answer?: string;
 	    edges: AttemptEdges;
 	
 	    static createFrom(source: any = {}) {
@@ -519,6 +522,7 @@ export namespace ent {
 	        this.card_id = source["card_id"];
 	        this.is_correct = source["is_correct"];
 	        this.error_type_id = source["error_type_id"];
+	        this.user_answer = source["user_answer"];
 	        this.edges = this.convertValues(source["edges"], AttemptEdges);
 	    }
 	
