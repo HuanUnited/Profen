@@ -95,3 +95,15 @@ func (r *NodeRepository) GetNode(ctx context.Context, id uuid.UUID) (*ent.Node, 
 func (r *NodeRepository) DeleteNode(ctx context.Context, id uuid.UUID) error {
 	return r.client.Node.DeleteOneID(id).Exec(ctx)
 }
+
+func (r *NodeRepository) SearchNodes(ctx context.Context, query string) ([]*ent.Node, error) {
+	return r.client.Node.Query().
+		Where(
+			node.Or(
+				node.TitleContainsFold(query),
+				node.BodyContainsFold(query),
+			),
+		).
+		Limit(20).
+		All(ctx)
+}

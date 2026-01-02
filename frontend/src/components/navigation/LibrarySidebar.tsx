@@ -1,58 +1,102 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
-
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, ArrowUp, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { GetNode } from "../../wailsjs/go/app/App";
 import SidebarFrame from "./SidebarFrame";
 import SubjectList from "../layouts/SubjectList";
 import NodeModal from "../smart/NodeModal";
 
 export default function LibrarySidebar() {
   const navigate = useNavigate();
-
-  // Replaced inline creation state with Modal state
+  const [searchParams] = useSearchParams();
+  const currentNodeId = searchParams.get('nodeId');
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Fetch current node to determine "Up" destination
+  const { data: currentNode } = useQuery({
+    queryKey: ['node', currentNodeId],
+    queryFn: () => GetNode(currentNodeId!),
+    enabled: !!currentNodeId
+  });
+
+  const handleUp = () => {
+    if (!currentNodeId) return; // Already at root
+
+    if (currentNode?.parent_id) {
+      // Go to parent
+      navigate(`/library?nodeId=${currentNode.parent_id}`);
+    } else {
+      // No parent (Subject) -> Go to Root
+      navigate('/library');
+    }
+  };
 
   return (
     <>
       <SidebarFrame
         resizable={true}
         initialWidth={280}
-        // Slot 1: Header
+
+        // 1. Header (Thinner + Up Button)
         header={
+          <div className="flex items-center gap-2 w-full">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center text-gray-500 hover:text-white transition-colors group"
+              title="Back to Dashboard"
+            >
+              <ArrowLeft size={16} />
+            </button>
+
+            <button
+              onClick={handleUp}
+              disabled={!currentNodeId}
+              className="flex items-center text-gray-500 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Up One Level"
+            >
+              <ArrowUp size={16} />
+            </button>
+
+            <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-gray-600 select-none">
+              LIBRARY
+            </span>
+          </div>
+        }
+
+        // 2. Toolbar (Now thinner/simpler or removed if empty?)
+        // User said "move create button... from next to explorer header".
+        // If we remove the create button, the toolbar might just be the "Explorer" text.
+        toolbar={
+          <div className="flex justify-between items-center w-full">
+            <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">
+              Subjects
+            </span>
+          </div>
+        }
+
+        // 3. Footer (New Home for Create Button)
+        footer={
           <button
-            onClick={() => navigate("/")}
-            className="flex items-center text-gray-400 hover:text-white transition-colors group"
+            onClick={() => setIsModalOpen(true)}
+            className="w-full py-2 bg-[#1f2335] border border-[#2f334d] rounded text-[#89b4fa] text-xs font-bold hover:bg-[#89b4fa] hover:text-black transition-all flex items-center justify-center gap-2 group"
           >
-            <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-semibold text-xs uppercase tracking-wider">Dashboard</span>
+            <Plus size={14} className="group-hover:scale-110 transition-transform" />
+            <span>NEW NODE</span>
           </button>
         }
-        // Slot 2: Toolbar
-        toolbar={
-          <>
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Explorer</span>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="p-1.5 rounded-md transition-colors text-[#89b4fa] hover:bg-white/5"
-              title="Create New Node"
-            >
-              <Plus size={16} />
-            </button>
-          </>
-        }
-        // Slot 3: Pinned Input (REMOVED - We use Modal now)
-        pinned={null}
       >
-        {/* Slot 4: Content */}
         <SubjectList />
       </SidebarFrame>
 
-      {/* The Unified Node Editor Modal */}
       <NodeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         mode="create"
-      // No initial parent passed here, so user must drill down from Subject
+      // TODO: If we are currently inside a node, maybe pre-fill it?
+      // initialParentId={currentNodeId || undefined} 
+      // ^ Users might expect "New Node" to create a child of current. 
+      // For now, let's keep it generic/root unless user explicitly wants context.
       />
     </>
   );

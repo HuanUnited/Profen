@@ -7,6 +7,7 @@ import (
 	"profen/internal/data"
 	"profen/internal/data/ent"
 	"profen/internal/data/ent/node"
+	"profen/internal/data/ent/nodeassociation"
 
 	"github.com/google/uuid"
 )
@@ -132,4 +133,56 @@ func (a *App) CreateNode(typeStr string, parentIDStr string, title string) (*ent
 	// 3. Call Repo
 	// We pass empty string for body initially.
 	return a.nodeRepo.CreateNode(a.ctx, nodeType, parentID, title, "", map[string]interface{}{})
+}
+
+// CreateAssociation links two nodes
+// Helper function (add to app.go or a utils file)
+func parseRelType(relTypeStr string) (nodeassociation.RelType, error) {
+	switch relTypeStr {
+	case "comes_before":
+		return nodeassociation.RelTypeComesBefore, nil
+	case "comes_after":
+		return nodeassociation.RelTypeComesAfter, nil
+	case "similar_to":
+		return nodeassociation.RelTypeSimilarTo, nil
+	case "tests":
+		return nodeassociation.RelTypeTests, nil
+	case "defines":
+		return nodeassociation.RelTypeDefines, nil
+	case "translation_of":
+		return nodeassociation.RelTypeTranslationOf, nil
+	case "translated_from":
+		return nodeassociation.RelTypeTranslatedFrom, nil
+	case "variant_of":
+		return nodeassociation.RelTypeVariantOf, nil
+	case "source_variant":
+		return nodeassociation.RelTypeSourceVariant, nil
+	default:
+		return "", fmt.Errorf("invalid relation type: %s", relTypeStr)
+	}
+}
+
+// Then use it:
+func (a *App) CreateAssociation(sourceIDStr, targetIDStr, relTypeStr string) error {
+	sourceID, err := uuid.Parse(sourceIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid source UUID: %w", err)
+	}
+	targetID, err := uuid.Parse(targetIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid target UUID: %w", err)
+	}
+
+	relType, err := parseRelType(relTypeStr)
+	if err != nil {
+		return err
+	}
+
+	return a.nodeRepo.CreateAssociation(a.ctx, sourceID, targetID, relType)
+}
+
+// SearchNodes finds nodes by title or body
+func (a *App) SearchNodes(query string) ([]*ent.Node, error) {
+	// We need to implement SearchNodes in NodeRepository first
+	return a.nodeRepo.SearchNodes(a.ctx, query)
 }

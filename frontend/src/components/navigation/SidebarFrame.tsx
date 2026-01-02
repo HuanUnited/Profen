@@ -12,6 +12,7 @@ interface SidebarFrameProps {
   minWidth?: number;
   maxWidth?: number;
   className?: string;
+  footer?: ReactNode; // <--- Add this
 }
 
 export default function SidebarFrame({
@@ -22,7 +23,8 @@ export default function SidebarFrame({
   resizable = false,
   initialWidth = 280,
   minWidth = 240,
-  maxWidth = 600 }: SidebarFrameProps) {
+  maxWidth = 600,
+  footer }: SidebarFrameProps) {
   const [width, setWidth] = useState(SidebarState.lastWidth);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -113,6 +115,13 @@ export default function SidebarFrame({
       <div className="flex-1 overflow-auto p-2 scrollbar-thin scrollbar-thumb-gray-800">
         {children}
       </div>
+
+      {/* Footer */}
+      {footer && (
+        <div className="p-3 border-t border-[#2f334d] bg-[#16161e] shrink-0">
+          {footer}
+        </div>
+      )}
 
       {/* Drag Handle */}
       {resizable && (
