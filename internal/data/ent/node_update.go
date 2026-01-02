@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
 	"profen/internal/data/ent/nodeclosure"
@@ -176,6 +177,25 @@ func (_u *NodeUpdate) AddIncomingAssociations(v ...*NodeAssociation) *NodeUpdate
 	return _u.AddIncomingAssociationIDs(ids...)
 }
 
+// SetFsrsCardID sets the "fsrs_card" edge to the FsrsCard entity by ID.
+func (_u *NodeUpdate) SetFsrsCardID(id uuid.UUID) *NodeUpdate {
+	_u.mutation.SetFsrsCardID(id)
+	return _u
+}
+
+// SetNillableFsrsCardID sets the "fsrs_card" edge to the FsrsCard entity by ID if the given value is not nil.
+func (_u *NodeUpdate) SetNillableFsrsCardID(id *uuid.UUID) *NodeUpdate {
+	if id != nil {
+		_u = _u.SetFsrsCardID(*id)
+	}
+	return _u
+}
+
+// SetFsrsCard sets the "fsrs_card" edge to the FsrsCard entity.
+func (_u *NodeUpdate) SetFsrsCard(v *FsrsCard) *NodeUpdate {
+	return _u.SetFsrsCardID(v.ID)
+}
+
 // Mutation returns the NodeMutation object of the builder.
 func (_u *NodeUpdate) Mutation() *NodeMutation {
 	return _u.mutation
@@ -290,6 +310,12 @@ func (_u *NodeUpdate) RemoveIncomingAssociations(v ...*NodeAssociation) *NodeUpd
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveIncomingAssociationIDs(ids...)
+}
+
+// ClearFsrsCard clears the "fsrs_card" edge to the FsrsCard entity.
+func (_u *NodeUpdate) ClearFsrsCard() *NodeUpdate {
+	_u.mutation.ClearFsrsCard()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -610,6 +636,35 @@ func (_u *NodeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.FsrsCardCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   node.FsrsCardTable,
+			Columns: []string{node.FsrsCardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.FsrsCardIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   node.FsrsCardTable,
+			Columns: []string{node.FsrsCardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{node.Label}
@@ -776,6 +831,25 @@ func (_u *NodeUpdateOne) AddIncomingAssociations(v ...*NodeAssociation) *NodeUpd
 	return _u.AddIncomingAssociationIDs(ids...)
 }
 
+// SetFsrsCardID sets the "fsrs_card" edge to the FsrsCard entity by ID.
+func (_u *NodeUpdateOne) SetFsrsCardID(id uuid.UUID) *NodeUpdateOne {
+	_u.mutation.SetFsrsCardID(id)
+	return _u
+}
+
+// SetNillableFsrsCardID sets the "fsrs_card" edge to the FsrsCard entity by ID if the given value is not nil.
+func (_u *NodeUpdateOne) SetNillableFsrsCardID(id *uuid.UUID) *NodeUpdateOne {
+	if id != nil {
+		_u = _u.SetFsrsCardID(*id)
+	}
+	return _u
+}
+
+// SetFsrsCard sets the "fsrs_card" edge to the FsrsCard entity.
+func (_u *NodeUpdateOne) SetFsrsCard(v *FsrsCard) *NodeUpdateOne {
+	return _u.SetFsrsCardID(v.ID)
+}
+
 // Mutation returns the NodeMutation object of the builder.
 func (_u *NodeUpdateOne) Mutation() *NodeMutation {
 	return _u.mutation
@@ -890,6 +964,12 @@ func (_u *NodeUpdateOne) RemoveIncomingAssociations(v ...*NodeAssociation) *Node
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveIncomingAssociationIDs(ids...)
+}
+
+// ClearFsrsCard clears the "fsrs_card" edge to the FsrsCard entity.
+func (_u *NodeUpdateOne) ClearFsrsCard() *NodeUpdateOne {
+	_u.mutation.ClearFsrsCard()
+	return _u
 }
 
 // Where appends a list predicates to the NodeUpdate builder.
@@ -1233,6 +1313,35 @@ func (_u *NodeUpdateOne) sqlSave(ctx context.Context) (_node *Node, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(nodeassociation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.FsrsCardCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   node.FsrsCardTable,
+			Columns: []string{node.FsrsCardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.FsrsCardIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   node.FsrsCardTable,
+			Columns: []string{node.FsrsCardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

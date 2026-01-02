@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
 	"profen/internal/data/ent/nodeclosure"
@@ -169,6 +170,25 @@ func (_c *NodeCreate) AddIncomingAssociations(v ...*NodeAssociation) *NodeCreate
 		ids[i] = v[i].ID
 	}
 	return _c.AddIncomingAssociationIDs(ids...)
+}
+
+// SetFsrsCardID sets the "fsrs_card" edge to the FsrsCard entity by ID.
+func (_c *NodeCreate) SetFsrsCardID(id uuid.UUID) *NodeCreate {
+	_c.mutation.SetFsrsCardID(id)
+	return _c
+}
+
+// SetNillableFsrsCardID sets the "fsrs_card" edge to the FsrsCard entity by ID if the given value is not nil.
+func (_c *NodeCreate) SetNillableFsrsCardID(id *uuid.UUID) *NodeCreate {
+	if id != nil {
+		_c = _c.SetFsrsCardID(*id)
+	}
+	return _c
+}
+
+// SetFsrsCard sets the "fsrs_card" edge to the FsrsCard entity.
+func (_c *NodeCreate) SetFsrsCard(v *FsrsCard) *NodeCreate {
+	return _c.SetFsrsCardID(v.ID)
 }
 
 // Mutation returns the NodeMutation object of the builder.
@@ -370,6 +390,22 @@ func (_c *NodeCreate) createSpec() (*Node, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(nodeassociation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.FsrsCardIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   node.FsrsCardTable,
+			Columns: []string{node.FsrsCardColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

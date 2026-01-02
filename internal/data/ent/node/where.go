@@ -384,6 +384,29 @@ func HasIncomingAssociationsWith(preds ...predicate.NodeAssociation) predicate.N
 	})
 }
 
+// HasFsrsCard applies the HasEdge predicate on the "fsrs_card" edge.
+func HasFsrsCard() predicate.Node {
+	return predicate.Node(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, FsrsCardTable, FsrsCardColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasFsrsCardWith applies the HasEdge predicate on the "fsrs_card" edge with a given conditions (other predicates).
+func HasFsrsCardWith(preds ...predicate.FsrsCard) predicate.Node {
+	return predicate.Node(func(s *sql.Selector) {
+		step := newFsrsCardStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Node) predicate.Node {
 	return predicate.Node(sql.AndPredicates(predicates...))

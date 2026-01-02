@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
 	"profen/internal/data/ent/nodeclosure"
@@ -831,13 +832,30 @@ func (m *ErrorTypeMutation) ResetEdge(name string) error {
 // FsrsCardMutation represents an operation that mutates the FsrsCard nodes in the graph.
 type FsrsCardMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*FsrsCard, error)
-	predicates    []predicate.FsrsCard
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	stability         *float64
+	addstability      *float64
+	difficulty        *float64
+	adddifficulty     *float64
+	elapsed_days      *int
+	addelapsed_days   *int
+	scheduled_days    *int
+	addscheduled_days *int
+	reps              *int
+	addreps           *int
+	lapses            *int
+	addlapses         *int
+	state             *fsrscard.State
+	last_review       *time.Time
+	due               *time.Time
+	clearedFields     map[string]struct{}
+	node              *uuid.UUID
+	clearednode       bool
+	done              bool
+	oldValue          func(context.Context) (*FsrsCard, error)
+	predicates        []predicate.FsrsCard
 }
 
 var _ ent.Mutation = (*FsrsCardMutation)(nil)
@@ -860,7 +878,7 @@ func newFsrsCardMutation(c config, op Op, opts ...fsrscardOption) *FsrsCardMutat
 }
 
 // withFsrsCardID sets the ID field of the mutation.
-func withFsrsCardID(id int) fsrscardOption {
+func withFsrsCardID(id uuid.UUID) fsrscardOption {
 	return func(m *FsrsCardMutation) {
 		var (
 			err   error
@@ -910,9 +928,15 @@ func (m FsrsCardMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of FsrsCard entities.
+func (m *FsrsCardMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *FsrsCardMutation) ID() (id int, exists bool) {
+func (m *FsrsCardMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -923,12 +947,12 @@ func (m *FsrsCardMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *FsrsCardMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *FsrsCardMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -936,6 +960,526 @@ func (m *FsrsCardMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetStability sets the "stability" field.
+func (m *FsrsCardMutation) SetStability(f float64) {
+	m.stability = &f
+	m.addstability = nil
+}
+
+// Stability returns the value of the "stability" field in the mutation.
+func (m *FsrsCardMutation) Stability() (r float64, exists bool) {
+	v := m.stability
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStability returns the old "stability" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldStability(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStability is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStability requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStability: %w", err)
+	}
+	return oldValue.Stability, nil
+}
+
+// AddStability adds f to the "stability" field.
+func (m *FsrsCardMutation) AddStability(f float64) {
+	if m.addstability != nil {
+		*m.addstability += f
+	} else {
+		m.addstability = &f
+	}
+}
+
+// AddedStability returns the value that was added to the "stability" field in this mutation.
+func (m *FsrsCardMutation) AddedStability() (r float64, exists bool) {
+	v := m.addstability
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStability resets all changes to the "stability" field.
+func (m *FsrsCardMutation) ResetStability() {
+	m.stability = nil
+	m.addstability = nil
+}
+
+// SetDifficulty sets the "difficulty" field.
+func (m *FsrsCardMutation) SetDifficulty(f float64) {
+	m.difficulty = &f
+	m.adddifficulty = nil
+}
+
+// Difficulty returns the value of the "difficulty" field in the mutation.
+func (m *FsrsCardMutation) Difficulty() (r float64, exists bool) {
+	v := m.difficulty
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDifficulty returns the old "difficulty" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldDifficulty(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDifficulty is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDifficulty requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDifficulty: %w", err)
+	}
+	return oldValue.Difficulty, nil
+}
+
+// AddDifficulty adds f to the "difficulty" field.
+func (m *FsrsCardMutation) AddDifficulty(f float64) {
+	if m.adddifficulty != nil {
+		*m.adddifficulty += f
+	} else {
+		m.adddifficulty = &f
+	}
+}
+
+// AddedDifficulty returns the value that was added to the "difficulty" field in this mutation.
+func (m *FsrsCardMutation) AddedDifficulty() (r float64, exists bool) {
+	v := m.adddifficulty
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDifficulty resets all changes to the "difficulty" field.
+func (m *FsrsCardMutation) ResetDifficulty() {
+	m.difficulty = nil
+	m.adddifficulty = nil
+}
+
+// SetElapsedDays sets the "elapsed_days" field.
+func (m *FsrsCardMutation) SetElapsedDays(i int) {
+	m.elapsed_days = &i
+	m.addelapsed_days = nil
+}
+
+// ElapsedDays returns the value of the "elapsed_days" field in the mutation.
+func (m *FsrsCardMutation) ElapsedDays() (r int, exists bool) {
+	v := m.elapsed_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldElapsedDays returns the old "elapsed_days" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldElapsedDays(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldElapsedDays is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldElapsedDays requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldElapsedDays: %w", err)
+	}
+	return oldValue.ElapsedDays, nil
+}
+
+// AddElapsedDays adds i to the "elapsed_days" field.
+func (m *FsrsCardMutation) AddElapsedDays(i int) {
+	if m.addelapsed_days != nil {
+		*m.addelapsed_days += i
+	} else {
+		m.addelapsed_days = &i
+	}
+}
+
+// AddedElapsedDays returns the value that was added to the "elapsed_days" field in this mutation.
+func (m *FsrsCardMutation) AddedElapsedDays() (r int, exists bool) {
+	v := m.addelapsed_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetElapsedDays resets all changes to the "elapsed_days" field.
+func (m *FsrsCardMutation) ResetElapsedDays() {
+	m.elapsed_days = nil
+	m.addelapsed_days = nil
+}
+
+// SetScheduledDays sets the "scheduled_days" field.
+func (m *FsrsCardMutation) SetScheduledDays(i int) {
+	m.scheduled_days = &i
+	m.addscheduled_days = nil
+}
+
+// ScheduledDays returns the value of the "scheduled_days" field in the mutation.
+func (m *FsrsCardMutation) ScheduledDays() (r int, exists bool) {
+	v := m.scheduled_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScheduledDays returns the old "scheduled_days" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldScheduledDays(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScheduledDays is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScheduledDays requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScheduledDays: %w", err)
+	}
+	return oldValue.ScheduledDays, nil
+}
+
+// AddScheduledDays adds i to the "scheduled_days" field.
+func (m *FsrsCardMutation) AddScheduledDays(i int) {
+	if m.addscheduled_days != nil {
+		*m.addscheduled_days += i
+	} else {
+		m.addscheduled_days = &i
+	}
+}
+
+// AddedScheduledDays returns the value that was added to the "scheduled_days" field in this mutation.
+func (m *FsrsCardMutation) AddedScheduledDays() (r int, exists bool) {
+	v := m.addscheduled_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetScheduledDays resets all changes to the "scheduled_days" field.
+func (m *FsrsCardMutation) ResetScheduledDays() {
+	m.scheduled_days = nil
+	m.addscheduled_days = nil
+}
+
+// SetReps sets the "reps" field.
+func (m *FsrsCardMutation) SetReps(i int) {
+	m.reps = &i
+	m.addreps = nil
+}
+
+// Reps returns the value of the "reps" field in the mutation.
+func (m *FsrsCardMutation) Reps() (r int, exists bool) {
+	v := m.reps
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReps returns the old "reps" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldReps(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReps is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReps requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReps: %w", err)
+	}
+	return oldValue.Reps, nil
+}
+
+// AddReps adds i to the "reps" field.
+func (m *FsrsCardMutation) AddReps(i int) {
+	if m.addreps != nil {
+		*m.addreps += i
+	} else {
+		m.addreps = &i
+	}
+}
+
+// AddedReps returns the value that was added to the "reps" field in this mutation.
+func (m *FsrsCardMutation) AddedReps() (r int, exists bool) {
+	v := m.addreps
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetReps resets all changes to the "reps" field.
+func (m *FsrsCardMutation) ResetReps() {
+	m.reps = nil
+	m.addreps = nil
+}
+
+// SetLapses sets the "lapses" field.
+func (m *FsrsCardMutation) SetLapses(i int) {
+	m.lapses = &i
+	m.addlapses = nil
+}
+
+// Lapses returns the value of the "lapses" field in the mutation.
+func (m *FsrsCardMutation) Lapses() (r int, exists bool) {
+	v := m.lapses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLapses returns the old "lapses" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldLapses(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLapses is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLapses requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLapses: %w", err)
+	}
+	return oldValue.Lapses, nil
+}
+
+// AddLapses adds i to the "lapses" field.
+func (m *FsrsCardMutation) AddLapses(i int) {
+	if m.addlapses != nil {
+		*m.addlapses += i
+	} else {
+		m.addlapses = &i
+	}
+}
+
+// AddedLapses returns the value that was added to the "lapses" field in this mutation.
+func (m *FsrsCardMutation) AddedLapses() (r int, exists bool) {
+	v := m.addlapses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetLapses resets all changes to the "lapses" field.
+func (m *FsrsCardMutation) ResetLapses() {
+	m.lapses = nil
+	m.addlapses = nil
+}
+
+// SetState sets the "state" field.
+func (m *FsrsCardMutation) SetState(f fsrscard.State) {
+	m.state = &f
+}
+
+// State returns the value of the "state" field in the mutation.
+func (m *FsrsCardMutation) State() (r fsrscard.State, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldState returns the old "state" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldState(ctx context.Context) (v fsrscard.State, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldState: %w", err)
+	}
+	return oldValue.State, nil
+}
+
+// ResetState resets all changes to the "state" field.
+func (m *FsrsCardMutation) ResetState() {
+	m.state = nil
+}
+
+// SetLastReview sets the "last_review" field.
+func (m *FsrsCardMutation) SetLastReview(t time.Time) {
+	m.last_review = &t
+}
+
+// LastReview returns the value of the "last_review" field in the mutation.
+func (m *FsrsCardMutation) LastReview() (r time.Time, exists bool) {
+	v := m.last_review
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastReview returns the old "last_review" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldLastReview(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastReview is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastReview requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastReview: %w", err)
+	}
+	return oldValue.LastReview, nil
+}
+
+// ClearLastReview clears the value of the "last_review" field.
+func (m *FsrsCardMutation) ClearLastReview() {
+	m.last_review = nil
+	m.clearedFields[fsrscard.FieldLastReview] = struct{}{}
+}
+
+// LastReviewCleared returns if the "last_review" field was cleared in this mutation.
+func (m *FsrsCardMutation) LastReviewCleared() bool {
+	_, ok := m.clearedFields[fsrscard.FieldLastReview]
+	return ok
+}
+
+// ResetLastReview resets all changes to the "last_review" field.
+func (m *FsrsCardMutation) ResetLastReview() {
+	m.last_review = nil
+	delete(m.clearedFields, fsrscard.FieldLastReview)
+}
+
+// SetDue sets the "due" field.
+func (m *FsrsCardMutation) SetDue(t time.Time) {
+	m.due = &t
+}
+
+// Due returns the value of the "due" field in the mutation.
+func (m *FsrsCardMutation) Due() (r time.Time, exists bool) {
+	v := m.due
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDue returns the old "due" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldDue(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDue: %w", err)
+	}
+	return oldValue.Due, nil
+}
+
+// ResetDue resets all changes to the "due" field.
+func (m *FsrsCardMutation) ResetDue() {
+	m.due = nil
+}
+
+// SetNodeID sets the "node_id" field.
+func (m *FsrsCardMutation) SetNodeID(u uuid.UUID) {
+	m.node = &u
+}
+
+// NodeID returns the value of the "node_id" field in the mutation.
+func (m *FsrsCardMutation) NodeID() (r uuid.UUID, exists bool) {
+	v := m.node
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNodeID returns the old "node_id" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldNodeID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNodeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNodeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNodeID: %w", err)
+	}
+	return oldValue.NodeID, nil
+}
+
+// ResetNodeID resets all changes to the "node_id" field.
+func (m *FsrsCardMutation) ResetNodeID() {
+	m.node = nil
+}
+
+// ClearNode clears the "node" edge to the Node entity.
+func (m *FsrsCardMutation) ClearNode() {
+	m.clearednode = true
+	m.clearedFields[fsrscard.FieldNodeID] = struct{}{}
+}
+
+// NodeCleared reports if the "node" edge to the Node entity was cleared.
+func (m *FsrsCardMutation) NodeCleared() bool {
+	return m.clearednode
+}
+
+// NodeIDs returns the "node" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// NodeID instead. It exists only for internal usage by the builders.
+func (m *FsrsCardMutation) NodeIDs() (ids []uuid.UUID) {
+	if id := m.node; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetNode resets all changes to the "node" edge.
+func (m *FsrsCardMutation) ResetNode() {
+	m.node = nil
+	m.clearednode = false
 }
 
 // Where appends a list predicates to the FsrsCardMutation builder.
@@ -972,7 +1516,37 @@ func (m *FsrsCardMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FsrsCardMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 10)
+	if m.stability != nil {
+		fields = append(fields, fsrscard.FieldStability)
+	}
+	if m.difficulty != nil {
+		fields = append(fields, fsrscard.FieldDifficulty)
+	}
+	if m.elapsed_days != nil {
+		fields = append(fields, fsrscard.FieldElapsedDays)
+	}
+	if m.scheduled_days != nil {
+		fields = append(fields, fsrscard.FieldScheduledDays)
+	}
+	if m.reps != nil {
+		fields = append(fields, fsrscard.FieldReps)
+	}
+	if m.lapses != nil {
+		fields = append(fields, fsrscard.FieldLapses)
+	}
+	if m.state != nil {
+		fields = append(fields, fsrscard.FieldState)
+	}
+	if m.last_review != nil {
+		fields = append(fields, fsrscard.FieldLastReview)
+	}
+	if m.due != nil {
+		fields = append(fields, fsrscard.FieldDue)
+	}
+	if m.node != nil {
+		fields = append(fields, fsrscard.FieldNodeID)
+	}
 	return fields
 }
 
@@ -980,6 +1554,28 @@ func (m *FsrsCardMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *FsrsCardMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case fsrscard.FieldStability:
+		return m.Stability()
+	case fsrscard.FieldDifficulty:
+		return m.Difficulty()
+	case fsrscard.FieldElapsedDays:
+		return m.ElapsedDays()
+	case fsrscard.FieldScheduledDays:
+		return m.ScheduledDays()
+	case fsrscard.FieldReps:
+		return m.Reps()
+	case fsrscard.FieldLapses:
+		return m.Lapses()
+	case fsrscard.FieldState:
+		return m.State()
+	case fsrscard.FieldLastReview:
+		return m.LastReview()
+	case fsrscard.FieldDue:
+		return m.Due()
+	case fsrscard.FieldNodeID:
+		return m.NodeID()
+	}
 	return nil, false
 }
 
@@ -987,6 +1583,28 @@ func (m *FsrsCardMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *FsrsCardMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case fsrscard.FieldStability:
+		return m.OldStability(ctx)
+	case fsrscard.FieldDifficulty:
+		return m.OldDifficulty(ctx)
+	case fsrscard.FieldElapsedDays:
+		return m.OldElapsedDays(ctx)
+	case fsrscard.FieldScheduledDays:
+		return m.OldScheduledDays(ctx)
+	case fsrscard.FieldReps:
+		return m.OldReps(ctx)
+	case fsrscard.FieldLapses:
+		return m.OldLapses(ctx)
+	case fsrscard.FieldState:
+		return m.OldState(ctx)
+	case fsrscard.FieldLastReview:
+		return m.OldLastReview(ctx)
+	case fsrscard.FieldDue:
+		return m.OldDue(ctx)
+	case fsrscard.FieldNodeID:
+		return m.OldNodeID(ctx)
+	}
 	return nil, fmt.Errorf("unknown FsrsCard field %s", name)
 }
 
@@ -995,6 +1613,76 @@ func (m *FsrsCardMutation) OldField(ctx context.Context, name string) (ent.Value
 // type.
 func (m *FsrsCardMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case fsrscard.FieldStability:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStability(v)
+		return nil
+	case fsrscard.FieldDifficulty:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDifficulty(v)
+		return nil
+	case fsrscard.FieldElapsedDays:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetElapsedDays(v)
+		return nil
+	case fsrscard.FieldScheduledDays:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScheduledDays(v)
+		return nil
+	case fsrscard.FieldReps:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReps(v)
+		return nil
+	case fsrscard.FieldLapses:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLapses(v)
+		return nil
+	case fsrscard.FieldState:
+		v, ok := value.(fsrscard.State)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetState(v)
+		return nil
+	case fsrscard.FieldLastReview:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastReview(v)
+		return nil
+	case fsrscard.FieldDue:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDue(v)
+		return nil
+	case fsrscard.FieldNodeID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNodeID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown FsrsCard field %s", name)
 }
@@ -1002,13 +1690,46 @@ func (m *FsrsCardMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *FsrsCardMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addstability != nil {
+		fields = append(fields, fsrscard.FieldStability)
+	}
+	if m.adddifficulty != nil {
+		fields = append(fields, fsrscard.FieldDifficulty)
+	}
+	if m.addelapsed_days != nil {
+		fields = append(fields, fsrscard.FieldElapsedDays)
+	}
+	if m.addscheduled_days != nil {
+		fields = append(fields, fsrscard.FieldScheduledDays)
+	}
+	if m.addreps != nil {
+		fields = append(fields, fsrscard.FieldReps)
+	}
+	if m.addlapses != nil {
+		fields = append(fields, fsrscard.FieldLapses)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *FsrsCardMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case fsrscard.FieldStability:
+		return m.AddedStability()
+	case fsrscard.FieldDifficulty:
+		return m.AddedDifficulty()
+	case fsrscard.FieldElapsedDays:
+		return m.AddedElapsedDays()
+	case fsrscard.FieldScheduledDays:
+		return m.AddedScheduledDays()
+	case fsrscard.FieldReps:
+		return m.AddedReps()
+	case fsrscard.FieldLapses:
+		return m.AddedLapses()
+	}
 	return nil, false
 }
 
@@ -1016,13 +1737,61 @@ func (m *FsrsCardMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *FsrsCardMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case fsrscard.FieldStability:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStability(v)
+		return nil
+	case fsrscard.FieldDifficulty:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDifficulty(v)
+		return nil
+	case fsrscard.FieldElapsedDays:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddElapsedDays(v)
+		return nil
+	case fsrscard.FieldScheduledDays:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddScheduledDays(v)
+		return nil
+	case fsrscard.FieldReps:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReps(v)
+		return nil
+	case fsrscard.FieldLapses:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLapses(v)
+		return nil
+	}
 	return fmt.Errorf("unknown FsrsCard numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *FsrsCardMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(fsrscard.FieldLastReview) {
+		fields = append(fields, fsrscard.FieldLastReview)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1035,30 +1804,76 @@ func (m *FsrsCardMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *FsrsCardMutation) ClearField(name string) error {
+	switch name {
+	case fsrscard.FieldLastReview:
+		m.ClearLastReview()
+		return nil
+	}
 	return fmt.Errorf("unknown FsrsCard nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *FsrsCardMutation) ResetField(name string) error {
+	switch name {
+	case fsrscard.FieldStability:
+		m.ResetStability()
+		return nil
+	case fsrscard.FieldDifficulty:
+		m.ResetDifficulty()
+		return nil
+	case fsrscard.FieldElapsedDays:
+		m.ResetElapsedDays()
+		return nil
+	case fsrscard.FieldScheduledDays:
+		m.ResetScheduledDays()
+		return nil
+	case fsrscard.FieldReps:
+		m.ResetReps()
+		return nil
+	case fsrscard.FieldLapses:
+		m.ResetLapses()
+		return nil
+	case fsrscard.FieldState:
+		m.ResetState()
+		return nil
+	case fsrscard.FieldLastReview:
+		m.ResetLastReview()
+		return nil
+	case fsrscard.FieldDue:
+		m.ResetDue()
+		return nil
+	case fsrscard.FieldNodeID:
+		m.ResetNodeID()
+		return nil
+	}
 	return fmt.Errorf("unknown FsrsCard field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *FsrsCardMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.node != nil {
+		edges = append(edges, fsrscard.EdgeNode)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *FsrsCardMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case fsrscard.EdgeNode:
+		if id := m.node; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *FsrsCardMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -1070,25 +1885,42 @@ func (m *FsrsCardMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *FsrsCardMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearednode {
+		edges = append(edges, fsrscard.EdgeNode)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *FsrsCardMutation) EdgeCleared(name string) bool {
+	switch name {
+	case fsrscard.EdgeNode:
+		return m.clearednode
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *FsrsCardMutation) ClearEdge(name string) error {
+	switch name {
+	case fsrscard.EdgeNode:
+		m.ClearNode()
+		return nil
+	}
 	return fmt.Errorf("unknown FsrsCard unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *FsrsCardMutation) ResetEdge(name string) error {
+	switch name {
+	case fsrscard.EdgeNode:
+		m.ResetNode()
+		return nil
+	}
 	return fmt.Errorf("unknown FsrsCard edge %s", name)
 }
 
@@ -1120,6 +1952,8 @@ type NodeMutation struct {
 	incoming_associations        map[int]struct{}
 	removedincoming_associations map[int]struct{}
 	clearedincoming_associations bool
+	fsrs_card                    *uuid.UUID
+	clearedfsrs_card             bool
 	done                         bool
 	oldValue                     func(context.Context) (*Node, error)
 	predicates                   []predicate.Node
@@ -1745,6 +2579,45 @@ func (m *NodeMutation) ResetIncomingAssociations() {
 	m.removedincoming_associations = nil
 }
 
+// SetFsrsCardID sets the "fsrs_card" edge to the FsrsCard entity by id.
+func (m *NodeMutation) SetFsrsCardID(id uuid.UUID) {
+	m.fsrs_card = &id
+}
+
+// ClearFsrsCard clears the "fsrs_card" edge to the FsrsCard entity.
+func (m *NodeMutation) ClearFsrsCard() {
+	m.clearedfsrs_card = true
+}
+
+// FsrsCardCleared reports if the "fsrs_card" edge to the FsrsCard entity was cleared.
+func (m *NodeMutation) FsrsCardCleared() bool {
+	return m.clearedfsrs_card
+}
+
+// FsrsCardID returns the "fsrs_card" edge ID in the mutation.
+func (m *NodeMutation) FsrsCardID() (id uuid.UUID, exists bool) {
+	if m.fsrs_card != nil {
+		return *m.fsrs_card, true
+	}
+	return
+}
+
+// FsrsCardIDs returns the "fsrs_card" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// FsrsCardID instead. It exists only for internal usage by the builders.
+func (m *NodeMutation) FsrsCardIDs() (ids []uuid.UUID) {
+	if id := m.fsrs_card; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetFsrsCard resets all changes to the "fsrs_card" edge.
+func (m *NodeMutation) ResetFsrsCard() {
+	m.fsrs_card = nil
+	m.clearedfsrs_card = false
+}
+
 // Where appends a list predicates to the NodeMutation builder.
 func (m *NodeMutation) Where(ps ...predicate.Node) {
 	m.predicates = append(m.predicates, ps...)
@@ -1967,7 +2840,7 @@ func (m *NodeMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *NodeMutation) AddedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.parent != nil {
 		edges = append(edges, node.EdgeParent)
 	}
@@ -1985,6 +2858,9 @@ func (m *NodeMutation) AddedEdges() []string {
 	}
 	if m.incoming_associations != nil {
 		edges = append(edges, node.EdgeIncomingAssociations)
+	}
+	if m.fsrs_card != nil {
+		edges = append(edges, node.EdgeFsrsCard)
 	}
 	return edges
 }
@@ -2027,13 +2903,17 @@ func (m *NodeMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case node.EdgeFsrsCard:
+		if id := m.fsrs_card; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *NodeMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.removedchildren != nil {
 		edges = append(edges, node.EdgeChildren)
 	}
@@ -2092,7 +2972,7 @@ func (m *NodeMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *NodeMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.clearedparent {
 		edges = append(edges, node.EdgeParent)
 	}
@@ -2110,6 +2990,9 @@ func (m *NodeMutation) ClearedEdges() []string {
 	}
 	if m.clearedincoming_associations {
 		edges = append(edges, node.EdgeIncomingAssociations)
+	}
+	if m.clearedfsrs_card {
+		edges = append(edges, node.EdgeFsrsCard)
 	}
 	return edges
 }
@@ -2130,6 +3013,8 @@ func (m *NodeMutation) EdgeCleared(name string) bool {
 		return m.clearedoutgoing_associations
 	case node.EdgeIncomingAssociations:
 		return m.clearedincoming_associations
+	case node.EdgeFsrsCard:
+		return m.clearedfsrs_card
 	}
 	return false
 }
@@ -2140,6 +3025,9 @@ func (m *NodeMutation) ClearEdge(name string) error {
 	switch name {
 	case node.EdgeParent:
 		m.ClearParent()
+		return nil
+	case node.EdgeFsrsCard:
+		m.ClearFsrsCard()
 		return nil
 	}
 	return fmt.Errorf("unknown Node unique edge %s", name)
@@ -2166,6 +3054,9 @@ func (m *NodeMutation) ResetEdge(name string) error {
 		return nil
 	case node.EdgeIncomingAssociations:
 		m.ResetIncomingAssociations()
+		return nil
+	case node.EdgeFsrsCard:
+		m.ResetFsrsCard()
 		return nil
 	}
 	return fmt.Errorf("unknown Node edge %s", name)

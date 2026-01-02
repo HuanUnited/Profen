@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/schema"
 	"time"
@@ -14,6 +15,40 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	fsrscardFields := schema.FsrsCard{}.Fields()
+	_ = fsrscardFields
+	// fsrscardDescStability is the schema descriptor for stability field.
+	fsrscardDescStability := fsrscardFields[1].Descriptor()
+	// fsrscard.DefaultStability holds the default value on creation for the stability field.
+	fsrscard.DefaultStability = fsrscardDescStability.Default.(float64)
+	// fsrscardDescDifficulty is the schema descriptor for difficulty field.
+	fsrscardDescDifficulty := fsrscardFields[2].Descriptor()
+	// fsrscard.DefaultDifficulty holds the default value on creation for the difficulty field.
+	fsrscard.DefaultDifficulty = fsrscardDescDifficulty.Default.(float64)
+	// fsrscardDescElapsedDays is the schema descriptor for elapsed_days field.
+	fsrscardDescElapsedDays := fsrscardFields[3].Descriptor()
+	// fsrscard.DefaultElapsedDays holds the default value on creation for the elapsed_days field.
+	fsrscard.DefaultElapsedDays = fsrscardDescElapsedDays.Default.(int)
+	// fsrscardDescScheduledDays is the schema descriptor for scheduled_days field.
+	fsrscardDescScheduledDays := fsrscardFields[4].Descriptor()
+	// fsrscard.DefaultScheduledDays holds the default value on creation for the scheduled_days field.
+	fsrscard.DefaultScheduledDays = fsrscardDescScheduledDays.Default.(int)
+	// fsrscardDescReps is the schema descriptor for reps field.
+	fsrscardDescReps := fsrscardFields[5].Descriptor()
+	// fsrscard.DefaultReps holds the default value on creation for the reps field.
+	fsrscard.DefaultReps = fsrscardDescReps.Default.(int)
+	// fsrscardDescLapses is the schema descriptor for lapses field.
+	fsrscardDescLapses := fsrscardFields[6].Descriptor()
+	// fsrscard.DefaultLapses holds the default value on creation for the lapses field.
+	fsrscard.DefaultLapses = fsrscardDescLapses.Default.(int)
+	// fsrscardDescDue is the schema descriptor for due field.
+	fsrscardDescDue := fsrscardFields[9].Descriptor()
+	// fsrscard.DefaultDue holds the default value on creation for the due field.
+	fsrscard.DefaultDue = fsrscardDescDue.Default.(func() time.Time)
+	// fsrscardDescID is the schema descriptor for id field.
+	fsrscardDescID := fsrscardFields[0].Descriptor()
+	// fsrscard.DefaultID holds the default value on creation for the id field.
+	fsrscard.DefaultID = fsrscardDescID.Default.(func() uuid.UUID)
 	nodeFields := schema.Node{}.Fields()
 	_ = nodeFields
 	// nodeDescCreatedAt is the schema descriptor for created_at field.

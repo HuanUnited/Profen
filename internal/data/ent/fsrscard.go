@@ -5,18 +5,64 @@ package ent
 import (
 	"fmt"
 	"profen/internal/data/ent/fsrscard"
+	"profen/internal/data/ent/node"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 )
 
 // FsrsCard is the model entity for the FsrsCard schema.
 type FsrsCard struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID           int `json:"id,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
+	// Memory stability (S). Interval when R=90%.
+	Stability float64 `json:"stability,omitempty"`
+	// Memory difficulty (D). 1 (easiest) to 10 (hardest).
+	Difficulty float64 `json:"difficulty,omitempty"`
+	// Days since the card was created or last reviewed.
+	ElapsedDays int `json:"elapsed_days,omitempty"`
+	// The interval (I) calculated by FSRS for the next review.
+	ScheduledDays int `json:"scheduled_days,omitempty"`
+	// Total number of reviews.
+	Reps int `json:"reps,omitempty"`
+	// Times the user forgot the card (rated 'Again').
+	Lapses int `json:"lapses,omitempty"`
+	// Current FSRS state.
+	State fsrscard.State `json:"state,omitempty"`
+	// Last time the user attempted this card.
+	LastReview *time.Time `json:"last_review,omitempty"`
+	// Next scheduled review date.
+	Due time.Time `json:"due,omitempty"`
+	// NodeID holds the value of the "node_id" field.
+	NodeID uuid.UUID `json:"node_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the FsrsCardQuery when eager-loading is set.
+	Edges        FsrsCardEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// FsrsCardEdges holds the relations/edges for other nodes in the graph.
+type FsrsCardEdges struct {
+	// Node holds the value of the node edge.
+	Node *Node `json:"node,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// NodeOrErr returns the Node value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e FsrsCardEdges) NodeOrErr() (*Node, error) {
+	if e.Node != nil {
+		return e.Node, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: node.Label}
+	}
+	return nil, &NotLoadedError{edge: "node"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -24,8 +70,16 @@ func (*FsrsCard) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case fsrscard.FieldID:
+		case fsrscard.FieldStability, fsrscard.FieldDifficulty:
+			values[i] = new(sql.NullFloat64)
+		case fsrscard.FieldElapsedDays, fsrscard.FieldScheduledDays, fsrscard.FieldReps, fsrscard.FieldLapses:
 			values[i] = new(sql.NullInt64)
+		case fsrscard.FieldState:
+			values[i] = new(sql.NullString)
+		case fsrscard.FieldLastReview, fsrscard.FieldDue:
+			values[i] = new(sql.NullTime)
+		case fsrscard.FieldID, fsrscard.FieldNodeID:
+			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -42,11 +96,72 @@ func (_m *FsrsCard) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case fsrscard.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				_m.ID = *value
 			}
-			_m.ID = int(value.Int64)
+		case fsrscard.FieldStability:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field stability", values[i])
+			} else if value.Valid {
+				_m.Stability = value.Float64
+			}
+		case fsrscard.FieldDifficulty:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field difficulty", values[i])
+			} else if value.Valid {
+				_m.Difficulty = value.Float64
+			}
+		case fsrscard.FieldElapsedDays:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field elapsed_days", values[i])
+			} else if value.Valid {
+				_m.ElapsedDays = int(value.Int64)
+			}
+		case fsrscard.FieldScheduledDays:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field scheduled_days", values[i])
+			} else if value.Valid {
+				_m.ScheduledDays = int(value.Int64)
+			}
+		case fsrscard.FieldReps:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field reps", values[i])
+			} else if value.Valid {
+				_m.Reps = int(value.Int64)
+			}
+		case fsrscard.FieldLapses:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field lapses", values[i])
+			} else if value.Valid {
+				_m.Lapses = int(value.Int64)
+			}
+		case fsrscard.FieldState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field state", values[i])
+			} else if value.Valid {
+				_m.State = fsrscard.State(value.String)
+			}
+		case fsrscard.FieldLastReview:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_review", values[i])
+			} else if value.Valid {
+				_m.LastReview = new(time.Time)
+				*_m.LastReview = value.Time
+			}
+		case fsrscard.FieldDue:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field due", values[i])
+			} else if value.Valid {
+				_m.Due = value.Time
+			}
+		case fsrscard.FieldNodeID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field node_id", values[i])
+			} else if value != nil {
+				_m.NodeID = *value
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -58,6 +173,11 @@ func (_m *FsrsCard) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *FsrsCard) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryNode queries the "node" edge of the FsrsCard entity.
+func (_m *FsrsCard) QueryNode() *NodeQuery {
+	return NewFsrsCardClient(_m.config).QueryNode(_m)
 }
 
 // Update returns a builder for updating this FsrsCard.
@@ -82,7 +202,38 @@ func (_m *FsrsCard) Unwrap() *FsrsCard {
 func (_m *FsrsCard) String() string {
 	var builder strings.Builder
 	builder.WriteString("FsrsCard(")
-	builder.WriteString(fmt.Sprintf("id=%v", _m.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("stability=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Stability))
+	builder.WriteString(", ")
+	builder.WriteString("difficulty=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Difficulty))
+	builder.WriteString(", ")
+	builder.WriteString("elapsed_days=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ElapsedDays))
+	builder.WriteString(", ")
+	builder.WriteString("scheduled_days=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ScheduledDays))
+	builder.WriteString(", ")
+	builder.WriteString("reps=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Reps))
+	builder.WriteString(", ")
+	builder.WriteString("lapses=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Lapses))
+	builder.WriteString(", ")
+	builder.WriteString("state=")
+	builder.WriteString(fmt.Sprintf("%v", _m.State))
+	builder.WriteString(", ")
+	if v := _m.LastReview; v != nil {
+		builder.WriteString("last_review=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("due=")
+	builder.WriteString(_m.Due.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("node_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.NodeID))
 	builder.WriteByte(')')
 	return builder.String()
 }

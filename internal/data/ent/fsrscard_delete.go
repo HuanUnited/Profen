@@ -40,7 +40,7 @@ func (_d *FsrsCardDelete) ExecX(ctx context.Context) int {
 }
 
 func (_d *FsrsCardDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(fsrscard.Table, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewDeleteSpec(fsrscard.Table, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {

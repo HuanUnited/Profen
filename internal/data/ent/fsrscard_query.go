@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"math"
 	"profen/internal/data/ent/fsrscard"
+	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/predicate"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // FsrsCardQuery is the builder for querying FsrsCard entities.
@@ -22,6 +24,7 @@ type FsrsCardQuery struct {
 	order      []fsrscard.OrderOption
 	inters     []Interceptor
 	predicates []predicate.FsrsCard
+	withNode   *NodeQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +61,28 @@ func (_q *FsrsCardQuery) Order(o ...fsrscard.OrderOption) *FsrsCardQuery {
 	return _q
 }
 
+// QueryNode chains the current query on the "node" edge.
+func (_q *FsrsCardQuery) QueryNode() *NodeQuery {
+	query := (&NodeClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(fsrscard.Table, fsrscard.FieldID, selector),
+			sqlgraph.To(node.Table, node.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, fsrscard.NodeTable, fsrscard.NodeColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first FsrsCard entity from the query.
 // Returns a *NotFoundError when no FsrsCard was found.
 func (_q *FsrsCardQuery) First(ctx context.Context) (*FsrsCard, error) {
@@ -82,8 +107,8 @@ func (_q *FsrsCardQuery) FirstX(ctx context.Context) *FsrsCard {
 
 // FirstID returns the first FsrsCard ID from the query.
 // Returns a *NotFoundError when no FsrsCard ID was found.
-func (_q *FsrsCardQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (_q *FsrsCardQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
@@ -95,7 +120,7 @@ func (_q *FsrsCardQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *FsrsCardQuery) FirstIDX(ctx context.Context) int {
+func (_q *FsrsCardQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -133,8 +158,8 @@ func (_q *FsrsCardQuery) OnlyX(ctx context.Context) *FsrsCard {
 // OnlyID is like Only, but returns the only FsrsCard ID in the query.
 // Returns a *NotSingularError when more than one FsrsCard ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *FsrsCardQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (_q *FsrsCardQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -150,7 +175,7 @@ func (_q *FsrsCardQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *FsrsCardQuery) OnlyIDX(ctx context.Context) int {
+func (_q *FsrsCardQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -178,7 +203,7 @@ func (_q *FsrsCardQuery) AllX(ctx context.Context) []*FsrsCard {
 }
 
 // IDs executes the query and returns a list of FsrsCard IDs.
-func (_q *FsrsCardQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (_q *FsrsCardQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
@@ -190,7 +215,7 @@ func (_q *FsrsCardQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *FsrsCardQuery) IDsX(ctx context.Context) []int {
+func (_q *FsrsCardQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -250,14 +275,38 @@ func (_q *FsrsCardQuery) Clone() *FsrsCardQuery {
 		order:      append([]fsrscard.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
 		predicates: append([]predicate.FsrsCard{}, _q.predicates...),
+		withNode:   _q.withNode.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
+// WithNode tells the query-builder to eager-load the nodes that are connected to
+// the "node" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *FsrsCardQuery) WithNode(opts ...func(*NodeQuery)) *FsrsCardQuery {
+	query := (&NodeClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withNode = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Stability float64 `json:"stability,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.FsrsCard.Query().
+//		GroupBy(fsrscard.FieldStability).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (_q *FsrsCardQuery) GroupBy(field string, fields ...string) *FsrsCardGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &FsrsCardGroupBy{build: _q}
@@ -269,6 +318,16 @@ func (_q *FsrsCardQuery) GroupBy(field string, fields ...string) *FsrsCardGroupB
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Stability float64 `json:"stability,omitempty"`
+//	}
+//
+//	client.FsrsCard.Query().
+//		Select(fsrscard.FieldStability).
+//		Scan(ctx, &v)
 func (_q *FsrsCardQuery) Select(fields ...string) *FsrsCardSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
 	sbuild := &FsrsCardSelect{FsrsCardQuery: _q}
@@ -310,8 +369,11 @@ func (_q *FsrsCardQuery) prepareQuery(ctx context.Context) error {
 
 func (_q *FsrsCardQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*FsrsCard, error) {
 	var (
-		nodes = []*FsrsCard{}
-		_spec = _q.querySpec()
+		nodes       = []*FsrsCard{}
+		_spec       = _q.querySpec()
+		loadedTypes = [1]bool{
+			_q.withNode != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*FsrsCard).scanValues(nil, columns)
@@ -319,6 +381,7 @@ func (_q *FsrsCardQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Fsr
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &FsrsCard{config: _q.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -330,7 +393,43 @@ func (_q *FsrsCardQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Fsr
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withNode; query != nil {
+		if err := _q.loadNode(ctx, query, nodes, nil,
+			func(n *FsrsCard, e *Node) { n.Edges.Node = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (_q *FsrsCardQuery) loadNode(ctx context.Context, query *NodeQuery, nodes []*FsrsCard, init func(*FsrsCard), assign func(*FsrsCard, *Node)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*FsrsCard)
+	for i := range nodes {
+		fk := nodes[i].NodeID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(node.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "node_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (_q *FsrsCardQuery) sqlCount(ctx context.Context) (int, error) {
@@ -343,7 +442,7 @@ func (_q *FsrsCardQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (_q *FsrsCardQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(fsrscard.Table, fsrscard.Columns, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(fsrscard.Table, fsrscard.Columns, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -357,6 +456,9 @@ func (_q *FsrsCardQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != fsrscard.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withNode != nil {
+			_spec.Node.AddColumnOnce(fsrscard.FieldNodeID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

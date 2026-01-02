@@ -3,21 +3,67 @@
 package fsrscard
 
 import (
+	"fmt"
+	"time"
+
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 )
 
 const (
 	// Label holds the string label denoting the fsrscard type in the database.
 	Label = "fsrs_card"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
+	FieldID = "card_id"
+	// FieldStability holds the string denoting the stability field in the database.
+	FieldStability = "stability"
+	// FieldDifficulty holds the string denoting the difficulty field in the database.
+	FieldDifficulty = "difficulty"
+	// FieldElapsedDays holds the string denoting the elapsed_days field in the database.
+	FieldElapsedDays = "elapsed_days"
+	// FieldScheduledDays holds the string denoting the scheduled_days field in the database.
+	FieldScheduledDays = "scheduled_days"
+	// FieldReps holds the string denoting the reps field in the database.
+	FieldReps = "reps"
+	// FieldLapses holds the string denoting the lapses field in the database.
+	FieldLapses = "lapses"
+	// FieldState holds the string denoting the state field in the database.
+	FieldState = "state"
+	// FieldLastReview holds the string denoting the last_review field in the database.
+	FieldLastReview = "last_review"
+	// FieldDue holds the string denoting the due field in the database.
+	FieldDue = "due"
+	// FieldNodeID holds the string denoting the node_id field in the database.
+	FieldNodeID = "node_id"
+	// EdgeNode holds the string denoting the node edge name in mutations.
+	EdgeNode = "node"
+	// NodeFieldID holds the string denoting the ID field of the Node.
+	NodeFieldID = "node_id"
 	// Table holds the table name of the fsrscard in the database.
 	Table = "fsrs_cards"
+	// NodeTable is the table that holds the node relation/edge.
+	NodeTable = "fsrs_cards"
+	// NodeInverseTable is the table name for the Node entity.
+	// It exists in this package in order to avoid circular dependency with the "node" package.
+	NodeInverseTable = "nodes"
+	// NodeColumn is the table column denoting the node relation/edge.
+	NodeColumn = "node_id"
 )
 
 // Columns holds all SQL columns for fsrscard fields.
 var Columns = []string{
 	FieldID,
+	FieldStability,
+	FieldDifficulty,
+	FieldElapsedDays,
+	FieldScheduledDays,
+	FieldReps,
+	FieldLapses,
+	FieldState,
+	FieldLastReview,
+	FieldDue,
+	FieldNodeID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -30,10 +76,121 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// DefaultStability holds the default value on creation for the "stability" field.
+	DefaultStability float64
+	// DefaultDifficulty holds the default value on creation for the "difficulty" field.
+	DefaultDifficulty float64
+	// DefaultElapsedDays holds the default value on creation for the "elapsed_days" field.
+	DefaultElapsedDays int
+	// DefaultScheduledDays holds the default value on creation for the "scheduled_days" field.
+	DefaultScheduledDays int
+	// DefaultReps holds the default value on creation for the "reps" field.
+	DefaultReps int
+	// DefaultLapses holds the default value on creation for the "lapses" field.
+	DefaultLapses int
+	// DefaultDue holds the default value on creation for the "due" field.
+	DefaultDue func() time.Time
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
+)
+
+// State defines the type for the "state" enum field.
+type State string
+
+// StateNew is the default value of the State enum.
+const DefaultState = StateNew
+
+// State values.
+const (
+	StateNew        State = "new"
+	StateLearning   State = "learning"
+	StateReview     State = "review"
+	StateRelearning State = "relearning"
+)
+
+func (s State) String() string {
+	return string(s)
+}
+
+// StateValidator is a validator for the "state" field enum values. It is called by the builders before save.
+func StateValidator(s State) error {
+	switch s {
+	case StateNew, StateLearning, StateReview, StateRelearning:
+		return nil
+	default:
+		return fmt.Errorf("fsrscard: invalid enum value for state field: %q", s)
+	}
+}
+
 // OrderOption defines the ordering options for the FsrsCard queries.
 type OrderOption func(*sql.Selector)
 
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByStability orders the results by the stability field.
+func ByStability(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStability, opts...).ToFunc()
+}
+
+// ByDifficulty orders the results by the difficulty field.
+func ByDifficulty(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDifficulty, opts...).ToFunc()
+}
+
+// ByElapsedDays orders the results by the elapsed_days field.
+func ByElapsedDays(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldElapsedDays, opts...).ToFunc()
+}
+
+// ByScheduledDays orders the results by the scheduled_days field.
+func ByScheduledDays(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldScheduledDays, opts...).ToFunc()
+}
+
+// ByReps orders the results by the reps field.
+func ByReps(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReps, opts...).ToFunc()
+}
+
+// ByLapses orders the results by the lapses field.
+func ByLapses(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLapses, opts...).ToFunc()
+}
+
+// ByState orders the results by the state field.
+func ByState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldState, opts...).ToFunc()
+}
+
+// ByLastReview orders the results by the last_review field.
+func ByLastReview(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastReview, opts...).ToFunc()
+}
+
+// ByDue orders the results by the due field.
+func ByDue(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDue, opts...).ToFunc()
+}
+
+// ByNodeID orders the results by the node_id field.
+func ByNodeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNodeID, opts...).ToFunc()
+}
+
+// ByNodeField orders the results by node field.
+func ByNodeField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newNodeStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newNodeStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(NodeInverseTable, NodeFieldID),
+		sqlgraph.Edge(sqlgraph.O2O, true, NodeTable, NodeColumn),
+	)
 }

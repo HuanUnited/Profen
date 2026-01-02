@@ -41,13 +41,31 @@ var (
 	}
 	// FsrsCardsColumns holds the columns for the "fsrs_cards" table.
 	FsrsCardsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "card_id", Type: field.TypeUUID},
+		{Name: "stability", Type: field.TypeFloat64, Default: 0},
+		{Name: "difficulty", Type: field.TypeFloat64, Default: 0},
+		{Name: "elapsed_days", Type: field.TypeInt, Default: 0},
+		{Name: "scheduled_days", Type: field.TypeInt, Default: 0},
+		{Name: "reps", Type: field.TypeInt, Default: 0},
+		{Name: "lapses", Type: field.TypeInt, Default: 0},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"new", "learning", "review", "relearning"}, Default: "new"},
+		{Name: "last_review", Type: field.TypeTime, Nullable: true},
+		{Name: "due", Type: field.TypeTime},
+		{Name: "node_id", Type: field.TypeUUID, Unique: true},
 	}
 	// FsrsCardsTable holds the schema information for the "fsrs_cards" table.
 	FsrsCardsTable = &schema.Table{
 		Name:       "fsrs_cards",
 		Columns:    FsrsCardsColumns,
 		PrimaryKey: []*schema.Column{FsrsCardsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "fsrs_cards_nodes_fsrs_card",
+				Columns:    []*schema.Column{FsrsCardsColumns[10]},
+				RefColumns: []*schema.Column{NodesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 	}
 	// NodesColumns holds the columns for the "nodes" table.
 	NodesColumns = []*schema.Column{
@@ -153,6 +171,7 @@ var (
 )
 
 func init() {
+	FsrsCardsTable.ForeignKeys[0].RefTable = NodesTable
 	NodesTable.ForeignKeys[0].RefTable = NodesTable
 	NodeAssociationsTable.ForeignKeys[0].RefTable = NodesTable
 	NodeAssociationsTable.ForeignKeys[1].RefTable = NodesTable

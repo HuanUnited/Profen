@@ -7,11 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"profen/internal/data/ent/fsrscard"
+	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // FsrsCardUpdate is the builder for updating FsrsCard entities.
@@ -27,9 +30,208 @@ func (_u *FsrsCardUpdate) Where(ps ...predicate.FsrsCard) *FsrsCardUpdate {
 	return _u
 }
 
+// SetStability sets the "stability" field.
+func (_u *FsrsCardUpdate) SetStability(v float64) *FsrsCardUpdate {
+	_u.mutation.ResetStability()
+	_u.mutation.SetStability(v)
+	return _u
+}
+
+// SetNillableStability sets the "stability" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableStability(v *float64) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetStability(*v)
+	}
+	return _u
+}
+
+// AddStability adds value to the "stability" field.
+func (_u *FsrsCardUpdate) AddStability(v float64) *FsrsCardUpdate {
+	_u.mutation.AddStability(v)
+	return _u
+}
+
+// SetDifficulty sets the "difficulty" field.
+func (_u *FsrsCardUpdate) SetDifficulty(v float64) *FsrsCardUpdate {
+	_u.mutation.ResetDifficulty()
+	_u.mutation.SetDifficulty(v)
+	return _u
+}
+
+// SetNillableDifficulty sets the "difficulty" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableDifficulty(v *float64) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetDifficulty(*v)
+	}
+	return _u
+}
+
+// AddDifficulty adds value to the "difficulty" field.
+func (_u *FsrsCardUpdate) AddDifficulty(v float64) *FsrsCardUpdate {
+	_u.mutation.AddDifficulty(v)
+	return _u
+}
+
+// SetElapsedDays sets the "elapsed_days" field.
+func (_u *FsrsCardUpdate) SetElapsedDays(v int) *FsrsCardUpdate {
+	_u.mutation.ResetElapsedDays()
+	_u.mutation.SetElapsedDays(v)
+	return _u
+}
+
+// SetNillableElapsedDays sets the "elapsed_days" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableElapsedDays(v *int) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetElapsedDays(*v)
+	}
+	return _u
+}
+
+// AddElapsedDays adds value to the "elapsed_days" field.
+func (_u *FsrsCardUpdate) AddElapsedDays(v int) *FsrsCardUpdate {
+	_u.mutation.AddElapsedDays(v)
+	return _u
+}
+
+// SetScheduledDays sets the "scheduled_days" field.
+func (_u *FsrsCardUpdate) SetScheduledDays(v int) *FsrsCardUpdate {
+	_u.mutation.ResetScheduledDays()
+	_u.mutation.SetScheduledDays(v)
+	return _u
+}
+
+// SetNillableScheduledDays sets the "scheduled_days" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableScheduledDays(v *int) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetScheduledDays(*v)
+	}
+	return _u
+}
+
+// AddScheduledDays adds value to the "scheduled_days" field.
+func (_u *FsrsCardUpdate) AddScheduledDays(v int) *FsrsCardUpdate {
+	_u.mutation.AddScheduledDays(v)
+	return _u
+}
+
+// SetReps sets the "reps" field.
+func (_u *FsrsCardUpdate) SetReps(v int) *FsrsCardUpdate {
+	_u.mutation.ResetReps()
+	_u.mutation.SetReps(v)
+	return _u
+}
+
+// SetNillableReps sets the "reps" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableReps(v *int) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetReps(*v)
+	}
+	return _u
+}
+
+// AddReps adds value to the "reps" field.
+func (_u *FsrsCardUpdate) AddReps(v int) *FsrsCardUpdate {
+	_u.mutation.AddReps(v)
+	return _u
+}
+
+// SetLapses sets the "lapses" field.
+func (_u *FsrsCardUpdate) SetLapses(v int) *FsrsCardUpdate {
+	_u.mutation.ResetLapses()
+	_u.mutation.SetLapses(v)
+	return _u
+}
+
+// SetNillableLapses sets the "lapses" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableLapses(v *int) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetLapses(*v)
+	}
+	return _u
+}
+
+// AddLapses adds value to the "lapses" field.
+func (_u *FsrsCardUpdate) AddLapses(v int) *FsrsCardUpdate {
+	_u.mutation.AddLapses(v)
+	return _u
+}
+
+// SetState sets the "state" field.
+func (_u *FsrsCardUpdate) SetState(v fsrscard.State) *FsrsCardUpdate {
+	_u.mutation.SetState(v)
+	return _u
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableState(v *fsrscard.State) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetState(*v)
+	}
+	return _u
+}
+
+// SetLastReview sets the "last_review" field.
+func (_u *FsrsCardUpdate) SetLastReview(v time.Time) *FsrsCardUpdate {
+	_u.mutation.SetLastReview(v)
+	return _u
+}
+
+// SetNillableLastReview sets the "last_review" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableLastReview(v *time.Time) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetLastReview(*v)
+	}
+	return _u
+}
+
+// ClearLastReview clears the value of the "last_review" field.
+func (_u *FsrsCardUpdate) ClearLastReview() *FsrsCardUpdate {
+	_u.mutation.ClearLastReview()
+	return _u
+}
+
+// SetDue sets the "due" field.
+func (_u *FsrsCardUpdate) SetDue(v time.Time) *FsrsCardUpdate {
+	_u.mutation.SetDue(v)
+	return _u
+}
+
+// SetNillableDue sets the "due" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableDue(v *time.Time) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetDue(*v)
+	}
+	return _u
+}
+
+// SetNodeID sets the "node_id" field.
+func (_u *FsrsCardUpdate) SetNodeID(v uuid.UUID) *FsrsCardUpdate {
+	_u.mutation.SetNodeID(v)
+	return _u
+}
+
+// SetNillableNodeID sets the "node_id" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableNodeID(v *uuid.UUID) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetNodeID(*v)
+	}
+	return _u
+}
+
+// SetNode sets the "node" edge to the Node entity.
+func (_u *FsrsCardUpdate) SetNode(v *Node) *FsrsCardUpdate {
+	return _u.SetNodeID(v.ID)
+}
+
 // Mutation returns the FsrsCardMutation object of the builder.
 func (_u *FsrsCardUpdate) Mutation() *FsrsCardMutation {
 	return _u.mutation
+}
+
+// ClearNode clears the "node" edge to the Node entity.
+func (_u *FsrsCardUpdate) ClearNode() *FsrsCardUpdate {
+	_u.mutation.ClearNode()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -59,14 +261,107 @@ func (_u *FsrsCardUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *FsrsCardUpdate) check() error {
+	if v, ok := _u.mutation.State(); ok {
+		if err := fsrscard.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "FsrsCard.state": %w`, err)}
+		}
+	}
+	if _u.mutation.NodeCleared() && len(_u.mutation.NodeIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "FsrsCard.node"`)
+	}
+	return nil
+}
+
 func (_u *FsrsCardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(fsrscard.Table, fsrscard.Columns, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(fsrscard.Table, fsrscard.Columns, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.Stability(); ok {
+		_spec.SetField(fsrscard.FieldStability, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedStability(); ok {
+		_spec.AddField(fsrscard.FieldStability, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.Difficulty(); ok {
+		_spec.SetField(fsrscard.FieldDifficulty, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDifficulty(); ok {
+		_spec.AddField(fsrscard.FieldDifficulty, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.ElapsedDays(); ok {
+		_spec.SetField(fsrscard.FieldElapsedDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedElapsedDays(); ok {
+		_spec.AddField(fsrscard.FieldElapsedDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.ScheduledDays(); ok {
+		_spec.SetField(fsrscard.FieldScheduledDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedScheduledDays(); ok {
+		_spec.AddField(fsrscard.FieldScheduledDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Reps(); ok {
+		_spec.SetField(fsrscard.FieldReps, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedReps(); ok {
+		_spec.AddField(fsrscard.FieldReps, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Lapses(); ok {
+		_spec.SetField(fsrscard.FieldLapses, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedLapses(); ok {
+		_spec.AddField(fsrscard.FieldLapses, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.State(); ok {
+		_spec.SetField(fsrscard.FieldState, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.LastReview(); ok {
+		_spec.SetField(fsrscard.FieldLastReview, field.TypeTime, value)
+	}
+	if _u.mutation.LastReviewCleared() {
+		_spec.ClearField(fsrscard.FieldLastReview, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Due(); ok {
+		_spec.SetField(fsrscard.FieldDue, field.TypeTime, value)
+	}
+	if _u.mutation.NodeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   fsrscard.NodeTable,
+			Columns: []string{fsrscard.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.NodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   fsrscard.NodeTable,
+			Columns: []string{fsrscard.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -88,9 +383,208 @@ type FsrsCardUpdateOne struct {
 	mutation *FsrsCardMutation
 }
 
+// SetStability sets the "stability" field.
+func (_u *FsrsCardUpdateOne) SetStability(v float64) *FsrsCardUpdateOne {
+	_u.mutation.ResetStability()
+	_u.mutation.SetStability(v)
+	return _u
+}
+
+// SetNillableStability sets the "stability" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableStability(v *float64) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetStability(*v)
+	}
+	return _u
+}
+
+// AddStability adds value to the "stability" field.
+func (_u *FsrsCardUpdateOne) AddStability(v float64) *FsrsCardUpdateOne {
+	_u.mutation.AddStability(v)
+	return _u
+}
+
+// SetDifficulty sets the "difficulty" field.
+func (_u *FsrsCardUpdateOne) SetDifficulty(v float64) *FsrsCardUpdateOne {
+	_u.mutation.ResetDifficulty()
+	_u.mutation.SetDifficulty(v)
+	return _u
+}
+
+// SetNillableDifficulty sets the "difficulty" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableDifficulty(v *float64) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetDifficulty(*v)
+	}
+	return _u
+}
+
+// AddDifficulty adds value to the "difficulty" field.
+func (_u *FsrsCardUpdateOne) AddDifficulty(v float64) *FsrsCardUpdateOne {
+	_u.mutation.AddDifficulty(v)
+	return _u
+}
+
+// SetElapsedDays sets the "elapsed_days" field.
+func (_u *FsrsCardUpdateOne) SetElapsedDays(v int) *FsrsCardUpdateOne {
+	_u.mutation.ResetElapsedDays()
+	_u.mutation.SetElapsedDays(v)
+	return _u
+}
+
+// SetNillableElapsedDays sets the "elapsed_days" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableElapsedDays(v *int) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetElapsedDays(*v)
+	}
+	return _u
+}
+
+// AddElapsedDays adds value to the "elapsed_days" field.
+func (_u *FsrsCardUpdateOne) AddElapsedDays(v int) *FsrsCardUpdateOne {
+	_u.mutation.AddElapsedDays(v)
+	return _u
+}
+
+// SetScheduledDays sets the "scheduled_days" field.
+func (_u *FsrsCardUpdateOne) SetScheduledDays(v int) *FsrsCardUpdateOne {
+	_u.mutation.ResetScheduledDays()
+	_u.mutation.SetScheduledDays(v)
+	return _u
+}
+
+// SetNillableScheduledDays sets the "scheduled_days" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableScheduledDays(v *int) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetScheduledDays(*v)
+	}
+	return _u
+}
+
+// AddScheduledDays adds value to the "scheduled_days" field.
+func (_u *FsrsCardUpdateOne) AddScheduledDays(v int) *FsrsCardUpdateOne {
+	_u.mutation.AddScheduledDays(v)
+	return _u
+}
+
+// SetReps sets the "reps" field.
+func (_u *FsrsCardUpdateOne) SetReps(v int) *FsrsCardUpdateOne {
+	_u.mutation.ResetReps()
+	_u.mutation.SetReps(v)
+	return _u
+}
+
+// SetNillableReps sets the "reps" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableReps(v *int) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetReps(*v)
+	}
+	return _u
+}
+
+// AddReps adds value to the "reps" field.
+func (_u *FsrsCardUpdateOne) AddReps(v int) *FsrsCardUpdateOne {
+	_u.mutation.AddReps(v)
+	return _u
+}
+
+// SetLapses sets the "lapses" field.
+func (_u *FsrsCardUpdateOne) SetLapses(v int) *FsrsCardUpdateOne {
+	_u.mutation.ResetLapses()
+	_u.mutation.SetLapses(v)
+	return _u
+}
+
+// SetNillableLapses sets the "lapses" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableLapses(v *int) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetLapses(*v)
+	}
+	return _u
+}
+
+// AddLapses adds value to the "lapses" field.
+func (_u *FsrsCardUpdateOne) AddLapses(v int) *FsrsCardUpdateOne {
+	_u.mutation.AddLapses(v)
+	return _u
+}
+
+// SetState sets the "state" field.
+func (_u *FsrsCardUpdateOne) SetState(v fsrscard.State) *FsrsCardUpdateOne {
+	_u.mutation.SetState(v)
+	return _u
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableState(v *fsrscard.State) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetState(*v)
+	}
+	return _u
+}
+
+// SetLastReview sets the "last_review" field.
+func (_u *FsrsCardUpdateOne) SetLastReview(v time.Time) *FsrsCardUpdateOne {
+	_u.mutation.SetLastReview(v)
+	return _u
+}
+
+// SetNillableLastReview sets the "last_review" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableLastReview(v *time.Time) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetLastReview(*v)
+	}
+	return _u
+}
+
+// ClearLastReview clears the value of the "last_review" field.
+func (_u *FsrsCardUpdateOne) ClearLastReview() *FsrsCardUpdateOne {
+	_u.mutation.ClearLastReview()
+	return _u
+}
+
+// SetDue sets the "due" field.
+func (_u *FsrsCardUpdateOne) SetDue(v time.Time) *FsrsCardUpdateOne {
+	_u.mutation.SetDue(v)
+	return _u
+}
+
+// SetNillableDue sets the "due" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableDue(v *time.Time) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetDue(*v)
+	}
+	return _u
+}
+
+// SetNodeID sets the "node_id" field.
+func (_u *FsrsCardUpdateOne) SetNodeID(v uuid.UUID) *FsrsCardUpdateOne {
+	_u.mutation.SetNodeID(v)
+	return _u
+}
+
+// SetNillableNodeID sets the "node_id" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableNodeID(v *uuid.UUID) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetNodeID(*v)
+	}
+	return _u
+}
+
+// SetNode sets the "node" edge to the Node entity.
+func (_u *FsrsCardUpdateOne) SetNode(v *Node) *FsrsCardUpdateOne {
+	return _u.SetNodeID(v.ID)
+}
+
 // Mutation returns the FsrsCardMutation object of the builder.
 func (_u *FsrsCardUpdateOne) Mutation() *FsrsCardMutation {
 	return _u.mutation
+}
+
+// ClearNode clears the "node" edge to the Node entity.
+func (_u *FsrsCardUpdateOne) ClearNode() *FsrsCardUpdateOne {
+	_u.mutation.ClearNode()
+	return _u
 }
 
 // Where appends a list predicates to the FsrsCardUpdate builder.
@@ -133,8 +627,24 @@ func (_u *FsrsCardUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *FsrsCardUpdateOne) check() error {
+	if v, ok := _u.mutation.State(); ok {
+		if err := fsrscard.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "FsrsCard.state": %w`, err)}
+		}
+	}
+	if _u.mutation.NodeCleared() && len(_u.mutation.NodeIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "FsrsCard.node"`)
+	}
+	return nil
+}
+
 func (_u *FsrsCardUpdateOne) sqlSave(ctx context.Context) (_node *FsrsCard, err error) {
-	_spec := sqlgraph.NewUpdateSpec(fsrscard.Table, fsrscard.Columns, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(fsrscard.Table, fsrscard.Columns, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID))
 	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "FsrsCard.id" for update`)}
@@ -158,6 +668,83 @@ func (_u *FsrsCardUpdateOne) sqlSave(ctx context.Context) (_node *FsrsCard, err 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.Stability(); ok {
+		_spec.SetField(fsrscard.FieldStability, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedStability(); ok {
+		_spec.AddField(fsrscard.FieldStability, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.Difficulty(); ok {
+		_spec.SetField(fsrscard.FieldDifficulty, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDifficulty(); ok {
+		_spec.AddField(fsrscard.FieldDifficulty, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.ElapsedDays(); ok {
+		_spec.SetField(fsrscard.FieldElapsedDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedElapsedDays(); ok {
+		_spec.AddField(fsrscard.FieldElapsedDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.ScheduledDays(); ok {
+		_spec.SetField(fsrscard.FieldScheduledDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedScheduledDays(); ok {
+		_spec.AddField(fsrscard.FieldScheduledDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Reps(); ok {
+		_spec.SetField(fsrscard.FieldReps, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedReps(); ok {
+		_spec.AddField(fsrscard.FieldReps, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Lapses(); ok {
+		_spec.SetField(fsrscard.FieldLapses, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedLapses(); ok {
+		_spec.AddField(fsrscard.FieldLapses, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.State(); ok {
+		_spec.SetField(fsrscard.FieldState, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.LastReview(); ok {
+		_spec.SetField(fsrscard.FieldLastReview, field.TypeTime, value)
+	}
+	if _u.mutation.LastReviewCleared() {
+		_spec.ClearField(fsrscard.FieldLastReview, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Due(); ok {
+		_spec.SetField(fsrscard.FieldDue, field.TypeTime, value)
+	}
+	if _u.mutation.NodeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   fsrscard.NodeTable,
+			Columns: []string{fsrscard.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.NodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   fsrscard.NodeTable,
+			Columns: []string{fsrscard.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &FsrsCard{config: _u.config}
 	_spec.Assign = _node.assignValues

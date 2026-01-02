@@ -4,11 +4,15 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"profen/internal/data/ent/fsrscard"
+	"profen/internal/data/ent/node"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // FsrsCardCreate is the builder for creating a FsrsCard entity.
@@ -18,6 +22,157 @@ type FsrsCardCreate struct {
 	hooks    []Hook
 }
 
+// SetStability sets the "stability" field.
+func (_c *FsrsCardCreate) SetStability(v float64) *FsrsCardCreate {
+	_c.mutation.SetStability(v)
+	return _c
+}
+
+// SetNillableStability sets the "stability" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableStability(v *float64) *FsrsCardCreate {
+	if v != nil {
+		_c.SetStability(*v)
+	}
+	return _c
+}
+
+// SetDifficulty sets the "difficulty" field.
+func (_c *FsrsCardCreate) SetDifficulty(v float64) *FsrsCardCreate {
+	_c.mutation.SetDifficulty(v)
+	return _c
+}
+
+// SetNillableDifficulty sets the "difficulty" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableDifficulty(v *float64) *FsrsCardCreate {
+	if v != nil {
+		_c.SetDifficulty(*v)
+	}
+	return _c
+}
+
+// SetElapsedDays sets the "elapsed_days" field.
+func (_c *FsrsCardCreate) SetElapsedDays(v int) *FsrsCardCreate {
+	_c.mutation.SetElapsedDays(v)
+	return _c
+}
+
+// SetNillableElapsedDays sets the "elapsed_days" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableElapsedDays(v *int) *FsrsCardCreate {
+	if v != nil {
+		_c.SetElapsedDays(*v)
+	}
+	return _c
+}
+
+// SetScheduledDays sets the "scheduled_days" field.
+func (_c *FsrsCardCreate) SetScheduledDays(v int) *FsrsCardCreate {
+	_c.mutation.SetScheduledDays(v)
+	return _c
+}
+
+// SetNillableScheduledDays sets the "scheduled_days" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableScheduledDays(v *int) *FsrsCardCreate {
+	if v != nil {
+		_c.SetScheduledDays(*v)
+	}
+	return _c
+}
+
+// SetReps sets the "reps" field.
+func (_c *FsrsCardCreate) SetReps(v int) *FsrsCardCreate {
+	_c.mutation.SetReps(v)
+	return _c
+}
+
+// SetNillableReps sets the "reps" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableReps(v *int) *FsrsCardCreate {
+	if v != nil {
+		_c.SetReps(*v)
+	}
+	return _c
+}
+
+// SetLapses sets the "lapses" field.
+func (_c *FsrsCardCreate) SetLapses(v int) *FsrsCardCreate {
+	_c.mutation.SetLapses(v)
+	return _c
+}
+
+// SetNillableLapses sets the "lapses" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableLapses(v *int) *FsrsCardCreate {
+	if v != nil {
+		_c.SetLapses(*v)
+	}
+	return _c
+}
+
+// SetState sets the "state" field.
+func (_c *FsrsCardCreate) SetState(v fsrscard.State) *FsrsCardCreate {
+	_c.mutation.SetState(v)
+	return _c
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableState(v *fsrscard.State) *FsrsCardCreate {
+	if v != nil {
+		_c.SetState(*v)
+	}
+	return _c
+}
+
+// SetLastReview sets the "last_review" field.
+func (_c *FsrsCardCreate) SetLastReview(v time.Time) *FsrsCardCreate {
+	_c.mutation.SetLastReview(v)
+	return _c
+}
+
+// SetNillableLastReview sets the "last_review" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableLastReview(v *time.Time) *FsrsCardCreate {
+	if v != nil {
+		_c.SetLastReview(*v)
+	}
+	return _c
+}
+
+// SetDue sets the "due" field.
+func (_c *FsrsCardCreate) SetDue(v time.Time) *FsrsCardCreate {
+	_c.mutation.SetDue(v)
+	return _c
+}
+
+// SetNillableDue sets the "due" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableDue(v *time.Time) *FsrsCardCreate {
+	if v != nil {
+		_c.SetDue(*v)
+	}
+	return _c
+}
+
+// SetNodeID sets the "node_id" field.
+func (_c *FsrsCardCreate) SetNodeID(v uuid.UUID) *FsrsCardCreate {
+	_c.mutation.SetNodeID(v)
+	return _c
+}
+
+// SetID sets the "id" field.
+func (_c *FsrsCardCreate) SetID(v uuid.UUID) *FsrsCardCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableID(v *uuid.UUID) *FsrsCardCreate {
+	if v != nil {
+		_c.SetID(*v)
+	}
+	return _c
+}
+
+// SetNode sets the "node" edge to the Node entity.
+func (_c *FsrsCardCreate) SetNode(v *Node) *FsrsCardCreate {
+	return _c.SetNodeID(v.ID)
+}
+
 // Mutation returns the FsrsCardMutation object of the builder.
 func (_c *FsrsCardCreate) Mutation() *FsrsCardMutation {
 	return _c.mutation
@@ -25,6 +180,7 @@ func (_c *FsrsCardCreate) Mutation() *FsrsCardMutation {
 
 // Save creates the FsrsCard in the database.
 func (_c *FsrsCardCreate) Save(ctx context.Context) (*FsrsCard, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -50,8 +206,83 @@ func (_c *FsrsCardCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *FsrsCardCreate) defaults() {
+	if _, ok := _c.mutation.Stability(); !ok {
+		v := fsrscard.DefaultStability
+		_c.mutation.SetStability(v)
+	}
+	if _, ok := _c.mutation.Difficulty(); !ok {
+		v := fsrscard.DefaultDifficulty
+		_c.mutation.SetDifficulty(v)
+	}
+	if _, ok := _c.mutation.ElapsedDays(); !ok {
+		v := fsrscard.DefaultElapsedDays
+		_c.mutation.SetElapsedDays(v)
+	}
+	if _, ok := _c.mutation.ScheduledDays(); !ok {
+		v := fsrscard.DefaultScheduledDays
+		_c.mutation.SetScheduledDays(v)
+	}
+	if _, ok := _c.mutation.Reps(); !ok {
+		v := fsrscard.DefaultReps
+		_c.mutation.SetReps(v)
+	}
+	if _, ok := _c.mutation.Lapses(); !ok {
+		v := fsrscard.DefaultLapses
+		_c.mutation.SetLapses(v)
+	}
+	if _, ok := _c.mutation.State(); !ok {
+		v := fsrscard.DefaultState
+		_c.mutation.SetState(v)
+	}
+	if _, ok := _c.mutation.Due(); !ok {
+		v := fsrscard.DefaultDue()
+		_c.mutation.SetDue(v)
+	}
+	if _, ok := _c.mutation.ID(); !ok {
+		v := fsrscard.DefaultID()
+		_c.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *FsrsCardCreate) check() error {
+	if _, ok := _c.mutation.Stability(); !ok {
+		return &ValidationError{Name: "stability", err: errors.New(`ent: missing required field "FsrsCard.stability"`)}
+	}
+	if _, ok := _c.mutation.Difficulty(); !ok {
+		return &ValidationError{Name: "difficulty", err: errors.New(`ent: missing required field "FsrsCard.difficulty"`)}
+	}
+	if _, ok := _c.mutation.ElapsedDays(); !ok {
+		return &ValidationError{Name: "elapsed_days", err: errors.New(`ent: missing required field "FsrsCard.elapsed_days"`)}
+	}
+	if _, ok := _c.mutation.ScheduledDays(); !ok {
+		return &ValidationError{Name: "scheduled_days", err: errors.New(`ent: missing required field "FsrsCard.scheduled_days"`)}
+	}
+	if _, ok := _c.mutation.Reps(); !ok {
+		return &ValidationError{Name: "reps", err: errors.New(`ent: missing required field "FsrsCard.reps"`)}
+	}
+	if _, ok := _c.mutation.Lapses(); !ok {
+		return &ValidationError{Name: "lapses", err: errors.New(`ent: missing required field "FsrsCard.lapses"`)}
+	}
+	if _, ok := _c.mutation.State(); !ok {
+		return &ValidationError{Name: "state", err: errors.New(`ent: missing required field "FsrsCard.state"`)}
+	}
+	if v, ok := _c.mutation.State(); ok {
+		if err := fsrscard.StateValidator(v); err != nil {
+			return &ValidationError{Name: "state", err: fmt.Errorf(`ent: validator failed for field "FsrsCard.state": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Due(); !ok {
+		return &ValidationError{Name: "due", err: errors.New(`ent: missing required field "FsrsCard.due"`)}
+	}
+	if _, ok := _c.mutation.NodeID(); !ok {
+		return &ValidationError{Name: "node_id", err: errors.New(`ent: missing required field "FsrsCard.node_id"`)}
+	}
+	if len(_c.mutation.NodeIDs()) == 0 {
+		return &ValidationError{Name: "node", err: errors.New(`ent: missing required edge "FsrsCard.node"`)}
+	}
 	return nil
 }
 
@@ -66,8 +297,13 @@ func (_c *FsrsCardCreate) sqlSave(ctx context.Context) (*FsrsCard, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -76,8 +312,65 @@ func (_c *FsrsCardCreate) sqlSave(ctx context.Context) (*FsrsCard, error) {
 func (_c *FsrsCardCreate) createSpec() (*FsrsCard, *sqlgraph.CreateSpec) {
 	var (
 		_node = &FsrsCard{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(fsrscard.Table, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(fsrscard.Table, sqlgraph.NewFieldSpec(fsrscard.FieldID, field.TypeUUID))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
+	if value, ok := _c.mutation.Stability(); ok {
+		_spec.SetField(fsrscard.FieldStability, field.TypeFloat64, value)
+		_node.Stability = value
+	}
+	if value, ok := _c.mutation.Difficulty(); ok {
+		_spec.SetField(fsrscard.FieldDifficulty, field.TypeFloat64, value)
+		_node.Difficulty = value
+	}
+	if value, ok := _c.mutation.ElapsedDays(); ok {
+		_spec.SetField(fsrscard.FieldElapsedDays, field.TypeInt, value)
+		_node.ElapsedDays = value
+	}
+	if value, ok := _c.mutation.ScheduledDays(); ok {
+		_spec.SetField(fsrscard.FieldScheduledDays, field.TypeInt, value)
+		_node.ScheduledDays = value
+	}
+	if value, ok := _c.mutation.Reps(); ok {
+		_spec.SetField(fsrscard.FieldReps, field.TypeInt, value)
+		_node.Reps = value
+	}
+	if value, ok := _c.mutation.Lapses(); ok {
+		_spec.SetField(fsrscard.FieldLapses, field.TypeInt, value)
+		_node.Lapses = value
+	}
+	if value, ok := _c.mutation.State(); ok {
+		_spec.SetField(fsrscard.FieldState, field.TypeEnum, value)
+		_node.State = value
+	}
+	if value, ok := _c.mutation.LastReview(); ok {
+		_spec.SetField(fsrscard.FieldLastReview, field.TypeTime, value)
+		_node.LastReview = &value
+	}
+	if value, ok := _c.mutation.Due(); ok {
+		_spec.SetField(fsrscard.FieldDue, field.TypeTime, value)
+		_node.Due = value
+	}
+	if nodes := _c.mutation.NodeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   fsrscard.NodeTable,
+			Columns: []string{fsrscard.NodeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(node.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.NodeID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -99,6 +392,7 @@ func (_c *FsrsCardCreateBulk) Save(ctx context.Context) ([]*FsrsCard, error) {
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*FsrsCardMutation)
 				if !ok {
@@ -125,10 +419,6 @@ func (_c *FsrsCardCreateBulk) Save(ctx context.Context) ([]*FsrsCard, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

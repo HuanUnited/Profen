@@ -4,53 +4,494 @@ package fsrscard
 
 import (
 	"profen/internal/data/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.FsrsCard {
+func ID(id uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.FsrsCard {
+func IDEQ(id uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.FsrsCard {
+func IDNEQ(id uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.FsrsCard {
+func IDIn(ids ...uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.FsrsCard {
+func IDNotIn(ids ...uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.FsrsCard {
+func IDGT(id uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.FsrsCard {
+func IDGTE(id uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.FsrsCard {
+func IDLT(id uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.FsrsCard {
+func IDLTE(id uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldLTE(FieldID, id))
+}
+
+// Stability applies equality check predicate on the "stability" field. It's identical to StabilityEQ.
+func Stability(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldStability, v))
+}
+
+// Difficulty applies equality check predicate on the "difficulty" field. It's identical to DifficultyEQ.
+func Difficulty(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldDifficulty, v))
+}
+
+// ElapsedDays applies equality check predicate on the "elapsed_days" field. It's identical to ElapsedDaysEQ.
+func ElapsedDays(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldElapsedDays, v))
+}
+
+// ScheduledDays applies equality check predicate on the "scheduled_days" field. It's identical to ScheduledDaysEQ.
+func ScheduledDays(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldScheduledDays, v))
+}
+
+// Reps applies equality check predicate on the "reps" field. It's identical to RepsEQ.
+func Reps(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldReps, v))
+}
+
+// Lapses applies equality check predicate on the "lapses" field. It's identical to LapsesEQ.
+func Lapses(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldLapses, v))
+}
+
+// LastReview applies equality check predicate on the "last_review" field. It's identical to LastReviewEQ.
+func LastReview(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldLastReview, v))
+}
+
+// Due applies equality check predicate on the "due" field. It's identical to DueEQ.
+func Due(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldDue, v))
+}
+
+// NodeID applies equality check predicate on the "node_id" field. It's identical to NodeIDEQ.
+func NodeID(v uuid.UUID) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldNodeID, v))
+}
+
+// StabilityEQ applies the EQ predicate on the "stability" field.
+func StabilityEQ(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldStability, v))
+}
+
+// StabilityNEQ applies the NEQ predicate on the "stability" field.
+func StabilityNEQ(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldStability, v))
+}
+
+// StabilityIn applies the In predicate on the "stability" field.
+func StabilityIn(vs ...float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldStability, vs...))
+}
+
+// StabilityNotIn applies the NotIn predicate on the "stability" field.
+func StabilityNotIn(vs ...float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldStability, vs...))
+}
+
+// StabilityGT applies the GT predicate on the "stability" field.
+func StabilityGT(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldStability, v))
+}
+
+// StabilityGTE applies the GTE predicate on the "stability" field.
+func StabilityGTE(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldStability, v))
+}
+
+// StabilityLT applies the LT predicate on the "stability" field.
+func StabilityLT(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldStability, v))
+}
+
+// StabilityLTE applies the LTE predicate on the "stability" field.
+func StabilityLTE(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldStability, v))
+}
+
+// DifficultyEQ applies the EQ predicate on the "difficulty" field.
+func DifficultyEQ(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldDifficulty, v))
+}
+
+// DifficultyNEQ applies the NEQ predicate on the "difficulty" field.
+func DifficultyNEQ(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldDifficulty, v))
+}
+
+// DifficultyIn applies the In predicate on the "difficulty" field.
+func DifficultyIn(vs ...float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldDifficulty, vs...))
+}
+
+// DifficultyNotIn applies the NotIn predicate on the "difficulty" field.
+func DifficultyNotIn(vs ...float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldDifficulty, vs...))
+}
+
+// DifficultyGT applies the GT predicate on the "difficulty" field.
+func DifficultyGT(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldDifficulty, v))
+}
+
+// DifficultyGTE applies the GTE predicate on the "difficulty" field.
+func DifficultyGTE(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldDifficulty, v))
+}
+
+// DifficultyLT applies the LT predicate on the "difficulty" field.
+func DifficultyLT(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldDifficulty, v))
+}
+
+// DifficultyLTE applies the LTE predicate on the "difficulty" field.
+func DifficultyLTE(v float64) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldDifficulty, v))
+}
+
+// ElapsedDaysEQ applies the EQ predicate on the "elapsed_days" field.
+func ElapsedDaysEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldElapsedDays, v))
+}
+
+// ElapsedDaysNEQ applies the NEQ predicate on the "elapsed_days" field.
+func ElapsedDaysNEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldElapsedDays, v))
+}
+
+// ElapsedDaysIn applies the In predicate on the "elapsed_days" field.
+func ElapsedDaysIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldElapsedDays, vs...))
+}
+
+// ElapsedDaysNotIn applies the NotIn predicate on the "elapsed_days" field.
+func ElapsedDaysNotIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldElapsedDays, vs...))
+}
+
+// ElapsedDaysGT applies the GT predicate on the "elapsed_days" field.
+func ElapsedDaysGT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldElapsedDays, v))
+}
+
+// ElapsedDaysGTE applies the GTE predicate on the "elapsed_days" field.
+func ElapsedDaysGTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldElapsedDays, v))
+}
+
+// ElapsedDaysLT applies the LT predicate on the "elapsed_days" field.
+func ElapsedDaysLT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldElapsedDays, v))
+}
+
+// ElapsedDaysLTE applies the LTE predicate on the "elapsed_days" field.
+func ElapsedDaysLTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldElapsedDays, v))
+}
+
+// ScheduledDaysEQ applies the EQ predicate on the "scheduled_days" field.
+func ScheduledDaysEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldScheduledDays, v))
+}
+
+// ScheduledDaysNEQ applies the NEQ predicate on the "scheduled_days" field.
+func ScheduledDaysNEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldScheduledDays, v))
+}
+
+// ScheduledDaysIn applies the In predicate on the "scheduled_days" field.
+func ScheduledDaysIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldScheduledDays, vs...))
+}
+
+// ScheduledDaysNotIn applies the NotIn predicate on the "scheduled_days" field.
+func ScheduledDaysNotIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldScheduledDays, vs...))
+}
+
+// ScheduledDaysGT applies the GT predicate on the "scheduled_days" field.
+func ScheduledDaysGT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldScheduledDays, v))
+}
+
+// ScheduledDaysGTE applies the GTE predicate on the "scheduled_days" field.
+func ScheduledDaysGTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldScheduledDays, v))
+}
+
+// ScheduledDaysLT applies the LT predicate on the "scheduled_days" field.
+func ScheduledDaysLT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldScheduledDays, v))
+}
+
+// ScheduledDaysLTE applies the LTE predicate on the "scheduled_days" field.
+func ScheduledDaysLTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldScheduledDays, v))
+}
+
+// RepsEQ applies the EQ predicate on the "reps" field.
+func RepsEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldReps, v))
+}
+
+// RepsNEQ applies the NEQ predicate on the "reps" field.
+func RepsNEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldReps, v))
+}
+
+// RepsIn applies the In predicate on the "reps" field.
+func RepsIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldReps, vs...))
+}
+
+// RepsNotIn applies the NotIn predicate on the "reps" field.
+func RepsNotIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldReps, vs...))
+}
+
+// RepsGT applies the GT predicate on the "reps" field.
+func RepsGT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldReps, v))
+}
+
+// RepsGTE applies the GTE predicate on the "reps" field.
+func RepsGTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldReps, v))
+}
+
+// RepsLT applies the LT predicate on the "reps" field.
+func RepsLT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldReps, v))
+}
+
+// RepsLTE applies the LTE predicate on the "reps" field.
+func RepsLTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldReps, v))
+}
+
+// LapsesEQ applies the EQ predicate on the "lapses" field.
+func LapsesEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldLapses, v))
+}
+
+// LapsesNEQ applies the NEQ predicate on the "lapses" field.
+func LapsesNEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldLapses, v))
+}
+
+// LapsesIn applies the In predicate on the "lapses" field.
+func LapsesIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldLapses, vs...))
+}
+
+// LapsesNotIn applies the NotIn predicate on the "lapses" field.
+func LapsesNotIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldLapses, vs...))
+}
+
+// LapsesGT applies the GT predicate on the "lapses" field.
+func LapsesGT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldLapses, v))
+}
+
+// LapsesGTE applies the GTE predicate on the "lapses" field.
+func LapsesGTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldLapses, v))
+}
+
+// LapsesLT applies the LT predicate on the "lapses" field.
+func LapsesLT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldLapses, v))
+}
+
+// LapsesLTE applies the LTE predicate on the "lapses" field.
+func LapsesLTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldLapses, v))
+}
+
+// StateEQ applies the EQ predicate on the "state" field.
+func StateEQ(v State) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldState, v))
+}
+
+// StateNEQ applies the NEQ predicate on the "state" field.
+func StateNEQ(v State) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldState, v))
+}
+
+// StateIn applies the In predicate on the "state" field.
+func StateIn(vs ...State) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldState, vs...))
+}
+
+// StateNotIn applies the NotIn predicate on the "state" field.
+func StateNotIn(vs ...State) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldState, vs...))
+}
+
+// LastReviewEQ applies the EQ predicate on the "last_review" field.
+func LastReviewEQ(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldLastReview, v))
+}
+
+// LastReviewNEQ applies the NEQ predicate on the "last_review" field.
+func LastReviewNEQ(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldLastReview, v))
+}
+
+// LastReviewIn applies the In predicate on the "last_review" field.
+func LastReviewIn(vs ...time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldLastReview, vs...))
+}
+
+// LastReviewNotIn applies the NotIn predicate on the "last_review" field.
+func LastReviewNotIn(vs ...time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldLastReview, vs...))
+}
+
+// LastReviewGT applies the GT predicate on the "last_review" field.
+func LastReviewGT(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldLastReview, v))
+}
+
+// LastReviewGTE applies the GTE predicate on the "last_review" field.
+func LastReviewGTE(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldLastReview, v))
+}
+
+// LastReviewLT applies the LT predicate on the "last_review" field.
+func LastReviewLT(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldLastReview, v))
+}
+
+// LastReviewLTE applies the LTE predicate on the "last_review" field.
+func LastReviewLTE(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldLastReview, v))
+}
+
+// LastReviewIsNil applies the IsNil predicate on the "last_review" field.
+func LastReviewIsNil() predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIsNull(FieldLastReview))
+}
+
+// LastReviewNotNil applies the NotNil predicate on the "last_review" field.
+func LastReviewNotNil() predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotNull(FieldLastReview))
+}
+
+// DueEQ applies the EQ predicate on the "due" field.
+func DueEQ(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldDue, v))
+}
+
+// DueNEQ applies the NEQ predicate on the "due" field.
+func DueNEQ(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldDue, v))
+}
+
+// DueIn applies the In predicate on the "due" field.
+func DueIn(vs ...time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldDue, vs...))
+}
+
+// DueNotIn applies the NotIn predicate on the "due" field.
+func DueNotIn(vs ...time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldDue, vs...))
+}
+
+// DueGT applies the GT predicate on the "due" field.
+func DueGT(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldDue, v))
+}
+
+// DueGTE applies the GTE predicate on the "due" field.
+func DueGTE(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldDue, v))
+}
+
+// DueLT applies the LT predicate on the "due" field.
+func DueLT(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldDue, v))
+}
+
+// DueLTE applies the LTE predicate on the "due" field.
+func DueLTE(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldDue, v))
+}
+
+// NodeIDEQ applies the EQ predicate on the "node_id" field.
+func NodeIDEQ(v uuid.UUID) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldNodeID, v))
+}
+
+// NodeIDNEQ applies the NEQ predicate on the "node_id" field.
+func NodeIDNEQ(v uuid.UUID) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldNodeID, v))
+}
+
+// NodeIDIn applies the In predicate on the "node_id" field.
+func NodeIDIn(vs ...uuid.UUID) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldNodeID, vs...))
+}
+
+// NodeIDNotIn applies the NotIn predicate on the "node_id" field.
+func NodeIDNotIn(vs ...uuid.UUID) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldNodeID, vs...))
+}
+
+// HasNode applies the HasEdge predicate on the "node" edge.
+func HasNode() predicate.FsrsCard {
+	return predicate.FsrsCard(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, NodeTable, NodeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasNodeWith applies the HasEdge predicate on the "node" edge with a given conditions (other predicates).
+func HasNodeWith(preds ...predicate.Node) predicate.FsrsCard {
+	return predicate.FsrsCard(func(s *sql.Selector) {
+		step := newNodeStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

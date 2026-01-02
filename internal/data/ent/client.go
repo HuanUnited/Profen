@@ -717,7 +717,7 @@ func (c *FsrsCardClient) UpdateOne(_m *FsrsCard) *FsrsCardUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *FsrsCardClient) UpdateOneID(id int) *FsrsCardUpdateOne {
+func (c *FsrsCardClient) UpdateOneID(id uuid.UUID) *FsrsCardUpdateOne {
 	mutation := newFsrsCardMutation(c.config, OpUpdateOne, withFsrsCardID(id))
 	return &FsrsCardUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -734,7 +734,7 @@ func (c *FsrsCardClient) DeleteOne(_m *FsrsCard) *FsrsCardDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *FsrsCardClient) DeleteOneID(id int) *FsrsCardDeleteOne {
+func (c *FsrsCardClient) DeleteOneID(id uuid.UUID) *FsrsCardDeleteOne {
 	builder := c.Delete().Where(fsrscard.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -751,17 +751,33 @@ func (c *FsrsCardClient) Query() *FsrsCardQuery {
 }
 
 // Get returns a FsrsCard entity by its id.
-func (c *FsrsCardClient) Get(ctx context.Context, id int) (*FsrsCard, error) {
+func (c *FsrsCardClient) Get(ctx context.Context, id uuid.UUID) (*FsrsCard, error) {
 	return c.Query().Where(fsrscard.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *FsrsCardClient) GetX(ctx context.Context, id int) *FsrsCard {
+func (c *FsrsCardClient) GetX(ctx context.Context, id uuid.UUID) *FsrsCard {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryNode queries the node edge of a FsrsCard.
+func (c *FsrsCardClient) QueryNode(_m *FsrsCard) *NodeQuery {
+	query := (&NodeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(fsrscard.Table, fsrscard.FieldID, id),
+			sqlgraph.To(node.Table, node.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, fsrscard.NodeTable, fsrscard.NodeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -986,6 +1002,22 @@ func (c *NodeClient) QueryIncomingAssociations(_m *Node) *NodeAssociationQuery {
 			sqlgraph.From(node.Table, node.FieldID, id),
 			sqlgraph.To(nodeassociation.Table, nodeassociation.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, node.IncomingAssociationsTable, node.IncomingAssociationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFsrsCard queries the fsrs_card edge of a Node.
+func (c *NodeClient) QueryFsrsCard(_m *Node) *FsrsCardQuery {
+	query := (&FsrsCardClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(node.Table, node.FieldID, id),
+			sqlgraph.To(fsrscard.Table, fsrscard.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, node.FsrsCardTable, node.FsrsCardColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

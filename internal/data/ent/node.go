@@ -5,6 +5,7 @@ package ent
 import (
 	"encoding/json"
 	"fmt"
+	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"strings"
 	"time"
@@ -49,9 +50,11 @@ type NodeEdges struct {
 	OutgoingAssociations []*NodeAssociation `json:"outgoing_associations,omitempty"`
 	// IncomingAssociations holds the value of the incoming_associations edge.
 	IncomingAssociations []*NodeAssociation `json:"incoming_associations,omitempty"`
+	// FsrsCard holds the value of the fsrs_card edge.
+	FsrsCard *FsrsCard `json:"fsrs_card,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
 // ParentOrErr returns the Parent value or an error if the edge
@@ -108,6 +111,17 @@ func (e NodeEdges) IncomingAssociationsOrErr() ([]*NodeAssociation, error) {
 		return e.IncomingAssociations, nil
 	}
 	return nil, &NotLoadedError{edge: "incoming_associations"}
+}
+
+// FsrsCardOrErr returns the FsrsCard value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e NodeEdges) FsrsCardOrErr() (*FsrsCard, error) {
+	if e.FsrsCard != nil {
+		return e.FsrsCard, nil
+	} else if e.loadedTypes[6] {
+		return nil, &NotFoundError{label: fsrscard.Label}
+	}
+	return nil, &NotLoadedError{edge: "fsrs_card"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -220,6 +234,11 @@ func (_m *Node) QueryOutgoingAssociations() *NodeAssociationQuery {
 // QueryIncomingAssociations queries the "incoming_associations" edge of the Node entity.
 func (_m *Node) QueryIncomingAssociations() *NodeAssociationQuery {
 	return NewNodeClient(_m.config).QueryIncomingAssociations(_m)
+}
+
+// QueryFsrsCard queries the "fsrs_card" edge of the Node entity.
+func (_m *Node) QueryFsrsCard() *FsrsCardQuery {
+	return NewNodeClient(_m.config).QueryFsrsCard(_m)
 }
 
 // Update returns a builder for updating this Node.

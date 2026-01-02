@@ -7,6 +7,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"math"
+	"profen/internal/data/ent/fsrscard"
 	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
 	"profen/internal/data/ent/nodeclosure"
@@ -32,6 +33,7 @@ type NodeQuery struct {
 	withParentClosures       *NodeClosureQuery
 	withOutgoingAssociations *NodeAssociationQuery
 	withIncomingAssociations *NodeAssociationQuery
+	withFsrsCard             *FsrsCardQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -193,6 +195,28 @@ func (_q *NodeQuery) QueryIncomingAssociations() *NodeAssociationQuery {
 			sqlgraph.From(node.Table, node.FieldID, selector),
 			sqlgraph.To(nodeassociation.Table, nodeassociation.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, node.IncomingAssociationsTable, node.IncomingAssociationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryFsrsCard chains the current query on the "fsrs_card" edge.
+func (_q *NodeQuery) QueryFsrsCard() *FsrsCardQuery {
+	query := (&FsrsCardClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(node.Table, node.FieldID, selector),
+			sqlgraph.To(fsrscard.Table, fsrscard.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, node.FsrsCardTable, node.FsrsCardColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -398,6 +422,7 @@ func (_q *NodeQuery) Clone() *NodeQuery {
 		withParentClosures:       _q.withParentClosures.Clone(),
 		withOutgoingAssociations: _q.withOutgoingAssociations.Clone(),
 		withIncomingAssociations: _q.withIncomingAssociations.Clone(),
+		withFsrsCard:             _q.withFsrsCard.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -467,6 +492,17 @@ func (_q *NodeQuery) WithIncomingAssociations(opts ...func(*NodeAssociationQuery
 		opt(query)
 	}
 	_q.withIncomingAssociations = query
+	return _q
+}
+
+// WithFsrsCard tells the query-builder to eager-load the nodes that are connected to
+// the "fsrs_card" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *NodeQuery) WithFsrsCard(opts ...func(*FsrsCardQuery)) *NodeQuery {
+	query := (&FsrsCardClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withFsrsCard = query
 	return _q
 }
 
@@ -548,13 +584,14 @@ func (_q *NodeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Node, e
 	var (
 		nodes       = []*Node{}
 		_spec       = _q.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [7]bool{
 			_q.withParent != nil,
 			_q.withChildren != nil,
 			_q.withChildClosures != nil,
 			_q.withParentClosures != nil,
 			_q.withOutgoingAssociations != nil,
 			_q.withIncomingAssociations != nil,
+			_q.withFsrsCard != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -617,6 +654,12 @@ func (_q *NodeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Node, e
 			func(n *Node, e *NodeAssociation) {
 				n.Edges.IncomingAssociations = append(n.Edges.IncomingAssociations, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withFsrsCard; query != nil {
+		if err := _q.loadFsrsCard(ctx, query, nodes, nil,
+			func(n *Node, e *FsrsCard) { n.Edges.FsrsCard = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -803,6 +846,33 @@ func (_q *NodeQuery) loadIncomingAssociations(ctx context.Context, query *NodeAs
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "target_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *NodeQuery) loadFsrsCard(ctx context.Context, query *FsrsCardQuery, nodes []*Node, init func(*Node), assign func(*Node, *FsrsCard)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Node)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(fsrscard.FieldNodeID)
+	}
+	query.Where(predicate.FsrsCard(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(node.FsrsCardColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.NodeID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "node_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

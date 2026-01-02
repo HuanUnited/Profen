@@ -38,10 +38,14 @@ const (
 	EdgeOutgoingAssociations = "outgoing_associations"
 	// EdgeIncomingAssociations holds the string denoting the incoming_associations edge name in mutations.
 	EdgeIncomingAssociations = "incoming_associations"
+	// EdgeFsrsCard holds the string denoting the fsrs_card edge name in mutations.
+	EdgeFsrsCard = "fsrs_card"
 	// NodeClosureFieldID holds the string denoting the ID field of the NodeClosure.
 	NodeClosureFieldID = "id"
 	// NodeAssociationFieldID holds the string denoting the ID field of the NodeAssociation.
 	NodeAssociationFieldID = "id"
+	// FsrsCardFieldID holds the string denoting the ID field of the FsrsCard.
+	FsrsCardFieldID = "card_id"
 	// Table holds the table name of the node in the database.
 	Table = "nodes"
 	// ParentTable is the table that holds the parent relation/edge.
@@ -80,6 +84,13 @@ const (
 	IncomingAssociationsInverseTable = "node_associations"
 	// IncomingAssociationsColumn is the table column denoting the incoming_associations relation/edge.
 	IncomingAssociationsColumn = "target_id"
+	// FsrsCardTable is the table that holds the fsrs_card relation/edge.
+	FsrsCardTable = "fsrs_cards"
+	// FsrsCardInverseTable is the table name for the FsrsCard entity.
+	// It exists in this package in order to avoid circular dependency with the "fsrscard" package.
+	FsrsCardInverseTable = "fsrs_cards"
+	// FsrsCardColumn is the table column denoting the fsrs_card relation/edge.
+	FsrsCardColumn = "node_id"
 )
 
 // Columns holds all SQL columns for node fields.
@@ -239,6 +250,13 @@ func ByIncomingAssociations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOpt
 		sqlgraph.OrderByNeighborTerms(s, newIncomingAssociationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByFsrsCardField orders the results by fsrs_card field.
+func ByFsrsCardField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newFsrsCardStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newParentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -279,5 +297,12 @@ func newIncomingAssociationsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IncomingAssociationsInverseTable, NodeAssociationFieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, IncomingAssociationsTable, IncomingAssociationsColumn),
+	)
+}
+func newFsrsCardStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(FsrsCardInverseTable, FsrsCardFieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, FsrsCardTable, FsrsCardColumn),
 	)
 }
