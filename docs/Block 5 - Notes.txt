@@ -1,0 +1,139 @@
+We're pausing here after we've more or less fleshed out the development of Blocks 1 to 7 (not including block 5 itself) due to a (from what I can say, tremendous and gigantic) oversight. Being not having planned out the frontend properly and focusing on backend logic for the most part of this application's development. It's good for when we don't want things to break, bad for when we now have things we need to do.
+
+Therefore Block 5 will be divided into subblocks that focus explicitly on the frontend architecture and design.
+
+1. The Core Workflow (The "Loop")
+To make the dashboard "show something," we need a complete lifecycle. Currently, we are blocked at step 1.
+Creation: User inputs Data (Topics, Problems, Terms).
+Scheduling: Backend initializes FSRS cards.
+Queue: Dashboard queries "Due Cards".
+Action: User studies (The "Attempt").
+Feedback: User grades -> FSRS updates -> Loop closes.
+Conclusion: We cannot build a working Dashboard or Study Session until we build the Library (Creation) view.
+
+2. Revised Implementation Blocks (Frontend Focused)
+We will split the remaining work into 4 distinct UI Phases:
+
+Phase 5.1: The Application Shell & Navigation
+Goal: Establish the global layout and routing.
+Components:
+AppSidebar: Collapsible navigation (Dashboard, Library, Dictionary, Settings).
+MainLayout: Handles scrolling and global background.
+Router: not so simple client routing (React Router v6 or something else that fits our usecase better).
+State: Active Route.
+
+Phase 5.2: The Library (Knowledge Graph Editor)
+Goal: CRUD (Create, Read, Update, Delete) for your Nodes. This replaces raw SQL scripts.
+Layout: Split-Pane Master/Detail.
+Left (Tree): NodeExplorer. A recursive tree view of Topics.
+Right (Editor): NodeForm. Dynamic inputs based on Node Type (Topic, Problem, Theory).
+Backend Needs: Expose GetChildren(id) and UpdateNode(node).
+
+Phase 5.3: The Study Session (The "Focus Mode")
+Goal: The actual learning interface.
+Layout: Centered Single-Column (Distraction-free) with the ability to still open the sidebar.
+States:
+Question / Prompt
+Written answer (user input with markdown + latex)
+Grading: FSRS Button Bar (Again, Hard, Good, Easy).
+Components: Markdown Renderer (with LaTeX support), Stopwatch, Snapshot Viewer.
+
+Phase 5.4: The Dictionary Manager
+Goal: Specialized UI for language learning (Block 3).
+Layout: Data Grid / Table.
+Features: Fast entry of Terms, Definition lookup, "Link to Theory".
+
+3. Deep Dive: Layout & Data Flow Plans
+Let's design the specific screens we need to build next.
+A. The Application Shell
+Design Philosophy: "Obsidian-like". Dark, minimal, sidebar on left, stylized like a TUI (similar to the design of what that Lipgloss library demonstration looks like) (keeping UI clutter and design to a minimal) - ascii and text formatting
+Tech: CSS Grid + WebTUI (this is a custom CSS library for implementing TUI Aesthetics on WebUIs)
+[Sidebar 250px] [      Main Content (Flex-1)      ]
+
+B. The Library View (Priority #1)
+This is where you will spend 50% of your time as a user (curating knowledge).
+- We'll be Implementing a recursive tree navigation in the sidebar.
++------------------+-----------------------------------------------+
+|  Start > Math    |  Editing: "Calculus" (Topic)                  |
+|  [Search Bar]    |                                               |
+|  v Algebra       |  [ Title Input ]                              |
+|    > Linear Eq   |                                               |
+|    v Quadratics  |  [ Parent Selector (Breadcrumb) ]             |
+|       Theory 1   |                                               |
+|       Problem 1  |                                               |
+|  > Geometry      |                                               |
+|  > Calculus      |  [ Content (Markdown Editor) ]                |
+|                  |  [ Related nodes selector    ]                |
+|  [+ Add Child]   |  [ Save ] [ Delete ] [ Preview ]              |
++------------------+-----------------------------------------------+
+Data Flow:
+Load GetChildren(RootID).
+Click Node -> GetNode(ID) -> Populate Form.
+Click Save -> UpdateNode(Node) -> Invalidate Query Cache -> Tree Refreshes.
+
+Library Viewing / Mode
++------------------+-----------------------------------------------+
+|  Start > Math    |  [ Title ]          [Status - Total attempts] |
+|  [Search Bar]    |  [ Parent Breadcrumb]                         |
+|  v Algebra       |                                               |
+|    > Linear Eq   |                                               |
+|    v Quadratics  |  [ Content (Markdown display) ]               |
+|       Theory 1   |                                               |
+|       Problem 1  |                                               |
+|  > Geometry      |  [Attempt history]                            |
+|  > Calculus      |  [Unresolved errors]                          |
+|                  |  [Linked Theories / Problems]                 |
+|                  |                                               |
+|  [+ Add Child]   |  [ Attempt ]                         [ Edit ] |
++------------------+-----------------------------------------------+
+
+// Adding nodes (subjects, topics, problems) will be primarily done through the sidebar, having the main content as a viewing / editting window for the nodes information.
+// Implement a "Context Menu" (Right-click on sidebar item -> Add Child Topic / Add Problem) AND a "Speed Dial" button in the main content area (e.g., "Add Problem to this Topic").
+// The "Split-Brain" Problem: You have a NodeEditor (Phase 5.2) and a StudyView (Phase 5.3).
+// Instead of creating a snapshot right after an attempt or instigation of new node, only create a snapshot export when it is requested (saves me the headache of having to Invalidate Cached queries)
+// Changing the background / display color or text color depending on the mastery status of a topic(yellow), problem/theory (green), subject (red orange), white for all when not mastered, red if if a problem is due or has unresolved errors. 
+
+C. The Study View (The "Attempt")
+This view must be distinct. It should hide the Sidebar to force focus.
+
++-------------------------------------------------------------+
+|  [Exit]                  Timer: 00:45                       |
++-------------------------------------------------------------+
+|                                                             |
+|   (Context: Math > Algebra > Quadratics)                    |
+|                                                             |
+|   **Problem:**                                              |
+|   Solve for x:  x^2 - 4 = 0                                 |
+|                                                             |
+|   [Shortcuts for typing in Latex]                           |
+|   [Input for typing in answer]                              |
+|                                                             |
+|   [ Show Answer ]                                           |
+|                                                             |
++-------------------------------------------------------------+
+(After Click):
+|   **Solution:** / (if a solution exists, or is given by the user)|
+|   x = 2, x = -2                                             |
+|                                                             |
+|   [Immutable Typed_In Answer]                               |
+|   [Adding commentary after solving the problem]             |
+|                                                             |
+|                                                             |
+|   [ Again (1m) ] [ Hard (2d) ] [ Good (4d) ] [ Easy (7d) ]  |
++-------------------------------------------------------------+
+// The input box needs to support LaTeX rendering as you type (Live Preview).
+// If I mark "Hard/Again", the UI must pop up a modal: "Why did you miss this?" (Calculation, Concept, Memory). - This is for error logging
+// We need to update the backend to allow us to save our attempt's solution (using JSONB or anything that allows to save markdown + latex)
+// This writes to ErrorResolution, which updates the weights we defined in Block 4. Don't make error logging optional; make it part of the "Again" flow.
+// We need to later show unresolved errors when looking at a problem, allow ourselves to select it (basically make another attempt) and record/update the errors resolution so that it shows how we resolved the error (JSONB text input field linked to the ErrorResolution)
+// That means we need to add two fields, one to the attempt table, one to the ErrorResolution table (make changes to the backend and testing it out)
+// Clarification: After submitting, the textarea becomes read-only.
+
+D. Dashboard View
+// I haven't planned out this view yet, but it should include the ability to view the original .html document that is the methodology for the entire project (basically just a learning guide), have a heatmap and streak display on the top left of the screen. Show problem/theory suggestions, due problems. Display subjects (pressing on one opens its correlating Library view) - add subjects using this same module. 
+
+We need to figure out our frontend stack and dependencies that will fit our design needs while also ensuring capabilites
++ TUI like design using WebTUI
++ Monaco for live preview editing
++ Remark-Math / Rehype-Katex: For LaTeX rendering
++ Further down the line the ability to integrate images/videos and audio (planned but not needed as of now).
