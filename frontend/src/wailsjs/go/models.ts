@@ -442,6 +442,10 @@ export namespace ent {
 	    // Go type: time
 	    due?: any;
 	    node_id?: number[];
+	    card_state?: string;
+	    current_step?: number;
+	    // Go type: time
+	    next_review?: any;
 	    edges: FsrsCardEdges;
 	
 	    static createFrom(source: any = {}) {
@@ -461,6 +465,9 @@ export namespace ent {
 	        this.last_review = this.convertValues(source["last_review"], null);
 	        this.due = this.convertValues(source["due"], null);
 	        this.node_id = source["node_id"];
+	        this.card_state = source["card_state"];
+	        this.current_step = source["current_step"];
+	        this.next_review = this.convertValues(source["next_review"], null);
 	        this.edges = this.convertValues(source["edges"], FsrsCardEdges);
 	    }
 	

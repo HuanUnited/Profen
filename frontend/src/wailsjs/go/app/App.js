@@ -58,6 +58,10 @@ export function GetRelatedNodes(arg1, arg2, arg3) {
   return window['go']['app']['App']['GetRelatedNodes'](arg1, arg2, arg3);
 }
 
+export function GetSchedulingInfo(arg1) {
+  return window['go']['app']['App']['GetSchedulingInfo'](arg1);
+}
+
 export function GetSubjects() {
   return window['go']['app']['App']['GetSubjects']();
 }

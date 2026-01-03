@@ -31,11 +31,13 @@ export function GetNodeMastery(arg1:string):Promise<Record<string, any>>;
 
 export function GetRelatedNodes(arg1:string,arg2:string,arg3:string):Promise<Array<ent.Node>>;
 
+export function GetSchedulingInfo(arg1:string):Promise<Record<number, string>>;
+
 export function GetSubjects():Promise<Array<ent.Node>>;
 
 export function IsFullscreen():Promise<boolean>;
 
-export function ReviewCard(arg1:string,arg2:number,arg3:number,arg4:string):Promise<ent.FsrsCard>;
+export function ReviewCard(arg1:string,arg2:number,arg3:number,arg4:string):Promise<void>;
 
 export function SearchNodes(arg1:string):Promise<Array<ent.Node>>;
 
