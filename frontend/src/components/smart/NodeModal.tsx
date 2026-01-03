@@ -1,5 +1,6 @@
+// frontend/src/components/smart/NodeModal.tsx
 import { useState, useEffect } from "react";
-import { X, Check, Lock, Trash2, Link as LinkIcon, Search, ChevronRight } from "lucide-react";
+import { X, Lock, Trash2, Link as LinkIcon, Search, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
@@ -18,7 +19,7 @@ import StyledFormContainer from "../atomic/StyledFormContainer";
 import StyledFormGroup from "../atomic/StylizedFormGroup";
 import StyledButton from "../atomic/StylizedButton";
 
-// Enhanced Modal Wrapper with StyledForm gradient
+// Enhanced Modal Wrapper
 const ModalWrapper = styled.div`
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(20px);
@@ -38,21 +39,21 @@ const ModalWrapper = styled.div`
     100% { background-position: 0% 50%; }
   }
 
-  /* Hide Scrollbars */
+  /* Custom Scrollbar for Right Panel */
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #2f334d; border-radius: 3px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #40c9ff; }
+  
   .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 `;
 
 // Define Debounce Hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => { setDebouncedValue(value); }, delay);
+    return () => { clearTimeout(handler); };
   }, [value, delay]);
   return debouncedValue;
 }
@@ -83,43 +84,21 @@ export default function NodeModal({
 }: NodeModalProps) {
   const queryClient = useQueryClient();
 
-  // Core Form State
   const [title, setTitle] = useState("");
   const [selectedType, setSelectedType] = useState<string>("subject");
-
-  // Drill Down State
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
-
-  // Relation State
   const [relations, setRelations] = useState<PendingRelation[]>([]);
   const [newRelType, setNewRelType] = useState("similar_to");
   const [targetSearchQuery, setTargetSearchQuery] = useState("");
   const [selectedTargetNode, setSelectedTargetNode] = useState<{ id: string; title: string } | null>(null);
-
   const [body, setBody] = useState("");
 
-  // Debounce search
   const debouncedSearch = useDebounce(targetSearchQuery, 500);
 
-  // Queries
-  const { data: subjects } = useQuery({
-    queryKey: ["subjects"],
-    queryFn: GetSubjects,
-    enabled: isOpen,
-  });
-
-  const { data: topics } = useQuery({
-    queryKey: ["children", selectedSubjectId],
-    queryFn: () => GetChildren(selectedSubjectId),
-    enabled: !!selectedSubjectId,
-  });
-
-  const { data: searchResults } = useQuery({
-    queryKey: ["search", debouncedSearch],
-    queryFn: () => SearchNodes(debouncedSearch),
-    enabled: debouncedSearch.length > 2,
-  });
+  const { data: subjects } = useQuery({ queryKey: ["subjects"], queryFn: GetSubjects, enabled: isOpen });
+  const { data: topics } = useQuery({ queryKey: ["children", selectedSubjectId], queryFn: () => GetChildren(selectedSubjectId), enabled: !!selectedSubjectId });
+  const { data: searchResults } = useQuery({ queryKey: ["search", debouncedSearch], queryFn: () => SearchNodes(debouncedSearch), enabled: debouncedSearch.length > 2 });
 
   useEffect(() => {
     if (isOpen) {
@@ -141,14 +120,7 @@ export default function NodeModal({
 
   const handleAddRelation = () => {
     if (!selectedTargetNode) return;
-    setRelations((prev) => [
-      ...prev,
-      {
-        targetId: selectedTargetNode.id,
-        relType: newRelType,
-        targetTitle: selectedTargetNode.title,
-      },
-    ]);
+    setRelations((prev) => [...prev, { targetId: selectedTargetNode.id, relType: newRelType, targetTitle: selectedTargetNode.title }]);
     setTargetSearchQuery("");
     setSelectedTargetNode(null);
   };
@@ -166,67 +138,32 @@ export default function NodeModal({
         if (selectedType === "topic") finalParent = selectedSubjectId;
         if (selectedType === "problem" || selectedType === "theory") finalParent = selectedTopicId;
         if (!finalParent && initialParentId) finalParent = initialParentId;
-
         const newNode = await CreateNode(selectedType, finalParent, title);
         nodeId = String(newNode.id);
       } else {
         if (!initialNode) return;
-        const updated = await UpdateNode(
-          String(initialNode.id),
-          title,
-          body,
-        );
+        const updated = await UpdateNode(String(initialNode.id), title, body);
         nodeId = String(updated.id);
       }
 
       if (relations.length > 0) {
-        await Promise.all(
-          relations.map((rel) => CreateAssociation(nodeId, rel.targetId, rel.relType))
-        );
+        await Promise.all(relations.map((rel) => CreateAssociation(nodeId, rel.targetId, rel.relType)));
       }
 
-      // --- REFRESH LOGIC START ---
-
-      // 1. Always refetch the root subjects list
-      await queryClient.refetchQueries({
-        queryKey: ["subjects"],
-        type: 'active', // Only refetch if component is mounted
-        exact: true
-      });
-
-      // 2. Determine the parent ID to update
+      // Refresh Logic
+      await queryClient.refetchQueries({ queryKey: ["subjects"], type: 'active', exact: true });
       let parentToUpdate = "";
-
       if (mode === "create") {
-        // If creating, we use the selected parents
         if (selectedType === "topic") parentToUpdate = selectedSubjectId;
         else if (selectedType === "problem" || selectedType === "theory") parentToUpdate = selectedTopicId;
         else if (initialParentId) parentToUpdate = initialParentId;
       } else if (mode === "edit" && initialNode) {
-        // If editing, use the existing parent
         parentToUpdate = String(initialNode.parent_id);
       }
-
-      // 3. Refetch the specific parent's children (Topic/Subject View)
-      if (parentToUpdate) {
-        await queryClient.refetchQueries({
-          queryKey: ["children", String(parentToUpdate)], // Ensure String()
-          type: 'active'
-        });
-      }
-
-      // 4. If we edited the node itself, refetch its details (Leaf View)
-      if (initialNode) {
-        await queryClient.refetchQueries({
-          queryKey: ["node", String(initialNode.id)], // Ensure String()
-          type: 'active'
-        });
-      }
-
-      // --- REFRESH LOGIC END ---
+      if (parentToUpdate) await queryClient.refetchQueries({ queryKey: ["children", String(parentToUpdate)], type: 'active' });
+      if (initialNode) await queryClient.refetchQueries({ queryKey: ["node", String(initialNode.id)], type: 'active' });
 
       onClose();
-
     } catch (e) {
       console.error(e);
     }
@@ -236,10 +173,10 @@ export default function NodeModal({
 
   const modal = (
     <ModalWrapper className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-200">
-      <div className="modal-container w-[90vw] max-w-6xl h-[85vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl">
+      <div className="modal-container w-[95vw] max-w-7xl h-[90vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl">
 
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-8 border-b border-[#2f334d]/50 bg-[#16161e]/90 backdrop-blur-sm">
+        <div className="h-16 flex items-center justify-between px-8 border-b border-[#2f334d]/50 bg-[#16161e]/90 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-4">
             <span className={clsx(
               "px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border",
@@ -251,17 +188,12 @@ export default function NodeModal({
               {mode === "create" ? "New Knowledge Node" : "Edit Properties"}
             </h2>
           </div>
-          <StyledButton
-            variant="ghost"
-            size="sm"
-            icon={<X size={20} />}
-            onClick={onClose}
-          />
+          <StyledButton variant="ghost" size="sm" icon={<X size={20} />} onClick={onClose} />
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* LEFT PANEL: Node Type & Hierarchy */}
-          <div className="w-80 bg-[#1a1b26]/80 border-r border-[#2f334d]/50 p-8 space-y-8 overflow-y-auto no-scrollbar">
+          {/* LEFT PANEL: Shrunk to w-64 */}
+          <div className="w-64 bg-[#1a1b26]/80 border-r border-[#2f334d]/50 p-6 space-y-8 overflow-y-auto no-scrollbar shrink-0">
             {/* Type Selector */}
             <div className="space-y-3">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -272,16 +204,16 @@ export default function NodeModal({
                   <StyledButton
                     key={t}
                     variant={selectedType === t ? "primary" : "secondary"}
-                    size="lg"
+                    size="sm"  // CHANGED: lg -> sm
                     className={clsx(
-                      "justify-start w-full! text-left px-4 py-3",
+                      "justify-center w-full! text-center py-2!",  // CHANGED: justify-start -> justify-center, removed px-4
                       mode === "edit" && selectedType !== t && "opacity-50 cursor-not-allowed"
                     )}
                     onClick={() => mode === "create" && setSelectedType(t)}
                     disabled={mode === "edit"}
                   >
                     {t.toUpperCase()}
-                    {selectedType === t && <Check size={16} />}
+                    {/* REMOVED: Check icon */}
                   </StyledButton>
                 ))}
               </div>
@@ -293,43 +225,28 @@ export default function NodeModal({
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                   <Lock size={12} /> Hierarchy
                 </label>
-
-                {/* Subject */}
                 <div className="space-y-1">
                   <span className="text-[10px] text-gray-500">Parent Subject</span>
                   <select
                     value={selectedSubjectId}
-                    onChange={(e) => {
-                      setSelectedSubjectId(e.target.value);
-                      setSelectedTopicId("");
-                    }}
-                    className="w-full bg-[#1a1b26] border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-[#e81cff]"
+                    onChange={(e) => { setSelectedSubjectId(e.target.value); setSelectedTopicId(""); }}
+                    className="w-full bg-[#1a1b26] border border-gray-700 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-[#e81cff]"
                   >
                     <option value="">-- Select --</option>
-                    {subjects?.map((s: any) => (
-                      <option key={s.id} value={s.id}>
-                        {s.title}
-                      </option>
-                    ))}
+                    {subjects?.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}
                   </select>
                 </div>
-
-                {/* Topic */}
                 {(selectedType === "problem" || selectedType === "theory") && (
                   <div className="space-y-1">
                     <span className="text-[10px] text-gray-500">Parent Topic</span>
                     <select
                       value={selectedTopicId}
                       onChange={(e) => setSelectedTopicId(e.target.value)}
-                      className="w-full bg-[#1a1b26] border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-[#e81cff]"
+                      className="w-full bg-[#1a1b26] border border-gray-700 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-[#e81cff]"
                       disabled={!selectedSubjectId}
                     >
                       <option value="">-- Select --</option>
-                      {topics?.map((t: any) => (
-                        <option key={t.id} value={t.id}>
-                          {t.title}
-                        </option>
-                      ))}
+                      {topics?.map((t: any) => <option key={t.id} value={t.id}>{t.title}</option>)}
                     </select>
                   </div>
                 )}
@@ -337,28 +254,26 @@ export default function NodeModal({
             )}
           </div>
 
-          {/* RIGHT PANEL: StyledFormContainer */}
-          <div className="flex-1 p-8 bg-transparent overflow-hidden flex flex-col">
+          {/* RIGHT PANEL: Scrollable & Expanded */}
+          <div className="flex-1 bg-transparent overflow-y-auto custom-scrollbar flex flex-col p-8">
+            <StyledFormContainer className="w-full max-w-4xl mx-auto space-y-8">
 
-            {/* Main Form */}
-            <StyledFormContainer className="flex-1 max-w-2xl mx-auto">
-
-              {/* Title */}
+              {/* Expanded Title */}
               <StyledFormGroup>
-                <label>Title</label>
+                <label className="text-gray-400 font-bold uppercase tracking-wider text-xs">Node Title</label>
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter node title..."
                   autoFocus
-                  className="text-3xl! font-bold! py-3!"
+                  className="text-4xl! font-bold! py-4! px-0! bg-transparent! border-b-2! border-gray-800 focus:border-[#40c9ff]! rounded-none!"
                 />
               </StyledFormGroup>
 
-              {/* Content */}
-              <StyledFormGroup>
-                <label>Content</label>
-                <div className="h-80 border border-[#414141] rounded-lg overflow-hidden bg-[#1a1b26]/80">
+              {/* Expanded Content Area */}
+              <StyledFormGroup className="flex-1 flex flex-col">
+                <label className="text-gray-400 font-bold uppercase tracking-wider text-xs mb-2">Content Body</label>
+                <div className="min-h-125 border border-[#414141] rounded-lg overflow-hidden bg-[#1a1b26]/80 flex flex-col">
                   <NodeEditor
                     initialContent={body}
                     onChange={setBody}
@@ -367,140 +282,95 @@ export default function NodeModal({
                 </div>
               </StyledFormGroup>
 
-            </StyledFormContainer>
-
-            {/* Relations Section */}
-            <div className="mt-8 pt-8 border-t border-[#2f334d]/50 space-y-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-gray-300 uppercase tracking-wider">
-                <LinkIcon size={16} />
-                Relationships
-              </div>
-
-              {/* Add Relation Row */}
-              <div className="flex gap-3 p-4 bg-[#1a1b26]/50 border border-[#2f334d]/50 rounded-xl items-start">
-                <div className="flex-1 space-y-2">
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">Type</label>
-                  <select
-                    value={newRelType}
-                    onChange={(e) => setNewRelType(e.target.value)}
-                    className="w-full bg-[#1a1b26] border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-[#e81cff]"
-                  >
-                    {REL_TYPES.map((r) => (
-                      <option key={r} value={r}>
-                        {r.replace(/_/g, ' ').toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
+              {/* Relations Section - Now part of the scroll flow */}
+              <div className="pt-8 border-t border-[#2f334d]/50 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-bold text-gray-300 uppercase tracking-wider">
+                  <LinkIcon size={16} /> Relationships
                 </div>
 
-                <div className="flex-1 space-y-2 relative">
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">Target</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-                    <input
-                      value={targetSearchQuery}
-                      onChange={(e) => {
-                        setTargetSearchQuery(e.target.value);
-                        setSelectedTargetNode(null);
-                      }}
-                      placeholder="Search nodes..."
-                      className={clsx(
-                        "w-full bg-[#1a1b26] border rounded-lg pl-10 pr-3 py-2.5 text-sm text-white outline-none focus:border-[#89b4fa]",
-                        selectedTargetNode ? "border-[#89b4fa]" : "border-gray-700"
-                      )}
-                    />
+                <div className="flex gap-3 p-4 bg-[#1a1b26]/50 border border-[#2f334d]/50 rounded-xl items-end">
+                  <div className="w-48 space-y-2">
+                    <label className="text-xs text-gray-500 uppercase tracking-wider">Type</label>
+                    <select
+                      value={newRelType}
+                      onChange={(e) => setNewRelType(e.target.value)}
+                      className="w-full h-10 bg-[#1a1b26] border border-gray-700 rounded-lg px-3 text-sm text-white outline-none focus:border-[#e81cff]"  // ADDED: h-10
+                    >
+                      {REL_TYPES.map((r) => <option key={r} value={r}>{r.replace(/_/g, ' ').toUpperCase()}</option>)}
+                    </select>
                   </div>
 
-                  {/* Search Results Dropdown */}
-                  {targetSearchQuery.length > 2 && !selectedTargetNode && searchResults && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1b26]/95 border border-[#2f334d] rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50 no-scrollbar">
-                      {searchResults.map((res: any) => (
-                        <StyledButton
-                          variant="primary"
-                          key={res.id}
-                          onClick={() => {
-                            setSelectedTargetNode({ id: String(res.id), title: res.title });
-                            setTargetSearchQuery(res.title);
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-[#89b4fa]/10 text-sm border-b border-gray-800/50 last:border-b-0 flex justify-between items-center transition-colors"
-                        >
-                          <span className="truncate">{res.title}</span>
-                          <span className="text-xs bg-gray-800/50 px-2 py-0.5 rounded-full">
-                            {res.type}
-                          </span>
-                        </StyledButton>
-                      ))}
-                      {searchResults.length === 0 && (
-                        <div className="px-4 py-3 text-xs text-gray-500 text-center">
-                          No nodes found
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <StyledButton
-                  variant="primary"
-                  size="sm"
-                  onClick={handleAddRelation}
-                  disabled={!selectedTargetNode}
-                >
-                  LINK
-                </StyledButton>
-              </div>
-
-              {/* Relations List */}
-              {relations.length > 0 && (
-                <div className="space-y-2 max-h-32 overflow-y-auto no-scrollbar">
-                  {relations.map((rel, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-[#1a1b26]/50 border border-[#2f334d]/50 rounded-lg group hover:bg-[#2f334d]/50 transition-all">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="px-2.5 py-1 bg-[#89b4fa]/20 border border-[#89b4fa]/30 rounded-md text-xs font-mono text-[#89b4fa]">
-                          {rel.relType.replace(/_/g, ' ').toUpperCase()}
-                        </div>
-                        <ChevronRight size={14} className="text-gray-500" />
-                        <span className="text-gray-300 text-sm font-medium truncate">
-                          {rel.targetTitle}
-                        </span>
-                      </div>
-                      <StyledButton
-                        variant="ghost"
-                        size="sm"
-                        icon={<Trash2 size={14} />}
-                        onClick={() => handleRemoveRelation(idx)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  <div className="flex-1 space-y-2 relative">
+                    <label className="text-xs text-gray-500 uppercase tracking-wider">Target Node</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+                      <input
+                        value={targetSearchQuery}
+                        onChange={(e) => { setTargetSearchQuery(e.target.value); setSelectedTargetNode(null); }}
+                        placeholder="Search for nodes to link..."
+                        className={clsx(
+                          "w-full h-10 bg-[#1a1b26] border rounded-lg pl-10 pr-3 text-sm text-white outline-none focus:border-[#89b4fa]",  // ADDED: h-10
+                          selectedTargetNode ? "border-[#89b4fa]" : "border-gray-700"
+                        )}
                       />
                     </div>
-                  ))}
+                    {targetSearchQuery.length > 2 && !selectedTargetNode && searchResults && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1b26]/95 border border-[#2f334d] rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50 custom-scrollbar">
+                        {searchResults.map((res: any) => (
+                          <button
+                            key={res.id}
+                            onClick={() => { setSelectedTargetNode({ id: String(res.id), title: res.title }); setTargetSearchQuery(res.title); }}
+                            className="w-full text-left px-4 py-3 hover:bg-[#89b4fa]/10 text-sm border-b border-gray-800/50 flex justify-between items-center"
+                          >
+                            <span className="truncate">{res.title}</span>
+                            <span className="text-xs bg-gray-800/50 px-2 py-0.5 rounded-full">{res.type}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    {/* REMOVED: mt-6, CHANGED: size md -> sm to match height */}
+                    <StyledButton
+                      variant="primary"
+                      size="sm"
+                      onClick={handleAddRelation}
+                      disabled={!selectedTargetNode}
+                      className="h-10!"  // ADDED: Fixed height to match inputs
+                    >
+                      LINK
+                    </StyledButton>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                {relations.length > 0 && (
+                  <div className="space-y-2">
+                    {relations.map((rel, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-4 bg-[#1a1b26]/50 border border-[#2f334d]/50 rounded-lg group hover:bg-[#2f334d]/50 transition-all">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="px-2.5 py-1 bg-[#89b4fa]/20 border border-[#89b4fa]/30 rounded-md text-xs font-mono text-[#89b4fa]">
+                            {rel.relType.replace(/_/g, ' ').toUpperCase()}
+                          </div>
+                          <ChevronRight size={14} className="text-gray-500" />
+                          <span className="text-gray-300 text-sm font-medium">{rel.targetTitle}</span>
+                        </div>
+                        <StyledButton variant="ghost" size="sm" icon={<Trash2 size={14} />} onClick={() => handleRemoveRelation(idx)} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </StyledFormContainer>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="h-20 border-t border-[#2f334d]/50 bg-[#16161e]/90 backdrop-blur-sm flex items-center justify-between px-8">
-          <span className="text-gray-500 text-xs font-mono">
-            {mode === "create"
-              ? "Drill down to select parent hierarchy."
-              : `Editing ${String(initialNode?.id || '').split("-")[0]}...`}
-          </span>
+        <div className="h-20 border-t border-[#2f334d]/50 bg-[#16161e]/90 backdrop-blur-sm flex items-center justify-between px-8 shrink-0">
+          <span className="text-gray-500 text-xs font-mono">{mode === "create" ? "Drill down to select parent." : `Editing ${String(initialNode?.id || '').split("-")[0]}`}</span>
           <div className="flex gap-3">
-            <StyledButton
-              variant="ghost"
-              size="md"
-              onClick={onClose}
-            >
-              CANCEL
-            </StyledButton>
-            <StyledButton
-              variant="primary"
-              size="md"
-              onClick={handleSubmit}
-              disabled={!title.trim()}
-            >
-              {mode === "create" ? "CREATE NODE" : "SAVE CHANGES"}
-            </StyledButton>
+            <StyledButton variant="ghost" size="md" onClick={onClose}>CANCEL</StyledButton>
+            <StyledButton variant="primary" size="md" onClick={handleSubmit} disabled={!title.trim()}>{mode === "create" ? "CREATE NODE" : "SAVE CHANGES"}</StyledButton>
           </div>
         </div>
       </div>
