@@ -27,6 +27,7 @@ type App struct {
 	suggestionRepo    *data.SuggestionRepository
 	attemptRepo       *data.AttemptRepository
 	statsRepo         *data.StatsRepository
+	studyCoordinator  *service.StudyCoordinator
 	isFullscreen      bool // Track fullscreen state
 }
 
@@ -40,6 +41,7 @@ func NewApp(client *ent.Client) *App {
 	learningService := service.NewLearningStepsService(client, learningConfig)
 	fsrsService := service.NewFSRSService(client, fsrsConfig)
 	coordinator := service.NewReviewCoordinator(learningService, fsrsService, client)
+	studyCoordinator := service.NewStudyCoordinator(client)
 
 	return &App{
 		client:            client,
@@ -51,6 +53,7 @@ func NewApp(client *ent.Client) *App {
 		suggestionRepo:    data.NewSuggestionRepository(client),
 		attemptRepo:       data.NewAttemptRepository(client),
 		statsRepo:         data.NewStatsRepository(client),
+		studyCoordinator:  studyCoordinator,
 	}
 }
 
@@ -403,4 +406,27 @@ func (a *App) DuplicateNode(nodeIDStr string) (*ent.Node, error) {
 		original.Body,
 		original.Metadata,
 	)
+}
+
+// GetNodeWithCard returns a node with its FSRS card state
+func (a *App) GetNodeWithCard(nodeIDStr string) (map[string]interface{}, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid node UUID: %w", err)
+	}
+	return a.studyCoordinator.GetNodeWithCard(a.ctx, id)
+}
+
+// GetDueCardsQueue returns due card IDs for study session (global scope)
+func (a *App) GetDueCardsQueue(limit int) ([]string, error) {
+	return a.studyCoordinator.GetDueCardsQueue(a.ctx, limit)
+}
+
+// GetDueCardsFromNode returns due card IDs from a specific subject/topic
+func (a *App) GetDueCardsFromNode(parentIDStr string, limit int) ([]string, error) {
+	id, err := uuid.Parse(parentIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid parent UUID: %w", err)
+	}
+	return a.studyCoordinator.GetDueCardsFromNode(a.ctx, id, limit)
 }
