@@ -3,18 +3,24 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { GetAttemptHistory } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
-import { ArrowRight, Pencil, History, Hash } from "lucide-react";
+import { ArrowRight, Pencil, History, Hash, ChevronDown, ChevronRight, Link, BookOpen } from "lucide-react";
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
 import NodeModal from "../smart/NodeModal";
+import StyledButton from "../atomic/StylizedButton";
 
 export default function ProblemView({ node }: { node: ent.Node }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [showSimilarProblems, setShowSimilarProblems] = useState(true);
+  const [showLinkedTheories, setShowLinkedTheories] = useState(true);
 
-  // Fetch Attempt History
   const { data: attempts } = useQuery({
     queryKey: ["attempts", String(node.id)],
     queryFn: () => GetAttemptHistory(String(node.id)),
   });
+
+  // TODO: Fetch from node associations
+  const similarProblems: any[] = [];
+  const linkedTheories: any[] = [];
 
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in slide-in-from-bottom-2">
@@ -31,15 +37,23 @@ export default function ProblemView({ node }: { node: ent.Node }) {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
+          <StyledButton
+            variant="ghost"
+            size="sm"
+            icon={<Pencil size={14} />}
             onClick={() => setIsEditOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1b26] border border-[#2f334d] rounded text-xs font-bold text-gray-400 hover:text-white hover:border-[#89b4fa] transition-all"
           >
-            <Pencil size={14} /> Edit
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#89b4fa] text-black rounded font-bold text-sm hover:bg-[#b4befe] shadow-lg shadow-blue-900/20 transition-all">
-            Attempt Problem <ArrowRight size={16} />
-          </button>
+            Edit
+          </StyledButton>
+
+          <StyledButton
+            variant="primary"
+            size="md"
+            icon={<ArrowRight size={16} />}
+            onClick={() => { /* Open Attempt Modal */ }}
+          >
+            Attempt Problem
+          </StyledButton>
         </div>
       </div>
 
@@ -64,7 +78,7 @@ export default function ProblemView({ node }: { node: ent.Node }) {
             </h3>
 
             <div className="space-y-3">
-              {attempts?.map((attempt: any, idx: number) => (
+              {attempts?.slice(0, 5).map((attempt: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-2 rounded hover:bg-[#2f334d]/50 transition-colors">
                   <div className="flex flex-col">
                     <span className="font-mono text-xs text-gray-500">
@@ -82,6 +96,60 @@ export default function ProblemView({ node }: { node: ent.Node }) {
               {(!attempts || attempts.length === 0) && (
                 <div className="text-center py-4 text-gray-600 text-xs">
                   No attempts yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Relations Container */}
+          <div className="bg-[#1a1b26] border border-[#2f334d] rounded-xl overflow-hidden">
+            <div className="border-b border-[#2f334d] px-4 py-2.5 flex items-center gap-2">
+              <Link size={12} className="text-gray-500" />
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Connections</span>
+            </div>
+
+            {/* Similar Problems */}
+            <div className="border-b border-[#2f334d]/50">
+              <button
+                onClick={() => setShowSimilarProblems(!showSimilarProblems)}
+                className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-[#2f334d]/30 transition-colors text-left"
+              >
+                <span className="text-xs font-medium text-blue-400 flex items-center gap-2">
+                  <Hash size={12} /> Similar Problems
+                </span>
+                {showSimilarProblems ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+              {showSimilarProblems && (
+                <div className="px-4 pb-3 space-y-1">
+                  {similarProblems.map((p: any) => (
+                    <div key={p.id} className="text-xs text-gray-400 hover:text-white cursor-pointer py-1">
+                      {p.title}
+                    </div>
+                  ))}
+                  {similarProblems.length === 0 && <div className="text-[10px] text-gray-600 italic py-1">None linked</div>}
+                </div>
+              )}
+            </div>
+
+            {/* Linked Theories */}
+            <div>
+              <button
+                onClick={() => setShowLinkedTheories(!showLinkedTheories)}
+                className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-[#2f334d]/30 transition-colors text-left"
+              >
+                <span className="text-xs font-medium text-purple-400 flex items-center gap-2">
+                  <BookOpen size={12} /> Linked Theories
+                </span>
+                {showLinkedTheories ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+              {showLinkedTheories && (
+                <div className="px-4 pb-3 space-y-1">
+                  {linkedTheories.map((t: any) => (
+                    <div key={t.id} className="text-xs text-gray-400 hover:text-white cursor-pointer py-1">
+                      {t.title}
+                    </div>
+                  ))}
+                  {linkedTheories.length === 0 && <div className="text-[10px] text-gray-600 italic py-1">None linked</div>}
                 </div>
               )}
             </div>
