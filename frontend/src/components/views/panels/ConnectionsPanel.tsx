@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight, Link, Info } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { GetNodeBreadcrumbs } from "../../../wailsjs/go/app/App";
 import { ent } from "../../../wailsjs/go/models";
 
 interface Connection {
@@ -60,25 +62,20 @@ export default function ConnectionsPanel({ nodeId, associations, groups }: Conne
     };
   });
 
+  // Fetch breadcrumbs for hovered node
+  const { data: hoveredBreadcrumbs } = useQuery({
+    queryKey: ["breadcrumbs", hoveredNode],
+    queryFn: () => GetNodeBreadcrumbs(hoveredNode!),
+    enabled: !!hoveredNode,
+    staleTime: 30000, // Cache for 30s to reduce API calls
+  });
+
   // Build breadcrumb path in format ~/subject/topic/node
-  const buildBreadcrumbs = (node: ent.Node): string => {
-    const crumbs: string[] = [];
-    let current = node;
-    let depth = 0;
-    const maxDepth = 10;
+  const buildBreadcrumbPath = (): string => {
+    if (!hoveredBreadcrumbs || hoveredBreadcrumbs.length === 0) return "~/";
 
-    while (current && depth < maxDepth) {
-      crumbs.unshift(current.title || "Untitled");
-
-      if (current.edges?.parent) {
-        current = current.edges.parent;
-      } else {
-        break;
-      }
-      depth++;
-    }
-
-    return "~/" + crumbs.join("/");
+    const titles = hoveredBreadcrumbs.map(node => node.title || "Untitled");
+    return "~/" + titles.join("/");
   };
 
   return (
@@ -103,69 +100,76 @@ export default function ConnectionsPanel({ nodeId, associations, groups }: Conne
 
           {expandedGroups[groups[idx].key] && (
             <div className="px-4 pb-3 space-y-1 overflow-visible">
-              {group.connections.map((conn) => (
-                <div
-                  key={String(conn.node.id)}
-                  onMouseEnter={() => setHoveredNode(String(conn.node.id))}
-                  onMouseLeave={() => setHoveredNode(null)}
-                  className="relative group overflow-visible"
-                >
+              {group.connections.map((conn) => {
+                const connId = String(conn.node.id);
+                const isHovered = hoveredNode === connId;
+
+                return (
                   <div
-                    onClick={() => navigate(`/library?nodeId=${conn.node.id}`)}
-                    className="flex items-center justify-between text-xs text-gray-400 hover:text-white hover:bg-[#2f334d]/50 cursor-pointer py-2 px-2 rounded transition-colors"
+                    key={connId}
+                    onMouseEnter={() => setHoveredNode(connId)}
+                    onMouseLeave={() => setHoveredNode(null)}
+                    className="relative group overflow-visible"
                   >
-                    <div className="flex-1 flex items-center gap-2 min-w-0">
-                      <span className="truncate group-hover:text-inherit">{conn.node.title}</span>
-                      <span className="text-[9px] font-mono text-gray-600 shrink-0">
-                        {String(conn.node.id).split("-")[0]}
-                      </span>
-                    </div>
-                    <Info size={10} className="text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                  </div>
-
-                  {/* Hover Tooltip - Fixed positioning to prevent clipping */}
-                  {hoveredNode === String(conn.node.id) && (
                     <div
-                      className="fixed z-100 bg-[#16161e] border-2 border-[#89b4fa]/50 rounded-lg p-3 shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 pointer-events-none"
-                      style={{
-                        left: '50%',
-                        top: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        minWidth: '320px',
-                        maxWidth: '450px'
-                      }}
+                      onClick={() => navigate(`/library?nodeId=${conn.node.id}`)}
+                      className="flex items-center justify-between text-xs text-gray-400 hover:text-white hover:bg-[#2f334d]/50 cursor-pointer py-2 px-2 rounded transition-colors"
                     >
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <span className="text-sm font-bold text-white">{conn.node.title}</span>
-                          <span className="text-[9px] bg-gray-800/50 px-2 py-1 rounded font-mono text-gray-400 shrink-0 uppercase">
-                            {conn.node.type}
-                          </span>
-                        </div>
+                      <div className="flex-1 flex items-center gap-2 min-w-0">
+                        <span className="truncate group-hover:text-inherit">{conn.node.title}</span>
+                        <span className="text-[9px] font-mono text-gray-600 shrink-0">
+                          {connId.split("-")[0]}
+                        </span>
+                      </div>
+                      <Info size={10} className="text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </div>
 
-                        <div className="text-[10px] text-gray-500 font-mono border-t border-gray-800 pt-2">
-                          <span className="text-gray-600">ID:</span> {String(conn.node.id)}
-                        </div>
+                    {/* Hover Tooltip - Fixed positioning to prevent clipping */}
+                    {isHovered && (
+                      <div
+                        className="fixed z-100 bg-[#16161e] border-2 border-[#89b4fa]/50 rounded-lg p-3 shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 pointer-events-none"
+                        style={{
+                          left: '50%',
+                          top: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          minWidth: '320px',
+                          maxWidth: '450px'
+                        }}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-sm font-bold text-white">{conn.node.title}</span>
+                            <span className="text-[9px] bg-gray-800/50 px-2 py-1 rounded font-mono text-gray-400 shrink-0 uppercase">
+                              {conn.node.type}
+                            </span>
+                          </div>
 
-                        <div className="text-[11px] text-gray-300 leading-relaxed border-t border-gray-800 pt-2 font-mono break-all">
-                          <span className="text-[#89b4fa] font-bold">PATH:</span><br />
-                          <span className="text-gray-400">{buildBreadcrumbs(conn.node)}</span>
-                        </div>
+                          <div className="text-[10px] text-gray-500 font-mono border-t border-gray-800 pt-2">
+                            <span className="text-gray-600">ID:</span> {connId}
+                          </div>
 
-                        <div className="text-[10px] text-purple-400 border-t border-gray-800 pt-2">
-                          <span className="text-gray-500">Relation:</span>{" "}
-                          <span className="font-mono bg-purple-900/30 px-2 py-1 rounded border border-purple-900/50">
-                            {conn.relType.replace(/_/g, ' ').toUpperCase()}
-                          </span>
-                          <span className="text-gray-600 ml-2">
-                            ({conn.direction === "source" ? "outgoing →" : "← incoming"})
-                          </span>
+                          <div className="text-[11px] text-gray-300 leading-relaxed border-t border-gray-800 pt-2 font-mono break-all">
+                            <span className="text-[#89b4fa] font-bold">PATH:</span><br />
+                            <span className="text-gray-400">
+                              {hoveredBreadcrumbs ? buildBreadcrumbPath() : "Loading..."}
+                            </span>
+                          </div>
+
+                          <div className="text-[10px] text-purple-400 border-t border-gray-800 pt-2">
+                            <span className="text-gray-500">Relation:</span>{" "}
+                            <span className="font-mono bg-purple-900/30 px-2 py-1 rounded border border-purple-900/50">
+                              {conn.relType.replace(/_/g, ' ').toUpperCase()}
+                            </span>
+                            <span className="text-gray-600 ml-2">
+                              ({conn.direction === "source" ? "outgoing →" : "← incoming"})
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
 
               {group.connections.length === 0 && (
                 <div className="text-[10px] text-gray-600 italic py-1 px-2">None linked</div>

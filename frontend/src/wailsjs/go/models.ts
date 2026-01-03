@@ -527,6 +527,7 @@ export namespace ent {
 	    is_correct?: boolean;
 	    error_type_id?: number[];
 	    user_answer?: string;
+	    metadata?: Record<string, any>;
 	    edges: AttemptEdges;
 	
 	    static createFrom(source: any = {}) {
@@ -546,6 +547,7 @@ export namespace ent {
 	        this.is_correct = source["is_correct"];
 	        this.error_type_id = source["error_type_id"];
 	        this.user_answer = source["user_answer"];
+	        this.metadata = source["metadata"];
 	        this.edges = this.convertValues(source["edges"], AttemptEdges);
 	    }
 	

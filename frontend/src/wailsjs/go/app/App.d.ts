@@ -9,6 +9,10 @@ export function CreateNode(arg1:string,arg2:string,arg3:string):Promise<ent.Node
 
 export function DeleteNode(arg1:string):Promise<void>;
 
+export function DuplicateNode(arg1:string):Promise<ent.Node>;
+
+export function GetAttemptDetails(arg1:string):Promise<Record<string, any>>;
+
 export function GetAttemptHistory(arg1:string):Promise<Array<ent.Attempt>>;
 
 export function GetChildren(arg1:string):Promise<Array<ent.Node>>;
@@ -20,6 +24,8 @@ export function GetDueCards(arg1:number):Promise<Array<ent.Node>>;
 export function GetNode(arg1:string):Promise<ent.Node>;
 
 export function GetNodeAssociations(arg1:string):Promise<Array<ent.NodeAssociation>>;
+
+export function GetNodeBreadcrumbs(arg1:string):Promise<Array<ent.Node>>;
 
 export function GetNodeMastery(arg1:string):Promise<Record<string, any>>;
 

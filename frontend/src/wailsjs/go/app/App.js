@@ -14,6 +14,14 @@ export function DeleteNode(arg1) {
   return window['go']['app']['App']['DeleteNode'](arg1);
 }
 
+export function DuplicateNode(arg1) {
+  return window['go']['app']['App']['DuplicateNode'](arg1);
+}
+
+export function GetAttemptDetails(arg1) {
+  return window['go']['app']['App']['GetAttemptDetails'](arg1);
+}
+
 export function GetAttemptHistory(arg1) {
   return window['go']['app']['App']['GetAttemptHistory'](arg1);
 }
@@ -36,6 +44,10 @@ export function GetNode(arg1) {
 
 export function GetNodeAssociations(arg1) {
   return window['go']['app']['App']['GetNodeAssociations'](arg1);
+}
+
+export function GetNodeBreadcrumbs(arg1) {
+  return window['go']['app']['App']['GetNodeBreadcrumbs'](arg1);
 }
 
 export function GetNodeMastery(arg1) {

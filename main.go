@@ -38,8 +38,8 @@ func main() {
 	// 3. Run Wails
 	err = wails.Run(&options.App{
 		Title:  "Profen",
-		Width:  1024,
-		Height: 768,
+		Width:  1920,
+		Height: 1080,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
@@ -48,6 +48,8 @@ func main() {
 		Bind: []interface{}{
 			myApp, // Exposes all public methods of App to JS
 		},
+
+		Fullscreen: true,
 	})
 
 	if err != nil {

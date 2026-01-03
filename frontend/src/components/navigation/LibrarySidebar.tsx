@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ArrowUp, Plus, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { GetNode } from "../../wailsjs/go/app/App";
+import { GetNode, GetNodeBreadcrumbs } from "../../wailsjs/go/app/App";
 import SidebarFrame from "./SidebarFrame";
 import SubjectList from "../layouts/SubjectList";
 import NodeModal from "../smart/NodeModal";
@@ -20,6 +20,13 @@ export default function LibrarySidebar() {
   const { data: currentNode } = useQuery({
     queryKey: ["node", currentNodeId],
     queryFn: () => GetNode(currentNodeId!),
+    enabled: !!currentNodeId,
+  });
+
+  // Fetch breadcrumbs from backend
+  const { data: breadcrumbs } = useQuery({
+    queryKey: ["breadcrumbs", currentNodeId],
+    queryFn: () => GetNodeBreadcrumbs(currentNodeId!),
     enabled: !!currentNodeId,
   });
 
@@ -46,25 +53,10 @@ export default function LibrarySidebar() {
 
   // Build breadcrumb path ~/subject/topic/node
   const buildCurrentPath = (): string => {
-    if (!currentNode) return "~/";
+    if (!breadcrumbs || breadcrumbs.length === 0) return "~/";
 
-    const crumbs: string[] = [];
-    let current = currentNode;
-    let depth = 0;
-    const maxDepth = 10;
-
-    while (current && depth < maxDepth) {
-      crumbs.unshift(current.title || "Untitled");
-
-      if (current.edges?.parent) {
-        current = current.edges.parent;
-      } else {
-        break;
-      }
-      depth++;
-    }
-
-    return "~/" + crumbs.join("/");
+    const titles = breadcrumbs.map(node => node.title || "Untitled");
+    return "~/" + titles.join("/");
   };
 
   return (
