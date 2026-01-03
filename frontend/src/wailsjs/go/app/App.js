@@ -62,12 +62,20 @@ export function GetSubjects() {
   return window['go']['app']['App']['GetSubjects']();
 }
 
+export function IsFullscreen() {
+  return window['go']['app']['App']['IsFullscreen']();
+}
+
 export function ReviewCard(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['ReviewCard'](arg1, arg2, arg3, arg4);
 }
 
 export function SearchNodes(arg1) {
   return window['go']['app']['App']['SearchNodes'](arg1);
+}
+
+export function ToggleFullscreen() {
+  return window['go']['app']['App']['ToggleFullscreen']();
 }
 
 export function UpdateNode(arg1, arg2, arg3) {

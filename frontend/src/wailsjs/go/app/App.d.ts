@@ -33,8 +33,12 @@ export function GetRelatedNodes(arg1:string,arg2:string,arg3:string):Promise<Arr
 
 export function GetSubjects():Promise<Array<ent.Node>>;
 
+export function IsFullscreen():Promise<boolean>;
+
 export function ReviewCard(arg1:string,arg2:number,arg3:number,arg4:string):Promise<ent.FsrsCard>;
 
 export function SearchNodes(arg1:string):Promise<Array<ent.Node>>;
+
+export function ToggleFullscreen():Promise<void>;
 
 export function UpdateNode(arg1:string,arg2:string,arg3:string):Promise<ent.Node>;

@@ -7,6 +7,7 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 
 	"profen/internal/app"
 	"profen/internal/data/postgres"
@@ -44,12 +45,19 @@ func main() {
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup:        myApp.Startup, // Important: binds Context
+		OnStartup:        myApp.Startup,
 		Bind: []interface{}{
-			myApp, // Exposes all public methods of App to JS
+			myApp,
 		},
 
-		Fullscreen: true,
+		// Start in fullscreen mode
+		WindowStartState: options.Fullscreen,
+
+		// Mac-specific: Enable native fullscreen controls
+		Mac: &mac.Options{
+			TitleBar: mac.TitleBarHiddenInset(),
+			// This enables Cmd+Ctrl+F on macOS
+		},
 	})
 
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"profen/internal/data/ent/nodeassociation"
 
 	"github.com/google/uuid"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -23,6 +24,7 @@ type App struct {
 	suggestionRepo  *data.SuggestionRepository
 	attemptRepo     *data.AttemptRepository
 	statsRepo       *data.StatsRepository
+	isFullscreen    bool // Track fullscreen state
 }
 
 // NewApp creates a new App application struct
@@ -41,6 +43,23 @@ func NewApp(client *ent.Client) *App {
 // startup is called when the app starts.
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+}
+
+// -- Fullscreen methods
+// ToggleFullscreen toggles fullscreen mode
+func (a *App) ToggleFullscreen() {
+	if a.isFullscreen {
+		runtime.WindowUnfullscreen(a.ctx)
+		a.isFullscreen = false
+	} else {
+		runtime.WindowFullscreen(a.ctx)
+		a.isFullscreen = true
+	}
+}
+
+// IsFullscreen returns current fullscreen state
+func (a *App) IsFullscreen() bool {
+	return a.isFullscreen
 }
 
 // --- NODE EXPLORER METHODS (For Library) ---
