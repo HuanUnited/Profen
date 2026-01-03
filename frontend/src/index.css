@@ -85,3 +85,60 @@ body {
 .prose code {
   color: #f38ba8 !important; /* Reddish code for contrast */
 }
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2f334d #1a1b26;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1a1b26;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #2f334d;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3f4456;
+}
+
+/* Apply to all view containers */
+.topics-grid-container,
+.children-grid-container,
+.topic-view-container {
+  scrollbar-width: thin;
+  scrollbar-color: #2f334d #1a1b26;
+}
+
+.topics-grid-container::-webkit-scrollbar,
+.children-grid-container::-webkit-scrollbar,
+.topic-view-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.topics-grid-container::-webkit-scrollbar-track,
+.children-grid-container::-webkit-scrollbar-track,
+.topic-view-container::-webkit-scrollbar-track {
+  background: #1a1b26;
+}
+
+.topics-grid-container::-webkit-scrollbar-thumb,
+.children-grid-container::-webkit-scrollbar-thumb,
+.topic-view-container::-webkit-scrollbar-thumb {
+  background: #2f334d;
+  border-radius: 4px;
+}
+
+.topics-grid-container::-webkit-scrollbar-thumb:hover,
+.children-grid-container::-webkit-scrollbar-thumb:hover,
+.topic-view-container::-webkit-scrollbar-thumb:hover {
+  background: #3f4456;
+}

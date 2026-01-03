@@ -9,8 +9,10 @@ import MarkdownRenderer from "../atomic/MarkdownRenderer";
 import NodeModal from "../smart/NodeModal";
 import StyledButton from "../atomic/StylizedButton";
 import ContextMenu from "../smart/ContextMenu";
+import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
 
 export default function ProblemView({ node }: { node: ent.Node }) {
+  useNavigationHistory();
   const navigate = useNavigate();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);

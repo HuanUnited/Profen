@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowUp, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp, Plus, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { GetNode } from "../../wailsjs/go/app/App";
 import SidebarFrame from "./SidebarFrame";
 import SubjectList from "../layouts/SubjectList";
 import NodeModal from "../smart/NodeModal";
 import StyledButton from "../atomic/StylizedButton";
+import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
 
 export default function LibrarySidebar() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const currentNodeId = searchParams.get('nodeId');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { goBack, goForward } = useNavigationHistory();
 
   // Fetch current node to determine context and "Up" destination
   const { data: currentNode } = useQuery({
@@ -52,14 +54,24 @@ export default function LibrarySidebar() {
         initialWidth={280}
         header={
           <div className="flex items-center gap-2 w-full">
+            {/* Browser-style Back/Forward */}
             <button
-              onClick={() => navigate("/")}
+              onClick={goBack}
               className="flex items-center text-gray-500 hover:text-white transition-colors group pointer-events-auto"
-              title="Back to Dashboard"
+              title="Back (Alt+←)"
             >
               <ArrowLeft size={16} />
             </button>
 
+            <button
+              onClick={goForward}
+              className="flex items-center text-gray-500 hover:text-white transition-colors group pointer-events-auto"
+              title="Forward (Alt+→)"
+            >
+              <ArrowRight size={16} />
+            </button>
+
+            {/* Up One Level */}
             <button
               onClick={handleUp}
               disabled={!currentNodeId}
@@ -82,15 +94,29 @@ export default function LibrarySidebar() {
           </div>
         }
         footer={
-          <StyledButton
-            variant="primary"
-            size="md"
-            icon={<Plus size={14} />}
-            onClick={() => setIsModalOpen(true)}
-            className="w-full"
-          >
-            NEW NODE
-          </StyledButton>
+          <div className="flex flex-col gap-2">
+            {/* Create Node Button */}
+            <StyledButton
+              variant="primary"
+              size="md"
+              icon={<Plus size={14} />}
+              onClick={() => setIsModalOpen(true)}
+              className="w-full"
+            >
+              NEW NODE
+            </StyledButton>
+
+            {/* Dashboard Button */}
+            <StyledButton
+              variant="ghost"
+              size="md"
+              icon={<Home size={14} />}
+              onClick={() => navigate("/")}
+              className="w-full"
+            >
+              DASHBOARD
+            </StyledButton>
+          </div>
         }
       >
         <SubjectList />

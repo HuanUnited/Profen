@@ -11,8 +11,11 @@ import NodeModal from "../smart/NodeModal";
 import StyledButton from "../atomic/StylizedButton";
 import ConfirmDialog from "../smart/ConfirmDialogue";
 import ContextMenu from "../smart/ContextMenu";
+import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
+
 
 export default function SubjectView({ node }: { node: ent.Node }) {
+  useNavigationHistory();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");

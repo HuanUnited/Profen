@@ -11,8 +11,11 @@ import StyledSearch from "../atomic/Search";
 import StyledButton from "../atomic/StylizedButton";
 import ConfirmDialog from "../smart/ConfirmDialogue";
 import ContextMenu from "../smart/ContextMenu";
+import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
+
 
 export default function TopicView({ node }: { node: ent.Node }) {
+  useNavigationHistory();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);

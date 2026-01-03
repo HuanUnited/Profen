@@ -122,7 +122,7 @@ export default function SidebarFrame({
 
       {/* Footer */}
       {footer && (
-        <div className="p-3 border-t border-[#2f334d] bg-[#16161e] shrink-0">
+        <div className="p-3 border-t border-[#2f334d] bg-[#16161e]">
           {footer}
         </div>
       )}

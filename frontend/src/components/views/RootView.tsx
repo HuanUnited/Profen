@@ -9,8 +9,11 @@ import { ent } from "../../wailsjs/go/models";
 import ConfirmDialog from "../smart/ConfirmDialogue";
 import ContextMenu from "../smart/ContextMenu";
 import NodeModal from "../smart/NodeModal";
+import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
+
 
 export default function RootView() {
+  useNavigationHistory();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; subject?: ent.Node } | null>(null);

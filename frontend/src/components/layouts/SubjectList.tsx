@@ -1,100 +1,56 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
-import { GetSubjects, GetChildren } from '../../wailsjs/go/app/App';
-import { ChevronRight, ChevronDown, Folder, FileText, Hash, Book } from 'lucide-react';
-import clsx from 'clsx';
-import { ent } from '../../wailsjs/go/models';
+// frontend/src/components/layouts/SubjectList.tsx
+import { useQuery } from "@tanstack/react-query";
+import { GetSubjects } from "../../wailsjs/go/app/App";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Book, ChevronRight } from "lucide-react";
 
 export default function SubjectList() {
-  const { data: subjects, isLoading, error } = useQuery({
-    queryKey: ['subjects'],
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const currentNodeId = searchParams.get('nodeId');
+
+  const { data: subjects, isLoading } = useQuery({
+    queryKey: ["subjects"],
     queryFn: GetSubjects,
-    retry: false,
   });
 
-  if (isLoading) return <div className="p-4 text-xs text-gray-500 animate-pulse">Loading hierarchy...</div>;
-
-  if (error) {
-    console.error("GetSubjects Error:", error);
+  if (isLoading) {
     return (
-      <div className="p-4 text-xs text-red-400 border border-red-900 bg-red-950/30 rounded m-2">
-        <p className="font-bold mb-1">Error Loading Subjects:</p>
-        <p className="font-mono break-all">{String(error)}</p>
+      <div className="flex items-center justify-center h-32">
+        <div className="text-xs text-gray-600 animate-pulse">Loading...</div>
       </div>
     );
   }
 
-  if (!subjects || subjects.length === 0) return <div className="p-4 text-xs text-gray-500">No subjects found.</div>;
-
   return (
-    <div className="space-y-1">
-      {subjects.map((sub) => (
-        <TreeNode key={String(sub.id)} node={sub} />
-      ))}
-    </div>
-  );
-}
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
+      {subjects?.map((sub: any) => {
+        const isActive = currentNodeId === String(sub.id);
 
-function TreeNode({ node }: { node: ent.Node }) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [isOpen, setIsOpen] = useState(false);
+        return (
+          <button
+            key={sub.id}
+            onClick={() => navigate(`/library?nodeId=${sub.id}`)}
+            className={`
+              group flex items-center gap-2 px-3 py-2 text-left text-sm
+              transition-colors border-l-2
+              ${isActive
+                ? 'bg-[#2f334d]/50 border-[#89b4fa] text-white'
+                : 'border-transparent text-gray-400 hover:bg-[#2f334d]/30 hover:text-gray-200'
+              }
+            `}
+          >
+            <Book size={14} className={isActive ? 'text-[#89b4fa]' : 'text-gray-600 group-hover:text-gray-400'} />
+            <span className="flex-1 truncate font-medium">{sub.title || "Untitled Subject"}</span>
+            <ChevronRight size={12} className={`${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'} transition-opacity`} />
+          </button>
+        );
+      })}
 
-  const selectedId = searchParams.get('nodeId');
-  const nodeIdStr = String(node.id).replace(/"/g, '');
-  const isSelected = selectedId === nodeIdStr;
-
-  const { data: children, isLoading } = useQuery({
-    queryKey: ['children', nodeIdStr],
-    queryFn: () => GetChildren(nodeIdStr),
-    enabled: isOpen,
-  });
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (node.type === 'subject' || node.type === 'topic') {
-      setIsOpen(!isOpen);
-    }
-    setSearchParams({ nodeId: nodeIdStr });
-  };
-
-  let Icon = FileText;
-  if (node.type === 'subject') Icon = Book;
-  if (node.type === 'topic') Icon = Folder;
-  if (node.type === 'problem') Icon = Hash;
-
-  return (
-    <div className="pl-2">
-      <div
-        onClick={handleToggle}
-        className={clsx(
-          "flex items-center py-1.5 px-2 rounded cursor-pointer transition-colors text-sm select-none",
-          isSelected
-            ? "bg-[#89b4fa] text-black font-bold"
-            : "text-gray-400 hover:text-white hover:bg-white/5"
-        )}
-      >
-        <span className="mr-1 opacity-50 w-4 flex justify-center">
-          {(node.type === 'subject' || node.type === 'topic') && (
-            isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-          )}
-        </span>
-        <Icon size={14} className="mr-2 shrink-0" />
-        <span className="truncate">{node.title || "Untitled"}</span>
-      </div>
-
-      {isOpen && (
-        <div className="border-l border-gray-800 ml-3">
-          {isLoading ? (
-            <div className="pl-6 py-1 text-xs text-gray-600">Loading...</div>
-          ) : (
-            children?.map((child) => (
-              <TreeNode key={String(child.id)} node={child} />
-            ))
-          )}
-          {children?.length === 0 && (
-            <div className="pl-6 py-1 text-xs text-gray-700 italic">Empty</div>
-          )}
+      {subjects?.length === 0 && (
+        <div className="px-3 py-8 text-center">
+          <p className="text-xs text-gray-600 italic">No subjects yet.</p>
+          <p className="text-xs text-gray-700 mt-2">Create one below.</p>
         </div>
       )}
     </div>
