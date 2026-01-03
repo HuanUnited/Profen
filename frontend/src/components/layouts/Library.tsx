@@ -24,7 +24,13 @@ export default function Library() {
 
   if (!nodeId) return <RootView />;
 
-  if (isLoading) return <div className="h-full flex items-center justify-center text-gray-500 font-mono animate-pulse">Loading Node...</div>;
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center text-gray-500 font-mono animate-pulse">
+        Loading Node...
+      </div>
+    );
+  }
 
   if (error || !node) {
     return (

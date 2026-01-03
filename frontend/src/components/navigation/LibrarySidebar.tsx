@@ -44,7 +44,7 @@ export default function LibrarySidebar() {
           <div className="flex items-center gap-2 w-full">
             <button
               onClick={() => navigate("/")}
-              className="flex items-center text-gray-500 hover:text-white transition-colors group"
+              className="flex items-center text-gray-500 hover:text-white transition-colors group pointer-events-auto"
               title="Back to Dashboard"
             >
               <ArrowLeft size={16} />
@@ -53,7 +53,7 @@ export default function LibrarySidebar() {
             <button
               onClick={handleUp}
               disabled={!currentNodeId}
-              className="flex items-center text-gray-500 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex items-center text-gray-500 hover:text-white transition-colors disabled:opacity-30 pointer-events-auto disabled:cursor-not-allowed"
               title="Up One Level"
             >
               <ArrowUp size={16} />

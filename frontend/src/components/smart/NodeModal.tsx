@@ -86,7 +86,6 @@ export default function NodeModal({
   // Core Form State
   const [title, setTitle] = useState("");
   const [selectedType, setSelectedType] = useState<string>("subject");
-  const [parentId, setParentId] = useState<string>(initialParentId || "");
 
   // Drill Down State
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
@@ -128,7 +127,6 @@ export default function NodeModal({
         setTitle(initialNode.title || "");
         setBody(initialNode.body || "");
         setSelectedType(initialNode.type || "subject");
-        setParentId(String(initialNode.parent_id || ""));
         setRelations([]);
       } else {
         setTitle("");
@@ -187,15 +185,45 @@ export default function NodeModal({
         );
       }
 
-      await queryClient.refetchQueries({ queryKey: ["subjects"] });
+      // --- REFRESH LOGIC START ---
 
-      if (parentId) {
-        await queryClient.refetchQueries({ queryKey: ["children", parentId] });
+      // 1. Always refetch the root subjects list
+      await queryClient.refetchQueries({
+        queryKey: ["subjects"],
+        type: 'active', // Only refetch if component is mounted
+        exact: true
+      });
+
+      // 2. Determine the parent ID to update
+      let parentToUpdate = "";
+
+      if (mode === "create") {
+        // If creating, we use the selected parents
+        if (selectedType === "topic") parentToUpdate = selectedSubjectId;
+        else if (selectedType === "problem" || selectedType === "theory") parentToUpdate = selectedTopicId;
+        else if (initialParentId) parentToUpdate = initialParentId;
+      } else if (mode === "edit" && initialNode) {
+        // If editing, use the existing parent
+        parentToUpdate = String(initialNode.parent_id);
       }
 
+      // 3. Refetch the specific parent's children (Topic/Subject View)
+      if (parentToUpdate) {
+        await queryClient.refetchQueries({
+          queryKey: ["children", String(parentToUpdate)], // Ensure String()
+          type: 'active'
+        });
+      }
+
+      // 4. If we edited the node itself, refetch its details (Leaf View)
       if (initialNode) {
-        await queryClient.refetchQueries({ queryKey: ["node", String(initialNode.id)] });
+        await queryClient.refetchQueries({
+          queryKey: ["node", String(initialNode.id)], // Ensure String()
+          type: 'active'
+        });
       }
+
+      // --- REFRESH LOGIC END ---
 
       onClose();
 
@@ -387,7 +415,8 @@ export default function NodeModal({
                   {targetSearchQuery.length > 2 && !selectedTargetNode && searchResults && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1b26]/95 border border-[#2f334d] rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50 no-scrollbar">
                       {searchResults.map((res: any) => (
-                        <button
+                        <StyledButton
+                          variant="primary"
                           key={res.id}
                           onClick={() => {
                             setSelectedTargetNode({ id: String(res.id), title: res.title });
@@ -399,7 +428,7 @@ export default function NodeModal({
                           <span className="text-xs bg-gray-800/50 px-2 py-0.5 rounded-full">
                             {res.type}
                           </span>
-                        </button>
+                        </StyledButton>
                       ))}
                       {searchResults.length === 0 && (
                         <div className="px-4 py-3 text-xs text-gray-500 text-center">
