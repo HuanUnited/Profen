@@ -1,14 +1,49 @@
-import { useQuery } from "@tanstack/react-query";
-import { GetSubjects } from "../../wailsjs/go/app/App";
+// frontend/src/components/views/RootView.tsx
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { GetSubjects, DeleteNode } from "../../wailsjs/go/app/App";
 import { useNavigate } from "react-router-dom";
 import { Book } from "lucide-react";
+import { toast } from "sonner";
+import ConfirmDialog from "../smart/ConfirmDialogue";
+import ContextMenu from "../smart/ContextMenu";
 
 export default function RootView() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; subjectId: string; title: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+
   const { data: subjects, isLoading } = useQuery({
     queryKey: ["subjects"],
     queryFn: GetSubjects,
   });
+
+  const handleContextMenu = (e: React.MouseEvent, subjectId: string, title: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, subjectId, title });
+  };
+
+  const handleDeleteSubject = async () => {
+    if (!deleteTarget) return;
+
+    const loadingToast = toast.loading('Deleting subject...');
+    try {
+      await DeleteNode(deleteTarget.id);
+      await queryClient.refetchQueries({
+        queryKey: ["subjects"],
+        type: 'active',
+        exact: true
+      });
+      toast.dismiss(loadingToast);
+      toast.success(`"${deleteTarget.title}" deleted successfully`);
+      setDeleteTarget(null);
+    } catch (e: any) {
+      toast.dismiss(loadingToast);
+      console.error("Delete failed:", e);
+      toast.error(e?.message || "Failed to delete subject");
+    }
+  };
 
   if (isLoading) return null;
 
@@ -19,7 +54,7 @@ export default function RootView() {
           Knowledge Base
         </h1>
         <p className="text-gray-500 font-mono text-sm">
-          Select a subject to begin.
+          Select a subject to begin. Right-click for options.
         </p>
       </header>
 
@@ -28,6 +63,7 @@ export default function RootView() {
           <div
             key={sub.id}
             onClick={() => navigate(`/library?nodeId=${sub.id}`)}
+            onContextMenu={(e) => handleContextMenu(e, String(sub.id), sub.title || "Untitled Subject")}
             className="group relative bg-[#1a1b26] border border-[#2f334d] p-6 rounded-lg cursor-pointer hover:border-[#89b4fa] transition-all hover:shadow-lg hover:-translate-y-1"
           >
             {/* Context Icon */}
@@ -57,6 +93,24 @@ export default function RootView() {
           </div>
         )}
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onDelete={() => setDeleteTarget({ id: contextMenu.subjectId, title: contextMenu.title })}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteSubject}
+        title="Delete Subject"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? All topics, problems, theories, and practice data will be permanently deleted.`}
+      />
     </div>
   );
 }

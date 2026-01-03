@@ -4,12 +4,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { GetChildren, DeleteNode } from "../../wailsjs/go/app/App";
 import { useNavigate } from "react-router-dom";
 import { ent } from "../../wailsjs/go/models";
-import { Folder, Book, X, Pencil } from "lucide-react";
+import { Folder, Book, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import StyledSearch from "../atomic/Search";
 import NodeModal from "../smart/NodeModal";
 import StyledButton from "../atomic/StylizedButton";
 import ConfirmDialog from "../smart/ConfirmDialogue";
+import ContextMenu from "../smart/ContextMenu";
 
 export default function SubjectView({ node }: { node: ent.Node }) {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function SubjectView({ node }: { node: ent.Node }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; topicId: string; title: string } | null>(null);
 
   const { data: children } = useQuery({
     queryKey: ["children", String(node.id)],
@@ -27,6 +29,12 @@ export default function SubjectView({ node }: { node: ent.Node }) {
   const filteredTopics = topics.filter(t =>
     t.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleContextMenu = (e: React.MouseEvent, topicId: string, title: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY, topicId, title });
+  };
 
   const handleDeleteTopic = async () => {
     if (!deleteTarget) return;
@@ -87,31 +95,15 @@ export default function SubjectView({ node }: { node: ent.Node }) {
           {filteredTopics.map(topic => (
             <div
               key={topic.id?.toString()}
-              className="group relative p-5 bg-[#1a1b26] border border-[#2f334d] rounded-xl hover:border-[#89b4fa] transition-all hover:-translate-y-1 hover:shadow-lg"
+              onClick={() => navigate(`/library?nodeId=${topic.id}`)}
+              onContextMenu={(e) => handleContextMenu(e, String(topic.id), topic.title || "Untitled")}
+              className="group p-5 bg-[#1a1b26] border border-[#2f334d] rounded-xl hover:border-[#89b4fa] cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg"
             >
-              {/* Delete Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteTarget({ id: String(topic.id), title: topic.title || "Untitled" });
-                }}
-                className="absolute top-2 right-2 p-1.5 bg-red-900/20 border border-red-900/30 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-900/40 z-10"
-                title="Delete topic"
-              >
-                <X size={12} className="text-red-400" />
-              </button>
-
-              {/* Clickable Card Content */}
-              <div
-                onClick={() => navigate(`/library?nodeId=${topic.id}`)}
-                className="cursor-pointer"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <Folder className="text-[#89b4fa] opacity-50 group-hover:opacity-100 transition-opacity" size={20} />
-                </div>
-                <h3 className="font-bold text-gray-200 group-hover:text-white truncate">{topic.title}</h3>
-                <p className="text-xs text-gray-500 mt-1 font-mono">0/0 Mastered</p>
+              <div className="flex justify-between items-start mb-2">
+                <Folder className="text-[#89b4fa] opacity-50 group-hover:opacity-100 transition-opacity" size={20} />
               </div>
+              <h3 className="font-bold text-gray-200 group-hover:text-white truncate">{topic.title}</h3>
+              <p className="text-xs text-gray-500 mt-1 font-mono">0/0 Mastered</p>
             </div>
           ))}
 
@@ -129,6 +121,16 @@ export default function SubjectView({ node }: { node: ent.Node }) {
         mode="edit"
         initialNode={node}
       />
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onDelete={() => setDeleteTarget({ id: contextMenu.topicId, title: contextMenu.title })}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={!!deleteTarget}
