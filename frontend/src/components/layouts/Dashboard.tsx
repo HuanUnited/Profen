@@ -4,11 +4,9 @@ import { Clock, Activity, Book, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import StyledButton from '../atomic/StylizedButton';
-import useToast from '../../utils/hooks/useToast'; // Import toast
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const toast = useToast();
 
   const { data: dueNodes, isLoading } = useQuery({
     queryKey: ['dueCards'],
@@ -20,19 +18,13 @@ export default function Dashboard() {
     try {
       // 1. Fetch queue IDs
       const queueIds = await GetDueCardsQueue(20);
-      
-      if (!queueIds || queueIds.length === 0) {
-        toast.info("No cards due! Great job.");
-        return;
-      }
 
       // 2. Navigate to Study Session
       // returnTo ensures we come back to dashboard after finishing
       navigate(`/study?queue=${queueIds.join(",")}&returnTo=/`);
-      
+
     } catch (err) {
       console.error("Failed to start session:", err);
-      toast.error("Could not start session");
     }
   };
 
@@ -106,8 +98,8 @@ export default function Dashboard() {
                 key={JSON.stringify(node.id)}
                 className="group flex items-center justify-between p-4 bg-[#1a1b26] border-l-2 border-transparent hover:border-(--tui-primary) hover:bg-[#20212e] transition-all cursor-pointer shadow-sm"
                 onClick={() => {
-                   // Clicking a single card starts a session with just that card
-                   navigate(`/study?queue=${node.id}&returnTo=/`);
+                  // Clicking a single card starts a session with just that card
+                  navigate(`/study?queue=${node.id}&returnTo=/`);
                 }}
               >
                 <div className="flex-1">

@@ -1,4 +1,4 @@
-import { ArrowLeft, X } from 'lucide-react';
+import { XIcon } from 'lucide-react';
 import StyledButton from '../atomic/StylizedButton';
 
 interface StudyHeaderProps {
@@ -18,7 +18,7 @@ export default function StudyHeader({ progress, total, onExit }: StudyHeaderProp
           SESSION_ACTIVE
         </span>
         <div className="h-2 w-32 bg-[#2f334d] rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-(--tui-primary) transition-all duration-500 ease-out"
             style={{ width: `${percentage}%` }}
           />
@@ -35,12 +35,12 @@ export default function StudyHeader({ progress, total, onExit }: StudyHeaderProp
 
       {/* Right: Exit */}
       <div className="flex-1 flex justify-end">
-        <StyledButton 
-          variant="ghost" 
-          size="sm" 
+        <StyledButton
+          variant="ghost"
+          size="sm"
           onClick={onExit}
           className="text-gray-400 hover:text-white"
-          icon={<X size={18} />}
+          icon={<XIcon size={18} />}
         >
           EXIT
         </StyledButton>

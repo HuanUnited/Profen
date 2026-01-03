@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { GetNodeWithCard, ReviewCard, GetSchedulingInfo } from '../../wailsjs/go/app/App';
-import useToast from './useToast';
+import { useToast } from './useToast';
 
 export default function useStudySession() {
   const [searchParams] = useSearchParams();
@@ -35,8 +35,8 @@ export default function useStudySession() {
 
   // 2. Fetch Current Node
   const currentNodeId = queue[currentIndex];
-  
-  const { data: node, isLoading, refetch } = useQuery({
+
+  const { data: node, isLoading } = useQuery({
     queryKey: ['studyNode', currentNodeId],
     queryFn: () => GetNodeWithCard(currentNodeId),
     enabled: !!currentNodeId,
@@ -57,11 +57,11 @@ export default function useStudySession() {
     if (!node) return;
 
     const duration = Date.now() - startTime;
-    
+
     try {
       // Optimistic Update: Move to next immediately
       await ReviewCard(node.id, grade, duration, "");
-      
+
       // Update stats
       setSessionStats(prev => ({
         reviewed: prev.reviewed + 1,

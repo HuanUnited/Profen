@@ -38,6 +38,14 @@ export function GetDueCards(arg1) {
   return window['go']['app']['App']['GetDueCards'](arg1);
 }
 
+export function GetDueCardsFromNode(arg1, arg2) {
+  return window['go']['app']['App']['GetDueCardsFromNode'](arg1, arg2);
+}
+
+export function GetDueCardsQueue(arg1) {
+  return window['go']['app']['App']['GetDueCardsQueue'](arg1);
+}
+
 export function GetNode(arg1) {
   return window['go']['app']['App']['GetNode'](arg1);
 }
@@ -52,6 +60,10 @@ export function GetNodeBreadcrumbs(arg1) {
 
 export function GetNodeMastery(arg1) {
   return window['go']['app']['App']['GetNodeMastery'](arg1);
+}
+
+export function GetNodeWithCard(arg1) {
+  return window['go']['app']['App']['GetNodeWithCard'](arg1);
 }
 
 export function GetRelatedNodes(arg1, arg2, arg3) {

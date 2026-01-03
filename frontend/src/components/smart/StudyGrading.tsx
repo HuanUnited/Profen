@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import StyledButton from '../atomic/StylizedButton';
 
 interface StudyGradingProps {
   onGrade: (grade: number) => void;
@@ -8,7 +7,7 @@ interface StudyGradingProps {
 }
 
 export default function StudyGrading({ onGrade, intervals, disabled }: StudyGradingProps) {
-  
+
   // Keyboard shortcuts (1-4)
   useEffect(() => {
     if (disabled) return;

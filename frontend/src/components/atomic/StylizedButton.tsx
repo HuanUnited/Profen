@@ -2,7 +2,7 @@
 import { ReactNode } from 'react';
 import clsx from 'clsx';
 
-interface StyledButtonProps {
+interface StylizedButtonProps {
   children?: ReactNode;
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
@@ -13,7 +13,7 @@ interface StyledButtonProps {
   disabled?: boolean;
 }
 
-export default function StyledButton({
+export default function StylizedButton({
   children,
   variant = 'primary',
   size = 'md',
@@ -22,7 +22,7 @@ export default function StyledButton({
   onClick,
   className = "",
   disabled = false
-}: StyledButtonProps) {
+}: StylizedButtonProps) {
 
   const sizeClasses = {
     sm: 'h-8 px-3 text-xs',

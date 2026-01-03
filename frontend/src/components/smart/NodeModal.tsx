@@ -24,10 +24,31 @@ import ConfirmDialog from "../smart/ConfirmDialogue";
 import { toast } from 'sonner';
 
 // Enhanced Modal Wrapper
+// Replace the ModalWrapper styled component in NodeModal.tsx:
+
 const ModalWrapper = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 50;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Panel background pattern */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(to right, rgba(47, 51, 77, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(47, 51, 77, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    opacity: 0.3;
+  }
 
   .modal-container {
     background: linear-gradient(#16161e, #16161e) padding-box,
@@ -43,7 +64,6 @@ const ModalWrapper = styled.div`
     100% { background-position: 0% 50%; }
   }
 
-  /* Custom Scrollbar for Right Panel */
   .custom-scrollbar::-webkit-scrollbar { width: 6px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .custom-scrollbar::-webkit-scrollbar-thumb { background: #2f334d; border-radius: 3px; }
@@ -51,6 +71,7 @@ const ModalWrapper = styled.div`
   
   .no-scrollbar::-webkit-scrollbar { display: none; }
 `;
+
 
 // Define Debounce Hook
 function useDebounce<T>(value: T, delay: number): T {

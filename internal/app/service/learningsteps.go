@@ -30,10 +30,10 @@ type LearningStepsConfig struct {
 // DefaultLearningConfig returns sensible defaults
 func DefaultLearningConfig() LearningStepsConfig {
 	return LearningStepsConfig{
-		LearningSteps:      []int{10, 30}, // 10 minutes, 30 minutes
-		RelearningSteps:    []int{10},     // 10 minutes
-		GraduatingInterval: 1,             // 1 day after graduating
-		EasyInterval:       4,             // 4 days if marked easy while learning
+		LearningSteps:      []int{5, 10}, // 10 minutes, 30 minutes
+		RelearningSteps:    []int{30},    // 10 minutes
+		GraduatingInterval: 1,            // 1 day after graduating
+		EasyInterval:       4,            // 4 days if marked easy while learning
 	}
 }
 

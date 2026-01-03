@@ -1,185 +1,209 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { GetAttemptHistory, GetNodeWithCard } from '../../wailsjs/go/app/App'; // Use GetNodeWithCard for fresh state
-import StylizedButton from '../atomic/StylizedButton';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { GetAttemptHistory, GetNodeAssociations, DeleteNode, GetNodeWithCard } from '../../wailsjs/go/app/App';
+import { ent } from '../../wailsjs/go/models';
+import { Pencil, BookOpen, Hash, Activity } from 'lucide-react';
 import MarkdownRenderer from '../atomic/MarkdownRenderer';
+import NodeModal from '../smart/NodeModal';
+import AttemptModal from '../smart/AttemptModal';
+import StyledButton from '../atomic/StylizedButton';
+import ContextMenu from '../smart/ContextMenu';
+import ConnectionsPanel from './panels/ConnectionsPanel';
+import ResizablePanel from './panels/ResizablePanel';
 import AttemptDetailModal from '../smart/AttemptDetailModal';
-import { Clock, CheckCircle, RotateCcw, AlertTriangle, ArrowRight, BookOpen } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigationHistory } from '../../utils/hooks/useNavigationHistory';
+import { toast } from 'sonner';
 
-interface ProblemViewProps {
-  node: any;
-}
+export default function ProblemView({ node }: { node: ent.Node }) {
+  useNavigationHistory(); // Restore Alt+Left/Right
 
-export default function ProblemView({ node }: ProblemViewProps) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isAttemptOpen, setIsAttemptOpen] = useState(false);
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
-  const navigate = useNavigate(); // Hook for navigation
 
-  // Fetch Attempt History
+  // Fetch Attempts
   const { data: attempts, isLoading: isAttemptsLoading } = useQuery({
-    queryKey: ['attempts', node.id],
-    queryFn: () => GetAttemptHistory(node.id),
+    queryKey: ['attempts', String(node.id)],
+    queryFn: () => GetAttemptHistory(String(node.id)),
   });
 
-  // Fetch FSRS State (Next Review, Stability, etc.)
-  const { data: cardState } = useQuery({
-    queryKey: ['cardState', node.id],
-    queryFn: () => GetNodeWithCard(node.id), // New function!
+  // Fetch Associations
+  const { data: associations } = useQuery({
+    queryKey: ["associations", String(node.id)],
+    queryFn: () => GetNodeAssociations(String(node.id)),
   });
+
+  // Fetch FSRS State
+  const { data: cardState } = useQuery({
+    queryKey: ['cardState', String(node.id)],
+    queryFn: () => GetNodeWithCard(String(node.id)),
+  });
+
+  const handleBackgroundContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleDelete = async () => {
+    try {
+      await DeleteNode(String(node.id));
+      await queryClient.invalidateQueries({ queryKey: ["children", String(node.parent_id)] });
+      toast.success("Problem deleted");
+      navigate(-1);
+    } catch (e) {
+      toast.error("Failed to delete problem");
+    }
+  };
+
+  const connectionGroups = [
+    {
+      key: "theories",
+      label: "Related Theories",
+      color: "text-purple-400",
+      icon: <BookOpen size={12} />,
+      filter: (a: ent.NodeAssociation, nodeId: string) =>
+        a.rel_type === "tests" && String(a.source_id) === nodeId
+    },
+    {
+      key: "similar",
+      label: "Similar Problems",
+      color: "text-blue-400",
+      icon: <Hash size={12} />,
+      filter: (a: ent.NodeAssociation, nodeId: string) =>
+        a.rel_type === "similar_to" && (String(a.source_id) === nodeId || String(a.target_id) === nodeId)
+    }
+  ];
 
   // Calculate stats
   const totalAttempts = attempts?.length || 0;
-  const bestStreak = 0; // Placeholder until backend supports streaks
-  const lastAttempt = attempts?.[0]; // Assuming sorted by date DESC
-
-  // Handle Review Click - Navigate to Study Session
-  const handleReview = () => {
-    // Navigate to /study with a queue of just this one node
-    // returnTo ensures we come back to the library view of this node
-    const returnPath = `/library?nodeId=${node.id}`;
-    navigate(`/study?queue=${node.id}&returnTo=${encodeURIComponent(returnPath)}`);
-  };
 
   return (
-    <div className="h-full flex flex-col p-8 space-y-8 overflow-y-auto custom-scrollbar">
-      
-      {/* 1. Header & Quick Actions */}
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded border border-blue-900 text-blue-400 bg-blue-900/10">
-              {node.type}
-            </span>
-            <span className="text-xs text-gray-500 font-mono">
-              UUID::{String(node.id).split('-')[0]}
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-100">{node.title}</h1>
-        </div>
+    <div className="h-full flex flex-col p-8 animate-in fade-in focus:outline-none" onContextMenu={handleBackgroundContextMenu}>
 
-        <div className="flex gap-3">
-          {/* Review Button */}
-          <StyledButton 
-            onClick={handleReview}
-            variant="primary"
-            icon={<BookOpen size={18} />}
-            className="animate-in fade-in zoom-in duration-300"
-          >
-            REVIEW NOW
+      <div className="mb-6 flex justify-between items-start border-b border-[#2f334d] pb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="bg-blue-900/20 text-blue-400 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border border-blue-900/30">
+              Problem
+            </span>
+            <span className="text-xs text-gray-600 font-mono">ID:{String(node.id).split("-")[0]}</span>
+          </div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">{node.title}</h1>
+        </div>
+        <div className="flex gap-2">
+          <StyledButton variant="primary" size="sm" icon={<Activity size={14} />} onClick={() => setIsAttemptOpen(true)}>
+            Attempt
+          </StyledButton>
+          <StyledButton variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => setIsEditOpen(true)}>
+            Edit
           </StyledButton>
         </div>
       </div>
 
-      {/* 2. Problem Statement */}
-      <div className="prose prose-invert prose-sm max-w-none bg-[#1a1b26] p-6 rounded-lg border border-[#2f334d] shadow-sm">
-        <MarkdownRenderer content={node.body} />
-      </div>
+      <div className="flex-1 flex gap-6 overflow-hidden">
+        {/* Left: Problem Statement */}
+        <div className="flex-1 border border-[#2f334d] rounded-xl bg-[#16161e] overflow-hidden flex flex-col shadow-inner">
+          <div className="bg-[#1a1b26] border-b border-[#2f334d] px-4 py-2 flex items-center gap-2">
+            <BookOpen size={14} className="text-gray-500" />
+            <span className="text-xs font-bold text-gray-400 uppercase">Problem Statement</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-8 custom-markdown">
+            <MarkdownRenderer content={node.body || "_No content provided._"} />
+          </div>
+        </div>
 
-      {/* 3. FSRS Status (New Section) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[#1a1b26] p-4 rounded-lg border border-[#2f334d] flex flex-col items-center justify-center">
-            <span className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">State</span>
-            <span className="text-xl font-mono text-blue-400">
-                {cardState?.card_state === 2 ? 'Review' : 
-                 cardState?.card_state === 1 ? 'Learning' : 
-                 cardState?.card_state === 3 ? 'Relearning' : 'New'}
-            </span>
-        </div>
-        <div className="bg-[#1a1b26] p-4 rounded-lg border border-[#2f334d] flex flex-col items-center justify-center">
-            <span className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Stability</span>
-            <span className="text-xl font-mono text-emerald-400">
-                {cardState?.stability ? Number(cardState.stability).toFixed(2) : '-'}
-            </span>
-        </div>
-        <div className="bg-[#1a1b26] p-4 rounded-lg border border-[#2f334d] flex flex-col items-center justify-center">
-            <span className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Difficulty</span>
-            <span className="text-xl font-mono text-orange-400">
-                 {cardState?.difficulty ? Number(cardState.difficulty).toFixed(2) : '-'}
-            </span>
-        </div>
-        <div className="bg-[#1a1b26] p-4 rounded-lg border border-[#2f334d] flex flex-col items-center justify-center">
-            <span className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Next Review</span>
-            <span className="text-sm font-mono text-gray-300">
-                {cardState?.next_review ? new Date(cardState.next_review).toLocaleDateString() : 'Now'}
-            </span>
-        </div>
-      </div>
+        {/* Right Sidebar */}
+        <div className="w-80 flex flex-col gap-6 overflow-hidden">
 
-      {/* 4. Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#1a1b26] p-4 rounded-lg border border-[#2f334d] flex items-center gap-4">
-          <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400"><RotateCcw size={20} /></div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase font-bold">Total Attempts</p>
-            <p className="text-2xl font-bold">{totalAttempts}</p>
+          {/* FSRS Status */}
+          <div className="bg-[#1a1b26] border border-[#2f334d] rounded-lg p-4 space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">FSRS Status</h3>
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase">State</p>
+                <p className="text-sm font-mono text-blue-400">
+                  {cardState?.card_state === 2 ? 'Review' :
+                    cardState?.card_state === 1 ? 'Learning' :
+                      cardState?.card_state === 3 ? 'Relearning' : 'New'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase">Stability</p>
+                <p className="text-sm font-mono text-emerald-400">
+                  {cardState?.stability ? Number(cardState.stability).toFixed(2) : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase">Difficulty</p>
+                <p className="text-sm font-mono text-orange-400">
+                  {cardState?.difficulty ? Number(cardState.difficulty).toFixed(2) : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase">Next</p>
+                <p className="text-xs font-mono text-gray-300">
+                  {cardState?.next_review ? new Date(cardState.next_review).toLocaleDateString() : 'Now'}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="bg-[#1a1b26] p-4 rounded-lg border border-[#2f334d] flex items-center gap-4">
-          <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400"><CheckCircle size={20} /></div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase font-bold">Best Streak</p>
-            <p className="text-2xl font-bold">{bestStreak}</p>
-          </div>
-        </div>
-        <div className="bg-[#1a1b26] p-4 rounded-lg border border-[#2f334d] flex items-center gap-4">
-          <div className="p-3 bg-orange-500/10 rounded-lg text-orange-400"><AlertTriangle size={20} /></div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase font-bold">Last Rating</p>
-            <p className="text-2xl font-bold">{lastAttempt?.rating || '-'}</p>
-          </div>
-        </div>
-      </div>
 
-      {/* 5. Attempt History */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          History Log
-        </h3>
-        
-        {isAttemptsLoading ? (
-           <div className="text-gray-500 font-mono text-sm animate-pulse">Loading history...</div>
-        ) : (!attempts || attempts.length === 0) ? (
-          <div className="p-8 text-center border-2 border-dashed border-[#2f334d] rounded-lg text-gray-500">
-            No attempts recorded yet. Start reviewing!
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {attempts.map((attempt: any) => (
-              <div 
-                key={attempt.id}
-                onClick={() => setSelectedAttemptId(attempt.id)}
-                className="flex items-center justify-between p-4 bg-[#1a1b26] border border-[#2f334d] rounded hover:border-blue-500/50 cursor-pointer transition-colors group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`
-                    w-2 h-2 rounded-full 
-                    ${attempt.rating >= 3 ? 'bg-emerald-500' : attempt.rating === 2 ? 'bg-orange-500' : 'bg-red-500'}
-                  `} />
-                  <div>
-                    <p className="text-sm font-bold text-gray-300">
-                      Rated: {['Again', 'Hard', 'Good', 'Easy'][attempt.rating - 1]}
-                    </p>
-                    <p className="text-xs text-gray-500 font-mono">
+          {/* Attempt History */}
+          <div className="flex-1 bg-[#1a1b26] border border-[#2f334d] rounded-lg overflow-hidden flex flex-col">
+            <div className="px-4 py-2 border-b border-[#2f334d] flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-400 uppercase">History</span>
+              <span className="text-xs text-gray-500 font-mono">{totalAttempts} attempts</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+              {isAttemptsLoading ? (
+                <div className="text-gray-500 text-xs animate-pulse">Loading...</div>
+              ) : (!attempts || attempts.length === 0) ? (
+                <div className="text-gray-600 text-xs text-center py-8">No attempts yet</div>
+              ) : (
+                attempts.map((attempt: any) => (
+                  <div
+                    key={attempt.id}
+                    onClick={() => setSelectedAttemptId(attempt.id)}
+                    className="p-2 bg-[#16161e] border border-[#2f334d] rounded hover:border-blue-500/50 cursor-pointer transition-colors group text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${attempt.rating >= 3 ? 'bg-emerald-500' : attempt.rating === 2 ? 'bg-orange-500' : 'bg-red-500'
+                          }`} />
+                        <span className="text-gray-300">
+                          {['Again', 'Hard', 'Good', 'Easy'][attempt.rating - 1]}
+                        </span>
+                      </div>
+                      <span className="text-gray-500 font-mono">{Math.round(attempt.duration_ms / 1000)}s</span>
+                    </div>
+                    <p className="text-[10px] text-gray-600 mt-1">
                       {new Date(attempt.created_at).toLocaleString()}
                     </p>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-4 text-gray-500">
-                  <span className="text-xs font-mono">{Math.round(attempt.duration_ms / 1000)}s</span>
-                  <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </div>
-            ))}
+                ))
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Connections */}
+          <ResizablePanel defaultHeight={300} minHeight={200} maxHeight={600}>
+            <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
+          </ResizablePanel>
+        </div>
       </div>
 
-      {/* Detail Modal */}
-      <AttemptDetailModal 
-        attemptId={selectedAttemptId} 
-        onClose={() => setSelectedAttemptId(null)} 
-      />
+      {contextMenu && (
+        <ContextMenu x={contextMenu.x} y={contextMenu.y} onEdit={() => setIsEditOpen(true)} onDelete={handleDelete} onClose={() => setContextMenu(null)} />
+      )}
+
+      <NodeModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} mode="edit" initialNode={node} />
+      <AttemptModal isOpen={isAttemptOpen} onClose={() => setIsAttemptOpen(false)} node={node} />
+      <AttemptDetailModal attemptId={String(selectedAttemptId)} onClose={() => setSelectedAttemptId(null)} isOpen={false} />
     </div>
   );
 }

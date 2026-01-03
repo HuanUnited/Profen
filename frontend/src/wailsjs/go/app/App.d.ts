@@ -21,6 +21,10 @@ export function GetDashboardStats():Promise<data.DashboardStats>;
 
 export function GetDueCards(arg1:number):Promise<Array<ent.Node>>;
 
+export function GetDueCardsFromNode(arg1:string,arg2:number):Promise<Array<string>>;
+
+export function GetDueCardsQueue(arg1:number):Promise<Array<string>>;
+
 export function GetNode(arg1:string):Promise<ent.Node>;
 
 export function GetNodeAssociations(arg1:string):Promise<Array<ent.NodeAssociation>>;
@@ -28,6 +32,8 @@ export function GetNodeAssociations(arg1:string):Promise<Array<ent.NodeAssociati
 export function GetNodeBreadcrumbs(arg1:string):Promise<Array<ent.Node>>;
 
 export function GetNodeMastery(arg1:string):Promise<Record<string, any>>;
+
+export function GetNodeWithCard(arg1:string):Promise<Record<string, any>>;
 
 export function GetRelatedNodes(arg1:string,arg2:string,arg3:string):Promise<Array<ent.Node>>;
 

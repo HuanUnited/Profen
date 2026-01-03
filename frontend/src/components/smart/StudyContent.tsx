@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import MarkdownRenderer from '../atomic/MarkdownRenderer';
 import StylizedButton from '../atomic/StylizedButton';
 import { Eye, EyeOff } from 'lucide-react';
@@ -24,7 +24,7 @@ export default function StudyContent({ node, onShowAnswer, isAnswerShown }: Stud
 
   return (
     <div className="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto w-full space-y-8 custom-scrollbar">
-      
+
       {/* Question / Front Side */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -35,14 +35,14 @@ export default function StudyContent({ node, onShowAnswer, isAnswerShown }: Stud
             UUID::{String(node.id).split('-')[0]}
           </span>
         </div>
-        
+
         <h2 className="text-2xl font-bold text-gray-100">
           {node.title}
         </h2>
 
         {/* For PROBLEMS: The body is the question */}
         <div className="prose prose-invert prose-sm max-w-none border-l-2 border-blue-500/50 pl-4 py-2">
-           <MarkdownRenderer content={node.body} />
+          <MarkdownRenderer content={node.body} />
         </div>
       </div>
 
@@ -55,7 +55,7 @@ export default function StudyContent({ node, onShowAnswer, isAnswerShown }: Stud
               Solution / Details
             </span>
           </div>
-          
+
           <div className="bg-[#1a1b26] p-6 rounded-lg border border-[#2f334d]">
             {/* 
               TODO: In the future, we might separate Question vs Answer fields.
@@ -65,19 +65,19 @@ export default function StudyContent({ node, onShowAnswer, isAnswerShown }: Stud
             <p className="text-gray-400 italic mb-2">
               (Self-Verification Mode: Compare your mental answer with the content below)
             </p>
-             <MarkdownRenderer content={node.body} />
+            <MarkdownRenderer content={node.body} />
           </div>
         </div>
       ) : (
         <div className="flex justify-center pt-12">
-          <StyledButton 
+          <StylizedButton
             onClick={onShowAnswer}
             className="px-12 py-4 text-lg font-bold animate-pulse"
             variant="primary"
             icon={<EyeOff size={20} />}
           >
             SHOW ANSWER (SPACE)
-          </StyledButton>
+          </StylizedButton>
         </div>
       )}
     </div>
