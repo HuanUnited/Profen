@@ -285,7 +285,8 @@ func (s *FSRSService) calculateNewDifficulty(difficulty float64, grade FSRSGrade
 }
 
 func (s *FSRSService) calculateInterval(stability, desiredRetention float64) float64 {
-	return stability / desiredRetention * (math.Pow(desiredRetention, 1.0/stability) - 1)
+	// ✅ Correct FSRS formula: I = S × 9 × (1/R - 1)
+	return stability * 9.0 * (1.0/desiredRetention - 1.0)
 }
 
 func (s *FSRSService) formatInterval(days int) string {

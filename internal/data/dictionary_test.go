@@ -24,7 +24,8 @@ func TestDictionary_DualCreation(t *testing.T) {
 	client.Node.Use(hooks.FsrsCardInitHook(client))
 
 	ctx := context.Background()
-	// Clean in correct order
+	// Clean in correct order (foreign key dependencies)
+	client.Attempt.Delete().ExecX(ctx) // ✅ FIRST
 	client.NodeAssociation.Delete().ExecX(ctx)
 	client.FsrsCard.Delete().ExecX(ctx)
 	client.NodeClosure.Delete().ExecX(ctx)
