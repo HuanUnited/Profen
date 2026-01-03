@@ -20,12 +20,12 @@ func setupTestDB(t *testing.T) (*ent.Client, context.Context) {
 	dsn := "host=localhost port=5173 user=postgres password=054625565 dbname=profen_test sslmode=disable"
 	client := enttest.Open(t, "postgres", dsn)
 	ctx := context.Background()
-
-	// Cleanup
-	client.Attempt.Delete().Exec(ctx)
-	client.FsrsCard.Delete().Exec(ctx)
-	client.NodeClosure.Delete().Exec(ctx)
-	client.Node.Delete().Exec(ctx)
+	// Clean in correct order (foreign key dependencies)
+	client.Attempt.Delete().ExecX(ctx) // ✅ DELETE ATTEMPTS FIRST
+	client.NodeAssociation.Delete().ExecX(ctx)
+	client.FsrsCard.Delete().ExecX(ctx)
+	client.NodeClosure.Delete().ExecX(ctx)
+	client.Node.Delete().ExecX(ctx)
 
 	return client, ctx
 }
