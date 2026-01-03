@@ -6,10 +6,14 @@ import { useNavigate } from "react-router-dom";
 import { ent } from "../../wailsjs/go/models";
 import { Folder, Book } from "lucide-react";
 import StyledSearch from "../atomic/Search";
+import { Pencil } from "lucide-react";
+import NodeModal from "../smart/NodeModal";
+import StyledButton from "../atomic/StylizedButton";
 
 export default function SubjectView({ node }: { node: ent.Node }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const { data: children } = useQuery({
     queryKey: ["children", String(node.id)],
@@ -25,9 +29,19 @@ export default function SubjectView({ node }: { node: ent.Node }) {
     <div className="h-full flex flex-col p-8 animate-in fade-in">
       {/* Subject Header */}
       <div className="mb-8 border-b border-[#2f334d] pb-6">
-        <div className="flex items-center gap-2 mb-3 text-xs text-gray-500 font-mono uppercase tracking-wider">
-          <Book size={12} />
-          <span>Root Subject</span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-xs text-gray-500 font-mono uppercase tracking-wider">
+            <Book size={12} />
+            <span>Root Subject</span>
+          </div>
+          <StyledButton
+            variant="ghost"
+            size="sm"
+            icon={<Pencil size={14} />}
+            onClick={() => setIsEditOpen(true)}
+          >
+            Edit
+          </StyledButton>
         </div>
         <h1 className="text-4xl font-bold text-white tracking-tight mb-4">{node.title}</h1>
 
@@ -68,6 +82,12 @@ export default function SubjectView({ node }: { node: ent.Node }) {
           )}
         </div>
       </div>
+      <NodeModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        mode="edit"
+        initialNode={node}
+      />
     </div>
   );
 }

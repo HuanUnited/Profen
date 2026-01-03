@@ -251,3 +251,11 @@ func (a *App) GetNodeMastery(nodeIDStr string) (map[string]interface{}, error) {
 		"is_mastered":    mastered,
 	}, nil
 }
+
+func (a *App) DeleteNode(nodeIDStr string) error {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid node UUID: %w", err)
+	}
+	return a.nodeRepo.DeleteNode(a.ctx, id)
+}

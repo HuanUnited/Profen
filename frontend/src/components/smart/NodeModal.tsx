@@ -12,12 +12,15 @@ import {
   UpdateNode,
   CreateAssociation,
   SearchNodes,
+  GetNodeAssociations,
+  DeleteNode,
 } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
 import NodeEditor from "./NodeEditor";
 import StyledFormContainer from "../atomic/StyledFormContainer";
 import StyledFormGroup from "../atomic/StylizedFormGroup";
 import StyledButton from "../atomic/StylizedButton";
+import ConfirmDialog from "../smart/ConfirmDialogue";
 
 // Enhanced Modal Wrapper
 const ModalWrapper = styled.div`
@@ -93,6 +96,7 @@ export default function NodeModal({
   const [targetSearchQuery, setTargetSearchQuery] = useState("");
   const [selectedTargetNode, setSelectedTargetNode] = useState<{ id: string; title: string } | null>(null);
   const [body, setBody] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const debouncedSearch = useDebounce(targetSearchQuery, 500);
 
@@ -100,13 +104,35 @@ export default function NodeModal({
   const { data: topics } = useQuery({ queryKey: ["children", selectedSubjectId], queryFn: () => GetChildren(selectedSubjectId), enabled: !!selectedSubjectId });
   const { data: searchResults } = useQuery({ queryKey: ["search", debouncedSearch], queryFn: () => SearchNodes(debouncedSearch), enabled: debouncedSearch.length > 2 });
 
+  const { data: existingAssociations } = useQuery({
+    queryKey: ["associations", String(initialNode?.id)],
+    queryFn: () => GetNodeAssociations(String(initialNode?.id)),
+    enabled: isOpen && mode === "edit" && !!initialNode,
+  });
+
   useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && initialNode) {
         setTitle(initialNode.title || "");
         setBody(initialNode.body || "");
         setSelectedType(initialNode.type || "subject");
-        setRelations([]);
+
+        // Load existing relations with proper type safety
+        if (existingAssociations && existingAssociations.length > 0) {
+          const existingRels: PendingRelation[] = existingAssociations
+            .filter((assoc: ent.NodeAssociation) =>
+              assoc.rel_type !== undefined &&
+              assoc.edges?.target?.title !== undefined
+            )
+            .map((assoc: ent.NodeAssociation) => ({
+              targetId: String(assoc.target_id),
+              relType: assoc.rel_type!,
+              targetTitle: assoc.edges?.target?.title || "Unknown",
+            }));
+          setRelations(existingRels);
+        } else {
+          setRelations([]);
+        }
       } else {
         setTitle("");
         setBody("");
@@ -116,7 +142,7 @@ export default function NodeModal({
         setSelectedTopicId("");
       }
     }
-  }, [isOpen, mode, initialNode]);
+  }, [isOpen, mode, initialNode, existingAssociations]);
 
   const handleAddRelation = () => {
     if (!selectedTargetNode) return;
@@ -127,6 +153,32 @@ export default function NodeModal({
 
   const handleRemoveRelation = (index: number) => {
     setRelations((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDelete = async () => {
+    if (!initialNode) return;
+    try {
+      await DeleteNode(String(initialNode.id));
+
+      // Refresh parent view
+      const parentToUpdate = String(initialNode.parent_id);
+      if (parentToUpdate && parentToUpdate !== "00000000-0000-0000-0000-000000000000") {
+        await queryClient.refetchQueries({
+          queryKey: ["children", parentToUpdate],
+          type: 'active'
+        });
+      }
+      await queryClient.refetchQueries({
+        queryKey: ["subjects"],
+        type: 'active',
+        exact: true
+      });
+
+      onClose();
+    } catch (e) {
+      console.error("Delete failed:", e);
+      alert("Failed to delete node. It may have dependencies.");
+    }
   };
 
   const handleSubmit = async () => {
@@ -146,8 +198,14 @@ export default function NodeModal({
         nodeId = String(updated.id);
       }
 
-      if (relations.length > 0) {
-        await Promise.all(relations.map((rel) => CreateAssociation(nodeId, rel.targetId, rel.relType)));
+      // Only create NEW relations (not existing ones)
+      const existingRelIds = new Set(
+        existingAssociations?.map((a: ent.NodeAssociation) => String(a.target_id)) || []
+      );
+      const newRelations = relations.filter(rel => !existingRelIds.has(rel.targetId));
+
+      if (newRelations.length > 0) {
+        await Promise.all(newRelations.map((rel) => CreateAssociation(nodeId, rel.targetId, rel.relType)));
       }
 
       // Refresh Logic
@@ -160,12 +218,18 @@ export default function NodeModal({
       } else if (mode === "edit" && initialNode) {
         parentToUpdate = String(initialNode.parent_id);
       }
-      if (parentToUpdate) await queryClient.refetchQueries({ queryKey: ["children", String(parentToUpdate)], type: 'active' });
-      if (initialNode) await queryClient.refetchQueries({ queryKey: ["node", String(initialNode.id)], type: 'active' });
+      if (parentToUpdate && parentToUpdate !== "00000000-0000-0000-0000-000000000000") {
+        await queryClient.refetchQueries({ queryKey: ["children", String(parentToUpdate)], type: 'active' });
+      }
+      if (initialNode) {
+        await queryClient.refetchQueries({ queryKey: ["node", String(initialNode.id)], type: 'active' });
+        await queryClient.refetchQueries({ queryKey: ["associations", String(initialNode.id)], type: 'active' });
+      }
 
       onClose();
     } catch (e) {
       console.error(e);
+      alert("Failed to save node. Check console for details.");
     }
   };
 
@@ -192,7 +256,7 @@ export default function NodeModal({
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* LEFT PANEL: Shrunk to w-64 */}
+          {/* LEFT PANEL */}
           <div className="w-64 bg-[#1a1b26]/80 border-r border-[#2f334d]/50 p-6 space-y-8 overflow-y-auto no-scrollbar shrink-0">
             {/* Type Selector */}
             <div className="space-y-3">
@@ -204,16 +268,15 @@ export default function NodeModal({
                   <StyledButton
                     key={t}
                     variant={selectedType === t ? "primary" : "secondary"}
-                    size="sm"  // CHANGED: lg -> sm
+                    size="sm"
                     className={clsx(
-                      "justify-center w-full! text-center py-2!",  // CHANGED: justify-start -> justify-center, removed px-4
+                      "justify-center w-full text-center py-2",
                       mode === "edit" && selectedType !== t && "opacity-50 cursor-not-allowed"
                     )}
                     onClick={() => mode === "create" && setSelectedType(t)}
                     disabled={mode === "edit"}
                   >
                     {t.toUpperCase()}
-                    {/* REMOVED: Check icon */}
                   </StyledButton>
                 ))}
               </div>
@@ -233,7 +296,11 @@ export default function NodeModal({
                     className="w-full bg-[#1a1b26] border border-gray-700 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-[#e81cff]"
                   >
                     <option value="">-- Select --</option>
-                    {subjects?.map((s: any) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                    {subjects?.map((s: ent.Node) => (
+                      <option key={String(s.id)} value={String(s.id)}>
+                        {s.title || "Untitled"}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 {(selectedType === "problem" || selectedType === "theory") && (
@@ -246,7 +313,11 @@ export default function NodeModal({
                       disabled={!selectedSubjectId}
                     >
                       <option value="">-- Select --</option>
-                      {topics?.map((t: any) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                      {topics?.map((t: ent.Node) => (
+                        <option key={String(t.id)} value={String(t.id)}>
+                          {t.title || "Untitled"}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 )}
@@ -254,11 +325,11 @@ export default function NodeModal({
             )}
           </div>
 
-          {/* RIGHT PANEL: Scrollable & Expanded */}
+          {/* RIGHT PANEL */}
           <div className="flex-1 bg-transparent overflow-y-auto custom-scrollbar flex flex-col p-8">
             <StyledFormContainer className="w-full max-w-4xl mx-auto space-y-8">
 
-              {/* Expanded Title */}
+              {/* Title */}
               <StyledFormGroup>
                 <label className="text-gray-400 font-bold uppercase tracking-wider text-xs">Node Title</label>
                 <input
@@ -266,14 +337,14 @@ export default function NodeModal({
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter node title..."
                   autoFocus
-                  className="text-4xl! font-bold! py-4! px-0! bg-transparent! border-b-2! border-gray-800 focus:border-[#40c9ff]! rounded-none!"
+                  className="text-4xl font-bold py-4 px-0 bg-transparent border-b-2 border-gray-800 focus:border-[#40c9ff] rounded-none"
                 />
               </StyledFormGroup>
 
-              {/* Expanded Content Area */}
+              {/* Content */}
               <StyledFormGroup className="flex-1 flex flex-col">
                 <label className="text-gray-400 font-bold uppercase tracking-wider text-xs mb-2">Content Body</label>
-                <div className="min-h-125 border border-[#414141] rounded-lg overflow-hidden bg-[#1a1b26]/80 flex flex-col">
+                <div className="min-h-100 border border-[#414141] rounded-lg overflow-hidden bg-[#1a1b26]/80 flex flex-col">
                   <NodeEditor
                     initialContent={body}
                     onChange={setBody}
@@ -282,7 +353,7 @@ export default function NodeModal({
                 </div>
               </StyledFormGroup>
 
-              {/* Relations Section - Now part of the scroll flow */}
+              {/* Relations Section */}
               <div className="pt-8 border-t border-[#2f334d]/50 space-y-4">
                 <div className="flex items-center gap-2 text-sm font-bold text-gray-300 uppercase tracking-wider">
                   <LinkIcon size={16} /> Relationships
@@ -294,7 +365,7 @@ export default function NodeModal({
                     <select
                       value={newRelType}
                       onChange={(e) => setNewRelType(e.target.value)}
-                      className="w-full h-10 bg-[#1a1b26] border border-gray-700 rounded-lg px-3 text-sm text-white outline-none focus:border-[#e81cff]"  // ADDED: h-10
+                      className="w-full h-10 bg-[#1a1b26] border border-gray-700 rounded-lg px-3 text-sm text-white outline-none focus:border-[#e81cff]"
                     >
                       {REL_TYPES.map((r) => <option key={r} value={r}>{r.replace(/_/g, ' ').toUpperCase()}</option>)}
                     </select>
@@ -309,17 +380,17 @@ export default function NodeModal({
                         onChange={(e) => { setTargetSearchQuery(e.target.value); setSelectedTargetNode(null); }}
                         placeholder="Search for nodes to link..."
                         className={clsx(
-                          "w-full h-10 bg-[#1a1b26] border rounded-lg pl-10 pr-3 text-sm text-white outline-none focus:border-[#89b4fa]",  // ADDED: h-10
+                          "w-full h-10 bg-[#1a1b26] border rounded-lg pl-10 pr-3 text-sm text-white outline-none focus:border-[#89b4fa]",
                           selectedTargetNode ? "border-[#89b4fa]" : "border-gray-700"
                         )}
                       />
                     </div>
                     {targetSearchQuery.length > 2 && !selectedTargetNode && searchResults && (
                       <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1b26]/95 border border-[#2f334d] rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50 custom-scrollbar">
-                        {searchResults.map((res: any) => (
+                        {searchResults.map((res: ent.Node) => (
                           <button
-                            key={res.id}
-                            onClick={() => { setSelectedTargetNode({ id: String(res.id), title: res.title }); setTargetSearchQuery(res.title); }}
+                            key={String(res.id)}
+                            onClick={() => { setSelectedTargetNode({ id: String(res.id), title: String(res.title) }); setTargetSearchQuery(String(res.title)); }}
                             className="w-full text-left px-4 py-3 hover:bg-[#89b4fa]/10 text-sm border-b border-gray-800/50 flex justify-between items-center"
                           >
                             <span className="truncate">{res.title}</span>
@@ -330,13 +401,12 @@ export default function NodeModal({
                     )}
                   </div>
                   <div>
-                    {/* REMOVED: mt-6, CHANGED: size md -> sm to match height */}
                     <StyledButton
                       variant="primary"
                       size="sm"
                       onClick={handleAddRelation}
                       disabled={!selectedTargetNode}
-                      className="h-10!"  // ADDED: Fixed height to match inputs
+                      className="h-10"
                     >
                       LINK
                     </StyledButton>
@@ -367,13 +437,43 @@ export default function NodeModal({
 
         {/* Footer */}
         <div className="h-20 border-t border-[#2f334d]/50 bg-[#16161e]/90 backdrop-blur-sm flex items-center justify-between px-8 shrink-0">
-          <span className="text-gray-500 text-xs font-mono">{mode === "create" ? "Drill down to select parent." : `Editing ${String(initialNode?.id || '').split("-")[0]}`}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-gray-500 text-xs font-mono">
+              {mode === "create" ? "Drill down to select parent." : `Editing ${String(initialNode?.id || '').split("-")[0]}`}
+            </span>
+            {mode === "edit" && (
+              <StyledButton
+                variant="ghost"
+                size="sm"
+                icon={<Trash2 size={14} />}
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-red-400 hover:text-red-300"
+              >
+                Delete Node
+              </StyledButton>
+            )}
+          </div>
           <div className="flex gap-3">
             <StyledButton variant="ghost" size="md" onClick={onClose}>CANCEL</StyledButton>
-            <StyledButton variant="primary" size="md" onClick={handleSubmit} disabled={!title.trim()}>{mode === "create" ? "CREATE NODE" : "SAVE CHANGES"}</StyledButton>
+            <StyledButton
+              variant="primary"
+              size="md"
+              onClick={handleSubmit}
+              disabled={mode === "create" ? !title.trim() : false}
+            >
+              {mode === "create" ? "CREATE NODE" : "SAVE CHANGES"}
+            </StyledButton>
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Delete Node"
+        message={`Are you sure you want to delete "${title}"? This action cannot be undone and may affect related nodes.`}
+      />
     </ModalWrapper>
   );
 

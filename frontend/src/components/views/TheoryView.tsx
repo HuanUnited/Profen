@@ -1,6 +1,7 @@
 // frontend/src/components/views/TheoryView.tsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { GetAttemptHistory, GetNodeAssociations } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
 import { Pencil, BookOpen, ChevronDown, ChevronRight, Hash, History, Link, ArrowRight } from "lucide-react";
@@ -9,6 +10,7 @@ import NodeModal from "../smart/NodeModal";
 import StyledButton from "../atomic/StylizedButton";
 
 export default function TheoryView({ node }: { node: ent.Node }) {
+  const navigate = useNavigate();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [showLinkedProblems, setShowLinkedProblems] = useState(true);
   const [showRelatedTheories, setShowRelatedTheories] = useState(true);
@@ -26,17 +28,21 @@ export default function TheoryView({ node }: { node: ent.Node }) {
   // Filter by relationship type with proper typing
   const linkedProblems = associations
     ?.filter((a: ent.NodeAssociation) =>
+      a.rel_type === "tests" && String(a.target_id) === String(node.id)
+    )
+    .map((a: ent.NodeAssociation) => a.edges?.source)
+    .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
+
+  const relatedTheories = associations
+    ?.filter((a: ent.NodeAssociation) =>
       a.rel_type === "similar_to" && String(a.source_id) === String(node.id)
     )
     .map((a: ent.NodeAssociation) => a.edges?.target)
     .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
 
-  const relatedTheories = associations
-    ?.filter((a: ent.NodeAssociation) =>
-      a.rel_type === "tests" && String(a.source_id) === String(node.id)
-    )
-    .map((a: ent.NodeAssociation) => a.edges?.target)
-    .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
+  const handleNavigateToNode = (nodeId: string) => {
+    navigate(`/library?nodeId=${nodeId}`);
+  };
 
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in slide-in-from-bottom-2">
@@ -94,7 +100,7 @@ export default function TheoryView({ node }: { node: ent.Node }) {
               <History size={14} /> Practice History
             </h3>
             <div className="space-y-2">
-              {attempts?.slice(0, 5).map((attempt: any, idx: number) => (
+              {attempts?.slice(0, 5).map((attempt: ent.Attempt, idx: number) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-2 rounded hover:bg-[#2f334d]/50 transition-colors">
                   <div className="flex flex-col">
                     <span className="font-mono text-xs text-gray-500">
@@ -105,7 +111,7 @@ export default function TheoryView({ node }: { node: ent.Node }) {
                     </span>
                   </div>
                   <span className="font-mono text-gray-600 text-xs">
-                    {Math.round(attempt.duration_ms / 1000)}s
+                    {Math.round(attempt.duration_ms ?? 0 / 1000)}s
                   </span>
                 </div>
               ))}
@@ -135,12 +141,21 @@ export default function TheoryView({ node }: { node: ent.Node }) {
               </button>
               {showLinkedProblems && (
                 <div className="px-4 pb-3 space-y-1">
-                  {linkedProblems.map((p: any) => (
-                    <div key={p.id} className="text-xs text-gray-400 hover:text-white cursor-pointer py-1">
-                      {p.title}
+                  {linkedProblems.map((p: ent.Node) => (
+                    <div
+                      key={p.id?.toString()}
+                      onClick={() => handleNavigateToNode(String(p.id))}
+                      className="flex items-center justify-between text-xs text-gray-400 hover:text-white hover:bg-[#2f334d]/50 cursor-pointer py-2 px-2 rounded transition-colors group"
+                    >
+                      <span className="truncate flex-1 group-hover:text-blue-300">{p.title}</span>
+                      <span className="text-[10px] font-mono text-gray-600 ml-2 shrink-0">
+                        {String(p.id).split("-")[0]}
+                      </span>
                     </div>
                   ))}
-                  {linkedProblems.length === 0 && <div className="text-[10px] text-gray-600 italic py-1">None linked</div>}
+                  {linkedProblems.length === 0 && (
+                    <div className="text-[10px] text-gray-600 italic py-1">None linked</div>
+                  )}
                 </div>
               )}
             </div>
@@ -158,12 +173,21 @@ export default function TheoryView({ node }: { node: ent.Node }) {
               </button>
               {showRelatedTheories && (
                 <div className="px-4 pb-3 space-y-1">
-                  {relatedTheories.map((t: any) => (
-                    <div key={t.id} className="text-xs text-gray-400 hover:text-white cursor-pointer py-1">
-                      {t.title}
+                  {relatedTheories.map((t: ent.Node) => (
+                    <div
+                      key={t.id?.toString()}
+                      onClick={() => handleNavigateToNode(String(t.id))}
+                      className="flex items-center justify-between text-xs text-gray-400 hover:text-white hover:bg-[#2f334d]/50 cursor-pointer py-2 px-2 rounded transition-colors group"
+                    >
+                      <span className="truncate flex-1 group-hover:text-purple-300">{t.title}</span>
+                      <span className="text-[10px] font-mono text-gray-600 ml-2 shrink-0">
+                        {String(t.id).split("-")[0]}
+                      </span>
                     </div>
                   ))}
-                  {relatedTheories.length === 0 && <div className="text-[10px] text-gray-600 italic py-1">None linked</div>}
+                  {relatedTheories.length === 0 && (
+                    <div className="text-[10px] text-gray-600 italic py-1">None linked</div>
+                  )}
                 </div>
               )}
             </div>
