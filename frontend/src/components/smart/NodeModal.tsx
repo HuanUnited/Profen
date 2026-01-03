@@ -245,18 +245,50 @@ export default function NodeModal({
         nodeId = String(updated.id);
       }
 
-      // Only create NEW relations (not existing ones)
+      // **FIX: Only create NEW relations that don't already exist**
       const existingRelIds = new Set(
-        existingAssociations?.map((a: ent.NodeAssociation) => String(a.target_id)) || []
+        existingAssociations?.map((a: ent.NodeAssociation) =>
+          `${a.target_id}-${a.rel_type}` // Composite key
+        ) || []
       );
-      const newRelations = relations.filter(rel => !existingRelIds.has(rel.targetId));
+
+      const newRelations = relations.filter(rel =>
+        !existingRelIds.has(`${rel.targetId}-${rel.relType}`)
+      );
 
       if (newRelations.length > 0) {
-        await Promise.all(newRelations.map((rel) => CreateAssociation(nodeId, rel.targetId, rel.relType)));
+        const results = await Promise.allSettled(
+          newRelations.map((rel) => CreateAssociation(nodeId, rel.targetId, rel.relType))
+        );
+
+        // Log failures but don't block
+        results.forEach((result, idx) => {
+          if (result.status === 'rejected') {
+            console.warn(`Failed to create relation ${newRelations[idx].relType}:`, result.reason);
+          }
+        });
       }
 
-      // Refresh Logic
+      // **FIX: Invalidate all affected queries including reverse relationships**
       await queryClient.refetchQueries({ queryKey: ["subjects"], type: 'active', exact: true });
+
+      // Invalidate current node and its associations
+      await queryClient.invalidateQueries({ queryKey: ["node", nodeId] });
+      await queryClient.invalidateQueries({ queryKey: ["associations", nodeId] });
+
+      // **FIX: Invalidate associations for ALL linked nodes (bidirectional update)**
+      const allLinkedNodeIds = new Set([
+        ...relations.map(r => r.targetId),
+        ...(existingAssociations?.map((a: ent.NodeAssociation) => String(a.target_id)) || [])
+      ]);
+
+      await Promise.all(
+        Array.from(allLinkedNodeIds).map(linkedId =>
+          queryClient.invalidateQueries({ queryKey: ["associations", linkedId] })
+        )
+      );
+
+      // Invalidate parent's children list
       let parentToUpdate = "";
       if (mode === "create") {
         if (selectedType === "topic") parentToUpdate = selectedSubjectId;
@@ -265,12 +297,9 @@ export default function NodeModal({
       } else if (mode === "edit" && initialNode) {
         parentToUpdate = String(initialNode.parent_id);
       }
+
       if (parentToUpdate && parentToUpdate !== "00000000-0000-0000-0000-000000000000") {
         await queryClient.refetchQueries({ queryKey: ["children", String(parentToUpdate)], type: 'active' });
-      }
-      if (initialNode) {
-        await queryClient.refetchQueries({ queryKey: ["node", String(initialNode.id)], type: 'active' });
-        await queryClient.refetchQueries({ queryKey: ["associations", String(initialNode.id)], type: 'active' });
       }
 
       toast.dismiss(loadingToast);

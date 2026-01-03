@@ -1,62 +1,69 @@
 // frontend/src/components/views/TheoryView.tsx
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { GetAttemptHistory, GetNodeAssociations } from "../../wailsjs/go/app/App";
+import { GetNodeAssociations, DeleteNode } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
-import { Pencil, BookOpen, ChevronDown, ChevronRight, Hash, History, Link, ArrowRight } from "lucide-react";
+import { Pencil, BookOpen, Hash } from "lucide-react";
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
 import NodeModal from "../smart/NodeModal";
 import StyledButton from "../atomic/StylizedButton";
 import ContextMenu from "../smart/ContextMenu";
+import ConnectionsPanel from "./panels/ConnectionsPanel";
 import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
-
+import { toast } from 'sonner';
 
 export default function TheoryView({ node }: { node: ent.Node }) {
   useNavigationHistory();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [showLinkedProblems, setShowLinkedProblems] = useState(true);
-  const [showRelatedTheories, setShowRelatedTheories] = useState(true);
-
-  const { data: attempts } = useQuery({
-    queryKey: ["attempts", String(node.id)],
-    queryFn: () => GetAttemptHistory(String(node.id)),
-  });
 
   const { data: associations } = useQuery({
     queryKey: ["associations", String(node.id)],
     queryFn: () => GetNodeAssociations(String(node.id)),
   });
 
-  // Filter by relationship type with proper typing
-  const linkedProblems = associations
-    ?.filter((a: ent.NodeAssociation) =>
-      a.rel_type === "tests" && String(a.target_id) === String(node.id)
-    )
-    .map((a: ent.NodeAssociation) => a.edges?.source)
-    .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
-
-  const relatedTheories = associations
-    ?.filter((a: ent.NodeAssociation) =>
-      a.rel_type === "similar_to" && String(a.source_id) === String(node.id)
-    )
-    .map((a: ent.NodeAssociation) => a.edges?.target)
-    .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
-
-  const handleNavigateToNode = (nodeId: string) => {
-    navigate(`/library?nodeId=${nodeId}`);
-  };
-
   const handleBackgroundContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY });
   };
 
+  const handleDelete = async () => {
+    try {
+      await DeleteNode(String(node.id));
+      await queryClient.invalidateQueries({ queryKey: ["children", String(node.parent_id)] });
+      toast.success("Theory deleted");
+      navigate(-1);
+    } catch (e) {
+      toast.error("Failed to delete theory");
+    }
+  };
+
+  const connectionGroups = [
+    {
+      key: "problems",
+      label: "Practice Problems",
+      color: "text-blue-400",
+      icon: <Hash size={12} />,
+      filter: (a: ent.NodeAssociation, nodeId: string) =>
+        a.rel_type === "tests" && String(a.target_id) === nodeId
+    },
+    {
+      key: "theories",
+      label: "Related Theories",
+      color: "text-purple-400",
+      icon: <BookOpen size={12} />,
+      filter: (a: ent.NodeAssociation, nodeId: string) =>
+        (a.rel_type === "variant_of" || a.rel_type === "similar_to") &&
+        (String(a.source_id) === nodeId || String(a.target_id) === nodeId)
+    }
+  ];
+
   return (
-    <div className="h-full flex flex-col p-6 animate-in fade-in slide-in-from-bottom-2" onContextMenu={handleBackgroundContextMenu}>
-      {/* Header */}
+    <div className="h-full flex flex-col p-8 animate-in fade-in focus:outline-none" onContextMenu={handleBackgroundContextMenu}>
       <div className="mb-6 flex justify-between items-start border-b border-[#2f334d] pb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -67,31 +74,13 @@ export default function TheoryView({ node }: { node: ent.Node }) {
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">{node.title}</h1>
         </div>
-
-        <div className="flex items-center gap-3">
-          <StyledButton
-            variant="ghost"
-            size="sm"
-            icon={<Pencil size={14} />}
-            onClick={() => setIsEditOpen(true)}
-          >
-            Edit
-          </StyledButton>
-
-          <StyledButton
-            variant="primary"
-            size="md"
-            icon={<ArrowRight size={16} />}
-            onClick={() => { /* Open Attempt Modal */ }}
-          >
-            Study Concept
-          </StyledButton>
-        </div>
+        <StyledButton variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => setIsEditOpen(true)}>
+          Edit
+        </StyledButton>
       </div>
 
       <div className="flex-1 flex gap-6 overflow-hidden">
-        {/* Main Content */}
-        <div className="flex-1 border border-[#2f334d] rounded-xl bg-[#16161e] overflow-hidden flex flex-col">
+        <div className="flex-1 border border-[#2f334d] rounded-xl bg-[#16161e] overflow-hidden flex flex-col shadow-inner">
           <div className="bg-[#1a1b26] border-b border-[#2f334d] px-4 py-2 flex items-center gap-2">
             <BookOpen size={14} className="text-gray-500" />
             <span className="text-xs font-bold text-gray-400 uppercase">Concept Material</span>
@@ -101,125 +90,16 @@ export default function TheoryView({ node }: { node: ent.Node }) {
           </div>
         </div>
 
-        {/* Sidebar */}
         <div className="w-80 space-y-4 overflow-y-auto pr-2">
-
-          {/* Attempt History */}
-          <div className="bg-[#1a1b26] border border-[#2f334d] rounded-xl p-4">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <History size={14} /> Practice History
-            </h3>
-            <div className="space-y-2">
-              {attempts?.slice(0, 5).map((attempt: ent.Attempt, idx: number) => (
-                <div key={idx} className="flex items-center justify-between text-sm p-2 rounded hover:bg-[#2f334d]/50 transition-colors">
-                  <div className="flex flex-col">
-                    <span className="font-mono text-xs text-gray-500">
-                      {new Date(attempt.created_at).toLocaleDateString()}
-                    </span>
-                    <span className={`text-xs font-bold ${attempt.is_correct ? 'text-green-400' : 'text-red-400'}`}>
-                      {attempt.is_correct ? 'Pass' : 'Fail'}
-                    </span>
-                  </div>
-                  <span className="font-mono text-gray-600 text-xs">
-                    {Math.round(attempt.duration_ms ?? 0 / 1000)}s
-                  </span>
-                </div>
-              ))}
-              {(!attempts || attempts.length === 0) && (
-                <div className="text-center py-4 text-gray-600 text-xs">No practice history.</div>
-              )}
-            </div>
-          </div>
-
-          {/* Relations Container */}
-          <div className="bg-[#1a1b26] border border-[#2f334d] rounded-xl overflow-hidden">
-            <div className="border-b border-[#2f334d] px-4 py-2.5 flex items-center gap-2">
-              <Link size={12} className="text-gray-500" />
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Connections</span>
-            </div>
-
-            {/* Linked Problems */}
-            <div className="border-b border-[#2f334d]/50">
-              <button
-                onClick={() => setShowLinkedProblems(!showLinkedProblems)}
-                className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-[#2f334d]/30 transition-colors text-left"
-              >
-                <span className="text-xs font-medium text-blue-400 flex items-center gap-2">
-                  <Hash size={12} /> Linked Problems
-                </span>
-                {showLinkedProblems ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
-              {showLinkedProblems && (
-                <div className="px-4 pb-3 space-y-1">
-                  {linkedProblems.map((p: ent.Node) => (
-                    <div
-                      key={p.id?.toString()}
-                      onClick={() => handleNavigateToNode(String(p.id))}
-                      className="flex items-center justify-between text-xs text-gray-400 hover:text-white hover:bg-[#2f334d]/50 cursor-pointer py-2 px-2 rounded transition-colors group"
-                    >
-                      <span className="truncate flex-1 group-hover:text-blue-300">{p.title}</span>
-                      <span className="text-[10px] font-mono text-gray-600 ml-2 shrink-0">
-                        {String(p.id).split("-")[0]}
-                      </span>
-                    </div>
-                  ))}
-                  {linkedProblems.length === 0 && (
-                    <div className="text-[10px] text-gray-600 italic py-1">None linked</div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Related Theories */}
-            <div>
-              <button
-                onClick={() => setShowRelatedTheories(!showRelatedTheories)}
-                className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-[#2f334d]/30 transition-colors text-left"
-              >
-                <span className="text-xs font-medium text-purple-400 flex items-center gap-2">
-                  <BookOpen size={12} /> Related Theories
-                </span>
-                {showRelatedTheories ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
-              {showRelatedTheories && (
-                <div className="px-4 pb-3 space-y-1">
-                  {relatedTheories.map((t: ent.Node) => (
-                    <div
-                      key={t.id?.toString()}
-                      onClick={() => handleNavigateToNode(String(t.id))}
-                      className="flex items-center justify-between text-xs text-gray-400 hover:text-white hover:bg-[#2f334d]/50 cursor-pointer py-2 px-2 rounded transition-colors group"
-                    >
-                      <span className="truncate flex-1 group-hover:text-purple-300">{t.title}</span>
-                      <span className="text-[10px] font-mono text-gray-600 ml-2 shrink-0">
-                        {String(t.id).split("-")[0]}
-                      </span>
-                    </div>
-                  ))}
-                  {relatedTheories.length === 0 && (
-                    <div className="text-[10px] text-gray-600 italic py-1">None linked</div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+          <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
         </div>
       </div>
 
       {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onEdit={() => setIsEditOpen(true)}
-          onClose={() => setContextMenu(null)}
-        />
+        <ContextMenu x={contextMenu.x} y={contextMenu.y} onEdit={() => setIsEditOpen(true)} onDelete={handleDelete} onClose={() => setContextMenu(null)} />
       )}
 
-      <NodeModal
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        mode="edit"
-        initialNode={node}
-      />
+      <NodeModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} mode="edit" initialNode={node} />
     </div>
   );
 }
