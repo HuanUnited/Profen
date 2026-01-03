@@ -120,41 +120,37 @@ func (a *App) ReviewCard(nodeIDStr string, grade int, durationMs int, userAnswer
 	}
 
 	// Parse userAnswer as JSON to extract metadata
-	var attemptData map[string]interface{}
-	if err := json.Unmarshal([]byte(userAnswer), &attemptData); err != nil {
-		// If not JSON, treat as plain text
-		attemptData = map[string]interface{}{
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(userAnswer), &metadata); err != nil {
+		// If not JSON, create simple metadata
+		metadata = map[string]interface{}{
 			"text": userAnswer,
 		}
 	}
 
-	// Process review through coordinator
-	_, err = a.reviewCoordinator.ProcessReview(a.ctx, nodeID, grade)
-	if err != nil {
-		return err
-	}
-
-	// Create attempt record
-	text, _ := attemptData["text"].(string)
-	errorLog, _ := attemptData["errorLog"].(string)
-	difficultyRating, _ := attemptData["userDifficultyRating"].(float64)
-
-	// Get the card to record attempt
+	// Get the card BEFORE processing review (to capture pre-review state)
 	card, err := a.reviewCoordinator.GetCard(a.ctx, nodeID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get card: %w", err)
 	}
 
-	// Record the attempt
+	// Process review through coordinator (this updates the card)
+	_, err = a.reviewCoordinator.ProcessReview(a.ctx, nodeID, grade)
+	if err != nil {
+		return fmt.Errorf("failed to process review: %w", err)
+	}
+
+	// Extract text from metadata for user_answer field
+	text, _ := metadata["text"].(string)
+
+	// Create attempt record (with card snapshot BEFORE the review)
 	return a.attemptRepo.CreateAttempt(
 		a.ctx,
-		card.ID,
+		card,
 		grade,
 		int64(durationMs),
 		text,
-		errorLog,
-		int(difficultyRating),
-		attemptData,
+		metadata,
 	)
 }
 

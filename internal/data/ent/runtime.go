@@ -98,6 +98,18 @@ func init() {
 	fsrscardDescDue := fsrscardFields[9].Descriptor()
 	// fsrscard.DefaultDue holds the default value on creation for the due field.
 	fsrscard.DefaultDue = fsrscardDescDue.Default.(func() time.Time)
+	// fsrscardDescCardState is the schema descriptor for card_state field.
+	fsrscardDescCardState := fsrscardFields[11].Descriptor()
+	// fsrscard.DefaultCardState holds the default value on creation for the card_state field.
+	fsrscard.DefaultCardState = fsrscardDescCardState.Default.(string)
+	// fsrscardDescCurrentStep is the schema descriptor for current_step field.
+	fsrscardDescCurrentStep := fsrscardFields[12].Descriptor()
+	// fsrscard.DefaultCurrentStep holds the default value on creation for the current_step field.
+	fsrscard.DefaultCurrentStep = fsrscardDescCurrentStep.Default.(int)
+	// fsrscardDescNextReview is the schema descriptor for next_review field.
+	fsrscardDescNextReview := fsrscardFields[13].Descriptor()
+	// fsrscard.DefaultNextReview holds the default value on creation for the next_review field.
+	fsrscard.DefaultNextReview = fsrscardDescNextReview.Default.(func() time.Time)
 	// fsrscardDescID is the schema descriptor for id field.
 	fsrscardDescID := fsrscardFields[0].Descriptor()
 	// fsrscard.DefaultID holds the default value on creation for the id field.

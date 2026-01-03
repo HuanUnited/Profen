@@ -155,6 +155,48 @@ func (_c *FsrsCardCreate) SetNodeID(v uuid.UUID) *FsrsCardCreate {
 	return _c
 }
 
+// SetCardState sets the "card_state" field.
+func (_c *FsrsCardCreate) SetCardState(v string) *FsrsCardCreate {
+	_c.mutation.SetCardState(v)
+	return _c
+}
+
+// SetNillableCardState sets the "card_state" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableCardState(v *string) *FsrsCardCreate {
+	if v != nil {
+		_c.SetCardState(*v)
+	}
+	return _c
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (_c *FsrsCardCreate) SetCurrentStep(v int) *FsrsCardCreate {
+	_c.mutation.SetCurrentStep(v)
+	return _c
+}
+
+// SetNillableCurrentStep sets the "current_step" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableCurrentStep(v *int) *FsrsCardCreate {
+	if v != nil {
+		_c.SetCurrentStep(*v)
+	}
+	return _c
+}
+
+// SetNextReview sets the "next_review" field.
+func (_c *FsrsCardCreate) SetNextReview(v time.Time) *FsrsCardCreate {
+	_c.mutation.SetNextReview(v)
+	return _c
+}
+
+// SetNillableNextReview sets the "next_review" field if the given value is not nil.
+func (_c *FsrsCardCreate) SetNillableNextReview(v *time.Time) *FsrsCardCreate {
+	if v != nil {
+		_c.SetNextReview(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *FsrsCardCreate) SetID(v uuid.UUID) *FsrsCardCreate {
 	_c.mutation.SetID(v)
@@ -256,6 +298,18 @@ func (_c *FsrsCardCreate) defaults() {
 		v := fsrscard.DefaultDue()
 		_c.mutation.SetDue(v)
 	}
+	if _, ok := _c.mutation.CardState(); !ok {
+		v := fsrscard.DefaultCardState
+		_c.mutation.SetCardState(v)
+	}
+	if _, ok := _c.mutation.CurrentStep(); !ok {
+		v := fsrscard.DefaultCurrentStep
+		_c.mutation.SetCurrentStep(v)
+	}
+	if _, ok := _c.mutation.NextReview(); !ok {
+		v := fsrscard.DefaultNextReview()
+		_c.mutation.SetNextReview(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := fsrscard.DefaultID()
 		_c.mutation.SetID(v)
@@ -295,6 +349,15 @@ func (_c *FsrsCardCreate) check() error {
 	}
 	if _, ok := _c.mutation.NodeID(); !ok {
 		return &ValidationError{Name: "node_id", err: errors.New(`ent: missing required field "FsrsCard.node_id"`)}
+	}
+	if _, ok := _c.mutation.CardState(); !ok {
+		return &ValidationError{Name: "card_state", err: errors.New(`ent: missing required field "FsrsCard.card_state"`)}
+	}
+	if _, ok := _c.mutation.CurrentStep(); !ok {
+		return &ValidationError{Name: "current_step", err: errors.New(`ent: missing required field "FsrsCard.current_step"`)}
+	}
+	if _, ok := _c.mutation.NextReview(); !ok {
+		return &ValidationError{Name: "next_review", err: errors.New(`ent: missing required field "FsrsCard.next_review"`)}
 	}
 	if len(_c.mutation.NodeIDs()) == 0 {
 		return &ValidationError{Name: "node", err: errors.New(`ent: missing required edge "FsrsCard.node"`)}
@@ -369,6 +432,18 @@ func (_c *FsrsCardCreate) createSpec() (*FsrsCard, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Due(); ok {
 		_spec.SetField(fsrscard.FieldDue, field.TypeTime, value)
 		_node.Due = value
+	}
+	if value, ok := _c.mutation.CardState(); ok {
+		_spec.SetField(fsrscard.FieldCardState, field.TypeString, value)
+		_node.CardState = value
+	}
+	if value, ok := _c.mutation.CurrentStep(); ok {
+		_spec.SetField(fsrscard.FieldCurrentStep, field.TypeInt, value)
+		_node.CurrentStep = value
+	}
+	if value, ok := _c.mutation.NextReview(); ok {
+		_spec.SetField(fsrscard.FieldNextReview, field.TypeTime, value)
+		_node.NextReview = value
 	}
 	if nodes := _c.mutation.NodeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

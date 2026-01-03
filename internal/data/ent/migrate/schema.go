@@ -94,6 +94,9 @@ var (
 		{Name: "state", Type: field.TypeEnum, Enums: []string{"new", "learning", "review", "relearning"}, Default: "new"},
 		{Name: "last_review", Type: field.TypeTime, Nullable: true},
 		{Name: "due", Type: field.TypeTime},
+		{Name: "card_state", Type: field.TypeString, Default: "new"},
+		{Name: "current_step", Type: field.TypeInt, Default: 0},
+		{Name: "next_review", Type: field.TypeTime},
 		{Name: "node_id", Type: field.TypeUUID, Unique: true},
 	}
 	// FsrsCardsTable holds the schema information for the "fsrs_cards" table.
@@ -104,7 +107,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "fsrs_cards_nodes_fsrs_card",
-				Columns:    []*schema.Column{FsrsCardsColumns[10]},
+				Columns:    []*schema.Column{FsrsCardsColumns[13]},
 				RefColumns: []*schema.Column{NodesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

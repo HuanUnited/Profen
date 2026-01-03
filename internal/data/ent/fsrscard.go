@@ -39,6 +39,12 @@ type FsrsCard struct {
 	Due time.Time `json:"due,omitempty"`
 	// NodeID holds the value of the "node_id" field.
 	NodeID uuid.UUID `json:"node_id,omitempty"`
+	// Current state: new, learning, review, relearning
+	CardState string `json:"card_state,omitempty"`
+	// Current index in learning/relearning steps
+	CurrentStep int `json:"current_step,omitempty"`
+	// When this card should be reviewed next
+	NextReview time.Time `json:"next_review,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the FsrsCardQuery when eager-loading is set.
 	Edges        FsrsCardEdges `json:"edges"`
@@ -83,11 +89,11 @@ func (*FsrsCard) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case fsrscard.FieldStability, fsrscard.FieldDifficulty:
 			values[i] = new(sql.NullFloat64)
-		case fsrscard.FieldElapsedDays, fsrscard.FieldScheduledDays, fsrscard.FieldReps, fsrscard.FieldLapses:
+		case fsrscard.FieldElapsedDays, fsrscard.FieldScheduledDays, fsrscard.FieldReps, fsrscard.FieldLapses, fsrscard.FieldCurrentStep:
 			values[i] = new(sql.NullInt64)
-		case fsrscard.FieldState:
+		case fsrscard.FieldState, fsrscard.FieldCardState:
 			values[i] = new(sql.NullString)
-		case fsrscard.FieldLastReview, fsrscard.FieldDue:
+		case fsrscard.FieldLastReview, fsrscard.FieldDue, fsrscard.FieldNextReview:
 			values[i] = new(sql.NullTime)
 		case fsrscard.FieldID, fsrscard.FieldNodeID:
 			values[i] = new(uuid.UUID)
@@ -173,6 +179,24 @@ func (_m *FsrsCard) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				_m.NodeID = *value
 			}
+		case fsrscard.FieldCardState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field card_state", values[i])
+			} else if value.Valid {
+				_m.CardState = value.String
+			}
+		case fsrscard.FieldCurrentStep:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field current_step", values[i])
+			} else if value.Valid {
+				_m.CurrentStep = int(value.Int64)
+			}
+		case fsrscard.FieldNextReview:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field next_review", values[i])
+			} else if value.Valid {
+				_m.NextReview = value.Time
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -250,6 +274,15 @@ func (_m *FsrsCard) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("node_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.NodeID))
+	builder.WriteString(", ")
+	builder.WriteString("card_state=")
+	builder.WriteString(_m.CardState)
+	builder.WriteString(", ")
+	builder.WriteString("current_step=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CurrentStep))
+	builder.WriteString(", ")
+	builder.WriteString("next_review=")
+	builder.WriteString(_m.NextReview.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

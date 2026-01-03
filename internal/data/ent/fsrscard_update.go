@@ -220,6 +220,55 @@ func (_u *FsrsCardUpdate) SetNillableNodeID(v *uuid.UUID) *FsrsCardUpdate {
 	return _u
 }
 
+// SetCardState sets the "card_state" field.
+func (_u *FsrsCardUpdate) SetCardState(v string) *FsrsCardUpdate {
+	_u.mutation.SetCardState(v)
+	return _u
+}
+
+// SetNillableCardState sets the "card_state" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableCardState(v *string) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetCardState(*v)
+	}
+	return _u
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (_u *FsrsCardUpdate) SetCurrentStep(v int) *FsrsCardUpdate {
+	_u.mutation.ResetCurrentStep()
+	_u.mutation.SetCurrentStep(v)
+	return _u
+}
+
+// SetNillableCurrentStep sets the "current_step" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableCurrentStep(v *int) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetCurrentStep(*v)
+	}
+	return _u
+}
+
+// AddCurrentStep adds value to the "current_step" field.
+func (_u *FsrsCardUpdate) AddCurrentStep(v int) *FsrsCardUpdate {
+	_u.mutation.AddCurrentStep(v)
+	return _u
+}
+
+// SetNextReview sets the "next_review" field.
+func (_u *FsrsCardUpdate) SetNextReview(v time.Time) *FsrsCardUpdate {
+	_u.mutation.SetNextReview(v)
+	return _u
+}
+
+// SetNillableNextReview sets the "next_review" field if the given value is not nil.
+func (_u *FsrsCardUpdate) SetNillableNextReview(v *time.Time) *FsrsCardUpdate {
+	if v != nil {
+		_u.SetNextReview(*v)
+	}
+	return _u
+}
+
 // SetNode sets the "node" edge to the Node entity.
 func (_u *FsrsCardUpdate) SetNode(v *Node) *FsrsCardUpdate {
 	return _u.SetNodeID(v.ID)
@@ -377,6 +426,18 @@ func (_u *FsrsCardUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Due(); ok {
 		_spec.SetField(fsrscard.FieldDue, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.CardState(); ok {
+		_spec.SetField(fsrscard.FieldCardState, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CurrentStep(); ok {
+		_spec.SetField(fsrscard.FieldCurrentStep, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedCurrentStep(); ok {
+		_spec.AddField(fsrscard.FieldCurrentStep, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.NextReview(); ok {
+		_spec.SetField(fsrscard.FieldNextReview, field.TypeTime, value)
 	}
 	if _u.mutation.NodeCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -662,6 +723,55 @@ func (_u *FsrsCardUpdateOne) SetNillableNodeID(v *uuid.UUID) *FsrsCardUpdateOne 
 	return _u
 }
 
+// SetCardState sets the "card_state" field.
+func (_u *FsrsCardUpdateOne) SetCardState(v string) *FsrsCardUpdateOne {
+	_u.mutation.SetCardState(v)
+	return _u
+}
+
+// SetNillableCardState sets the "card_state" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableCardState(v *string) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetCardState(*v)
+	}
+	return _u
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (_u *FsrsCardUpdateOne) SetCurrentStep(v int) *FsrsCardUpdateOne {
+	_u.mutation.ResetCurrentStep()
+	_u.mutation.SetCurrentStep(v)
+	return _u
+}
+
+// SetNillableCurrentStep sets the "current_step" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableCurrentStep(v *int) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetCurrentStep(*v)
+	}
+	return _u
+}
+
+// AddCurrentStep adds value to the "current_step" field.
+func (_u *FsrsCardUpdateOne) AddCurrentStep(v int) *FsrsCardUpdateOne {
+	_u.mutation.AddCurrentStep(v)
+	return _u
+}
+
+// SetNextReview sets the "next_review" field.
+func (_u *FsrsCardUpdateOne) SetNextReview(v time.Time) *FsrsCardUpdateOne {
+	_u.mutation.SetNextReview(v)
+	return _u
+}
+
+// SetNillableNextReview sets the "next_review" field if the given value is not nil.
+func (_u *FsrsCardUpdateOne) SetNillableNextReview(v *time.Time) *FsrsCardUpdateOne {
+	if v != nil {
+		_u.SetNextReview(*v)
+	}
+	return _u
+}
+
 // SetNode sets the "node" edge to the Node entity.
 func (_u *FsrsCardUpdateOne) SetNode(v *Node) *FsrsCardUpdateOne {
 	return _u.SetNodeID(v.ID)
@@ -849,6 +959,18 @@ func (_u *FsrsCardUpdateOne) sqlSave(ctx context.Context) (_node *FsrsCard, err 
 	}
 	if value, ok := _u.mutation.Due(); ok {
 		_spec.SetField(fsrscard.FieldDue, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.CardState(); ok {
+		_spec.SetField(fsrscard.FieldCardState, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.CurrentStep(); ok {
+		_spec.SetField(fsrscard.FieldCurrentStep, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedCurrentStep(); ok {
+		_spec.AddField(fsrscard.FieldCurrentStep, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.NextReview(); ok {
+		_spec.SetField(fsrscard.FieldNextReview, field.TypeTime, value)
 	}
 	if _u.mutation.NodeCleared() {
 		edge := &sqlgraph.EdgeSpec{

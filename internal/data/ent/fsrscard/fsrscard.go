@@ -36,6 +36,12 @@ const (
 	FieldDue = "due"
 	// FieldNodeID holds the string denoting the node_id field in the database.
 	FieldNodeID = "node_id"
+	// FieldCardState holds the string denoting the card_state field in the database.
+	FieldCardState = "card_state"
+	// FieldCurrentStep holds the string denoting the current_step field in the database.
+	FieldCurrentStep = "current_step"
+	// FieldNextReview holds the string denoting the next_review field in the database.
+	FieldNextReview = "next_review"
 	// EdgeNode holds the string denoting the node edge name in mutations.
 	EdgeNode = "node"
 	// EdgeAttempts holds the string denoting the attempts edge name in mutations.
@@ -75,6 +81,9 @@ var Columns = []string{
 	FieldLastReview,
 	FieldDue,
 	FieldNodeID,
+	FieldCardState,
+	FieldCurrentStep,
+	FieldNextReview,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -102,6 +111,12 @@ var (
 	DefaultLapses int
 	// DefaultDue holds the default value on creation for the "due" field.
 	DefaultDue func() time.Time
+	// DefaultCardState holds the default value on creation for the "card_state" field.
+	DefaultCardState string
+	// DefaultCurrentStep holds the default value on creation for the "current_step" field.
+	DefaultCurrentStep int
+	// DefaultNextReview holds the default value on creation for the "next_review" field.
+	DefaultNextReview func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -190,6 +205,21 @@ func ByDue(opts ...sql.OrderTermOption) OrderOption {
 // ByNodeID orders the results by the node_id field.
 func ByNodeID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNodeID, opts...).ToFunc()
+}
+
+// ByCardState orders the results by the card_state field.
+func ByCardState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCardState, opts...).ToFunc()
+}
+
+// ByCurrentStep orders the results by the current_step field.
+func ByCurrentStep(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCurrentStep, opts...).ToFunc()
+}
+
+// ByNextReview orders the results by the next_review field.
+func ByNextReview(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNextReview, opts...).ToFunc()
 }
 
 // ByNodeField orders the results by node field.

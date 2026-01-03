@@ -101,6 +101,21 @@ func NodeID(v uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldEQ(FieldNodeID, v))
 }
 
+// CardState applies equality check predicate on the "card_state" field. It's identical to CardStateEQ.
+func CardState(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldCardState, v))
+}
+
+// CurrentStep applies equality check predicate on the "current_step" field. It's identical to CurrentStepEQ.
+func CurrentStep(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldCurrentStep, v))
+}
+
+// NextReview applies equality check predicate on the "next_review" field. It's identical to NextReviewEQ.
+func NextReview(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldNextReview, v))
+}
+
 // StabilityEQ applies the EQ predicate on the "stability" field.
 func StabilityEQ(v float64) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldEQ(FieldStability, v))
@@ -469,6 +484,151 @@ func NodeIDIn(vs ...uuid.UUID) predicate.FsrsCard {
 // NodeIDNotIn applies the NotIn predicate on the "node_id" field.
 func NodeIDNotIn(vs ...uuid.UUID) predicate.FsrsCard {
 	return predicate.FsrsCard(sql.FieldNotIn(FieldNodeID, vs...))
+}
+
+// CardStateEQ applies the EQ predicate on the "card_state" field.
+func CardStateEQ(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldCardState, v))
+}
+
+// CardStateNEQ applies the NEQ predicate on the "card_state" field.
+func CardStateNEQ(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldCardState, v))
+}
+
+// CardStateIn applies the In predicate on the "card_state" field.
+func CardStateIn(vs ...string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldCardState, vs...))
+}
+
+// CardStateNotIn applies the NotIn predicate on the "card_state" field.
+func CardStateNotIn(vs ...string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldCardState, vs...))
+}
+
+// CardStateGT applies the GT predicate on the "card_state" field.
+func CardStateGT(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldCardState, v))
+}
+
+// CardStateGTE applies the GTE predicate on the "card_state" field.
+func CardStateGTE(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldCardState, v))
+}
+
+// CardStateLT applies the LT predicate on the "card_state" field.
+func CardStateLT(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldCardState, v))
+}
+
+// CardStateLTE applies the LTE predicate on the "card_state" field.
+func CardStateLTE(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldCardState, v))
+}
+
+// CardStateContains applies the Contains predicate on the "card_state" field.
+func CardStateContains(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldContains(FieldCardState, v))
+}
+
+// CardStateHasPrefix applies the HasPrefix predicate on the "card_state" field.
+func CardStateHasPrefix(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldHasPrefix(FieldCardState, v))
+}
+
+// CardStateHasSuffix applies the HasSuffix predicate on the "card_state" field.
+func CardStateHasSuffix(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldHasSuffix(FieldCardState, v))
+}
+
+// CardStateEqualFold applies the EqualFold predicate on the "card_state" field.
+func CardStateEqualFold(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEqualFold(FieldCardState, v))
+}
+
+// CardStateContainsFold applies the ContainsFold predicate on the "card_state" field.
+func CardStateContainsFold(v string) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldContainsFold(FieldCardState, v))
+}
+
+// CurrentStepEQ applies the EQ predicate on the "current_step" field.
+func CurrentStepEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldCurrentStep, v))
+}
+
+// CurrentStepNEQ applies the NEQ predicate on the "current_step" field.
+func CurrentStepNEQ(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldCurrentStep, v))
+}
+
+// CurrentStepIn applies the In predicate on the "current_step" field.
+func CurrentStepIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldCurrentStep, vs...))
+}
+
+// CurrentStepNotIn applies the NotIn predicate on the "current_step" field.
+func CurrentStepNotIn(vs ...int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldCurrentStep, vs...))
+}
+
+// CurrentStepGT applies the GT predicate on the "current_step" field.
+func CurrentStepGT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldCurrentStep, v))
+}
+
+// CurrentStepGTE applies the GTE predicate on the "current_step" field.
+func CurrentStepGTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldCurrentStep, v))
+}
+
+// CurrentStepLT applies the LT predicate on the "current_step" field.
+func CurrentStepLT(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldCurrentStep, v))
+}
+
+// CurrentStepLTE applies the LTE predicate on the "current_step" field.
+func CurrentStepLTE(v int) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldCurrentStep, v))
+}
+
+// NextReviewEQ applies the EQ predicate on the "next_review" field.
+func NextReviewEQ(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldEQ(FieldNextReview, v))
+}
+
+// NextReviewNEQ applies the NEQ predicate on the "next_review" field.
+func NextReviewNEQ(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNEQ(FieldNextReview, v))
+}
+
+// NextReviewIn applies the In predicate on the "next_review" field.
+func NextReviewIn(vs ...time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldIn(FieldNextReview, vs...))
+}
+
+// NextReviewNotIn applies the NotIn predicate on the "next_review" field.
+func NextReviewNotIn(vs ...time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldNotIn(FieldNextReview, vs...))
+}
+
+// NextReviewGT applies the GT predicate on the "next_review" field.
+func NextReviewGT(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGT(FieldNextReview, v))
+}
+
+// NextReviewGTE applies the GTE predicate on the "next_review" field.
+func NextReviewGTE(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldGTE(FieldNextReview, v))
+}
+
+// NextReviewLT applies the LT predicate on the "next_review" field.
+func NextReviewLT(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLT(FieldNextReview, v))
+}
+
+// NextReviewLTE applies the LTE predicate on the "next_review" field.
+func NextReviewLTE(v time.Time) predicate.FsrsCard {
+	return predicate.FsrsCard(sql.FieldLTE(FieldNextReview, v))
 }
 
 // HasNode applies the HasEdge predicate on the "node" edge.

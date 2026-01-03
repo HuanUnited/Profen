@@ -2597,6 +2597,10 @@ type FsrsCardMutation struct {
 	state             *fsrscard.State
 	last_review       *time.Time
 	due               *time.Time
+	card_state        *string
+	current_step      *int
+	addcurrent_step   *int
+	next_review       *time.Time
 	clearedFields     map[string]struct{}
 	node              *uuid.UUID
 	clearednode       bool
@@ -3205,6 +3209,134 @@ func (m *FsrsCardMutation) ResetNodeID() {
 	m.node = nil
 }
 
+// SetCardState sets the "card_state" field.
+func (m *FsrsCardMutation) SetCardState(s string) {
+	m.card_state = &s
+}
+
+// CardState returns the value of the "card_state" field in the mutation.
+func (m *FsrsCardMutation) CardState() (r string, exists bool) {
+	v := m.card_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCardState returns the old "card_state" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldCardState(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCardState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCardState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCardState: %w", err)
+	}
+	return oldValue.CardState, nil
+}
+
+// ResetCardState resets all changes to the "card_state" field.
+func (m *FsrsCardMutation) ResetCardState() {
+	m.card_state = nil
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (m *FsrsCardMutation) SetCurrentStep(i int) {
+	m.current_step = &i
+	m.addcurrent_step = nil
+}
+
+// CurrentStep returns the value of the "current_step" field in the mutation.
+func (m *FsrsCardMutation) CurrentStep() (r int, exists bool) {
+	v := m.current_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCurrentStep returns the old "current_step" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldCurrentStep(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCurrentStep is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCurrentStep requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCurrentStep: %w", err)
+	}
+	return oldValue.CurrentStep, nil
+}
+
+// AddCurrentStep adds i to the "current_step" field.
+func (m *FsrsCardMutation) AddCurrentStep(i int) {
+	if m.addcurrent_step != nil {
+		*m.addcurrent_step += i
+	} else {
+		m.addcurrent_step = &i
+	}
+}
+
+// AddedCurrentStep returns the value that was added to the "current_step" field in this mutation.
+func (m *FsrsCardMutation) AddedCurrentStep() (r int, exists bool) {
+	v := m.addcurrent_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCurrentStep resets all changes to the "current_step" field.
+func (m *FsrsCardMutation) ResetCurrentStep() {
+	m.current_step = nil
+	m.addcurrent_step = nil
+}
+
+// SetNextReview sets the "next_review" field.
+func (m *FsrsCardMutation) SetNextReview(t time.Time) {
+	m.next_review = &t
+}
+
+// NextReview returns the value of the "next_review" field in the mutation.
+func (m *FsrsCardMutation) NextReview() (r time.Time, exists bool) {
+	v := m.next_review
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNextReview returns the old "next_review" field's value of the FsrsCard entity.
+// If the FsrsCard object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FsrsCardMutation) OldNextReview(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNextReview is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNextReview requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNextReview: %w", err)
+	}
+	return oldValue.NextReview, nil
+}
+
+// ResetNextReview resets all changes to the "next_review" field.
+func (m *FsrsCardMutation) ResetNextReview() {
+	m.next_review = nil
+}
+
 // ClearNode clears the "node" edge to the Node entity.
 func (m *FsrsCardMutation) ClearNode() {
 	m.clearednode = true
@@ -3320,7 +3452,7 @@ func (m *FsrsCardMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FsrsCardMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 13)
 	if m.stability != nil {
 		fields = append(fields, fsrscard.FieldStability)
 	}
@@ -3351,6 +3483,15 @@ func (m *FsrsCardMutation) Fields() []string {
 	if m.node != nil {
 		fields = append(fields, fsrscard.FieldNodeID)
 	}
+	if m.card_state != nil {
+		fields = append(fields, fsrscard.FieldCardState)
+	}
+	if m.current_step != nil {
+		fields = append(fields, fsrscard.FieldCurrentStep)
+	}
+	if m.next_review != nil {
+		fields = append(fields, fsrscard.FieldNextReview)
+	}
 	return fields
 }
 
@@ -3379,6 +3520,12 @@ func (m *FsrsCardMutation) Field(name string) (ent.Value, bool) {
 		return m.Due()
 	case fsrscard.FieldNodeID:
 		return m.NodeID()
+	case fsrscard.FieldCardState:
+		return m.CardState()
+	case fsrscard.FieldCurrentStep:
+		return m.CurrentStep()
+	case fsrscard.FieldNextReview:
+		return m.NextReview()
 	}
 	return nil, false
 }
@@ -3408,6 +3555,12 @@ func (m *FsrsCardMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldDue(ctx)
 	case fsrscard.FieldNodeID:
 		return m.OldNodeID(ctx)
+	case fsrscard.FieldCardState:
+		return m.OldCardState(ctx)
+	case fsrscard.FieldCurrentStep:
+		return m.OldCurrentStep(ctx)
+	case fsrscard.FieldNextReview:
+		return m.OldNextReview(ctx)
 	}
 	return nil, fmt.Errorf("unknown FsrsCard field %s", name)
 }
@@ -3487,6 +3640,27 @@ func (m *FsrsCardMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetNodeID(v)
 		return nil
+	case fsrscard.FieldCardState:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCardState(v)
+		return nil
+	case fsrscard.FieldCurrentStep:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCurrentStep(v)
+		return nil
+	case fsrscard.FieldNextReview:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNextReview(v)
+		return nil
 	}
 	return fmt.Errorf("unknown FsrsCard field %s", name)
 }
@@ -3513,6 +3687,9 @@ func (m *FsrsCardMutation) AddedFields() []string {
 	if m.addlapses != nil {
 		fields = append(fields, fsrscard.FieldLapses)
 	}
+	if m.addcurrent_step != nil {
+		fields = append(fields, fsrscard.FieldCurrentStep)
+	}
 	return fields
 }
 
@@ -3533,6 +3710,8 @@ func (m *FsrsCardMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedReps()
 	case fsrscard.FieldLapses:
 		return m.AddedLapses()
+	case fsrscard.FieldCurrentStep:
+		return m.AddedCurrentStep()
 	}
 	return nil, false
 }
@@ -3583,6 +3762,13 @@ func (m *FsrsCardMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddLapses(v)
+		return nil
+	case fsrscard.FieldCurrentStep:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCurrentStep(v)
 		return nil
 	}
 	return fmt.Errorf("unknown FsrsCard numeric field %s", name)
@@ -3649,6 +3835,15 @@ func (m *FsrsCardMutation) ResetField(name string) error {
 		return nil
 	case fsrscard.FieldNodeID:
 		m.ResetNodeID()
+		return nil
+	case fsrscard.FieldCardState:
+		m.ResetCardState()
+		return nil
+	case fsrscard.FieldCurrentStep:
+		m.ResetCurrentStep()
+		return nil
+	case fsrscard.FieldNextReview:
+		m.ResetNextReview()
 		return nil
 	}
 	return fmt.Errorf("unknown FsrsCard field %s", name)
