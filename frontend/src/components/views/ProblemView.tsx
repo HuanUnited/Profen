@@ -1,7 +1,7 @@
 // frontend/src/components/views/ProblemView.tsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { GetAttemptHistory } from "../../wailsjs/go/app/App";
+import { GetAttemptHistory, GetNodeAssociations } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
 import { ArrowRight, Pencil, History, Hash, ChevronDown, ChevronRight, Link, BookOpen } from "lucide-react";
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
@@ -18,22 +18,25 @@ export default function ProblemView({ node }: { node: ent.Node }) {
     queryFn: () => GetAttemptHistory(String(node.id)),
   });
 
-  // In ProblemView.tsx
   const { data: associations } = useQuery({
     queryKey: ["associations", String(node.id)],
     queryFn: () => GetNodeAssociations(String(node.id)),
   });
 
-  // Filter by relationship type
+  // Filter by relationship type with proper typing
   const similarProblems = associations
-    ?.filter(a => a.rel_type === "similar_to" && String(a.source_id) === String(node.id))
-    .map(a => a.edges?.target)
-    .filter(Boolean) || [];
+    ?.filter((a: ent.NodeAssociation) =>
+      a.rel_type === "similar_to" && String(a.source_id) === String(node.id)
+    )
+    .map((a: ent.NodeAssociation) => a.edges?.target)
+    .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
 
   const linkedTheories = associations
-    ?.filter(a => a.rel_type === "tests" && String(a.source_id) === String(node.id))
-    .map(a => a.edges?.target)
-    .filter(Boolean) || [];
+    ?.filter((a: ent.NodeAssociation) =>
+      a.rel_type === "tests" && String(a.source_id) === String(node.id)
+    )
+    .map((a: ent.NodeAssociation) => a.edges?.target)
+    .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
 
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in slide-in-from-bottom-2">
@@ -91,7 +94,7 @@ export default function ProblemView({ node }: { node: ent.Node }) {
             </h3>
 
             <div className="space-y-3">
-              {attempts?.slice(0, 5).map((attempt: any, idx: number) => (
+              {attempts?.slice(0, 5).map((attempt: ent.Attempt, idx: number) => (
                 <div key={idx} className="flex items-center justify-between text-sm p-2 rounded hover:bg-[#2f334d]/50 transition-colors">
                   <div className="flex flex-col">
                     <span className="font-mono text-xs text-gray-500">
@@ -102,7 +105,7 @@ export default function ProblemView({ node }: { node: ent.Node }) {
                     </span>
                   </div>
                   <span className="font-mono text-gray-600 text-xs">
-                    {Math.round(attempt.duration_ms / 1000)}s
+                    {Math.round((attempt?.duration_ms ?? 0) / 1000)}s
                   </span>
                 </div>
               ))}
@@ -134,8 +137,8 @@ export default function ProblemView({ node }: { node: ent.Node }) {
               </button>
               {showSimilarProblems && (
                 <div className="px-4 pb-3 space-y-1">
-                  {similarProblems.map((p: any) => (
-                    <div key={p.id} className="text-xs text-gray-400 hover:text-white cursor-pointer py-1">
+                  {similarProblems.map((p: ent.Node) => (
+                    <div key={p.id?.toString()} className="text-xs text-gray-400 hover:text-white cursor-pointer py-1">
                       {p.title}
                     </div>
                   ))}
@@ -157,8 +160,8 @@ export default function ProblemView({ node }: { node: ent.Node }) {
               </button>
               {showLinkedTheories && (
                 <div className="px-4 pb-3 space-y-1">
-                  {linkedTheories.map((t: any) => (
-                    <div key={t.id} className="text-xs text-gray-400 hover:text-white cursor-pointer py-1">
+                  {linkedTheories.map((t: ent.Node) => (
+                    <div key={t.id?.toString()} className="text-xs text-gray-400 hover:text-white cursor-pointer py-1">
                       {t.title}
                     </div>
                   ))}

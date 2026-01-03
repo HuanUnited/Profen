@@ -1,7 +1,7 @@
 // frontend/src/components/views/TheoryView.tsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { GetAttemptHistory } from "../../wailsjs/go/app/App";
+import { GetAttemptHistory, GetNodeAssociations } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
 import { Pencil, BookOpen, ChevronDown, ChevronRight, Hash, History, Link, ArrowRight } from "lucide-react";
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
@@ -18,22 +18,25 @@ export default function TheoryView({ node }: { node: ent.Node }) {
     queryFn: () => GetAttemptHistory(String(node.id)),
   });
 
-  // In ProblemView.tsx
   const { data: associations } = useQuery({
     queryKey: ["associations", String(node.id)],
     queryFn: () => GetNodeAssociations(String(node.id)),
   });
 
-  // Filter by relationship type
-  const similarProblems = associations
-    ?.filter(a => a.rel_type === "similar_to" && String(a.source_id) === String(node.id))
-    .map(a => a.edges?.target)
-    .filter(Boolean) || [];
+  // Filter by relationship type with proper typing
+  const linkedProblems = associations
+    ?.filter((a: ent.NodeAssociation) =>
+      a.rel_type === "similar_to" && String(a.source_id) === String(node.id)
+    )
+    .map((a: ent.NodeAssociation) => a.edges?.target)
+    .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
 
-  const linkedTheories = associations
-    ?.filter(a => a.rel_type === "tests" && String(a.source_id) === String(node.id))
-    .map(a => a.edges?.target)
-    .filter(Boolean) || [];
+  const relatedTheories = associations
+    ?.filter((a: ent.NodeAssociation) =>
+      a.rel_type === "tests" && String(a.source_id) === String(node.id)
+    )
+    .map((a: ent.NodeAssociation) => a.edges?.target)
+    .filter((t): t is ent.Node => t !== undefined && t !== null) || [];
 
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in slide-in-from-bottom-2">
