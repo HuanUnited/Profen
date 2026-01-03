@@ -259,3 +259,21 @@ func (a *App) DeleteNode(nodeIDStr string) error {
 	}
 	return a.nodeRepo.DeleteNode(a.ctx, id)
 }
+
+// GetNodeBreadcrumbs retrieves the path from root to node for navigation
+func (a *App) GetNodeBreadcrumbs(nodeIDStr string) ([]*ent.Node, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID: %w", err)
+	}
+	return a.nodeRepo.GetNodeBreadcrumbs(a.ctx, id)
+}
+
+// DuplicateNode duplicates a node
+func (a *App) DuplicateNode(nodeIDStr string) (*ent.Node, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID: %w", err)
+	}
+	return a.nodeRepo.DuplicateNode(a.ctx, id)
+}
