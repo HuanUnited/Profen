@@ -263,3 +263,52 @@ func (r *NodeRepository) SearchNodes(ctx context.Context, query string) ([]*ent.
 		Limit(20).
 		All(ctx)
 }
+
+// GetNodeBreadcrumbs returns the path from root to node
+func (r *NodeRepository) GetNodeBreadcrumbs(ctx context.Context, id uuid.UUID) ([]*ent.Node, error) {
+	path := []*ent.Node{}
+	currentID := id
+	visited := make(map[uuid.UUID]bool) // Prevent cycles
+
+	for depth := 0; depth < 10; depth++ {
+		if visited[currentID] {
+			break // Circular reference detected
+		}
+		visited[currentID] = true
+
+		node, err := r.client.Node.Get(ctx, currentID)
+		if err != nil {
+			return path, nil // Return what we have so far
+		}
+
+		// Prepend to reverse order (Child -> Parent -> Root) becomes (Root -> Parent -> Child)
+		path = append([]*ent.Node{node}, path...)
+
+		if node.ParentID == uuid.Nil {
+			break
+		}
+		currentID = node.ParentID
+	}
+
+	return path, nil
+}
+
+// DuplicateNode creates a deep copy of a node (excluding children/attempts)
+func (r *NodeRepository) DuplicateNode(ctx context.Context, id uuid.UUID) (*ent.Node, error) {
+	original, err := r.client.Node.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get original node: %w", err)
+	}
+
+	// Create copy with "(Copy)" suffix
+	newTitle := original.Title + " (Copy)"
+
+	return r.CreateNode(
+		ctx,
+		original.Type,
+		original.ParentID,
+		newTitle,
+		original.Body,
+		original.Metadata,
+	)
+}
