@@ -1,10 +1,10 @@
 // frontend/src/components/smart/AttemptModal.tsx
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, Timer, Check, AlertCircle, Star, ChevronRight } from "lucide-react";
+import { X, Timer, Check, AlertCircle, Star, ChevronRight, BookOpen } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ent } from "../../wailsjs/go/models";
-import { ReviewCard } from "../../wailsjs/go/app/App";
+import { ReviewCard, GetSchedulingInfo } from "../../wailsjs/go/app/App";
 import StyledButton from "../atomic/StylizedButton";
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
 import { toast } from 'sonner';
@@ -29,6 +29,11 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
   const [difficultyRating, setDifficultyRating] = useState<number>(5); // 1-10
   const [errorLog, setErrorLog] = useState("");
 
+  // FSRS Data
+  const [intervals, setIntervals] = useState<Record<number, string>>({
+    1: "...", 2: "...", 3: "...", 4: "..."
+  });
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -41,14 +46,22 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
       setDifficultyRating(5);
       setErrorLog("");
 
+      // Fetch Intervals
+      GetSchedulingInfo(String(node.id))
+        .then(setIntervals)
+        .catch(e => {
+          console.error("Failed to fetch intervals:", e);
+          setIntervals({ 1: "?", 2: "?", 3: "?", 4: "?" });
+        });
+
       timerRef.current = setInterval(() => {
         setElapsed(Date.now() - startTime);
-      }, 10); // Update every 10ms for millisecond precision
+      }, 10);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isOpen, startTime]);
+  }, [isOpen, startTime, node.id]);
 
   const handleStopTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -57,17 +70,14 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
   };
 
   const handleStarClick = (star: number) => {
-    const starValue = star * 2; // Each star represents 2 points (full star)
-    const halfValue = starValue - 1; // Half star is 1 point less
+    const starValue = star * 2;
+    const halfValue = starValue - 1;
 
     if (difficultyRating === starValue) {
-      // Third click: Full star -> Remove (go to previous star's value)
       setDifficultyRating(halfValue - 1);
     } else if (difficultyRating === halfValue) {
-      // Second click: Half star -> Full star
       setDifficultyRating(starValue);
     } else {
-      // First click: Empty -> Half star
       setDifficultyRating(halfValue);
     }
   };
@@ -89,6 +99,7 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
 
       await queryClient.invalidateQueries({ queryKey: ["attempts", String(node.id)] });
       await queryClient.invalidateQueries({ queryKey: ["stats"] });
+      await queryClient.invalidateQueries({ queryKey: ["node", String(node.id)] }); // Refresh node data/state
 
       toast.success("Attempt recorded!");
       onClose();
@@ -100,28 +111,29 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
 
   if (!isOpen) return null;
 
-  // Format: MM:SS.CS (centiseconds)
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    const centiseconds = Math.floor((ms % 1000) / 10); // 00-99
-
+    const centiseconds = Math.floor((ms % 1000) / 10);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}`;
   };
 
-  // Calculate next review intervals (Anki-style)
-  const getNextIntervals = () => {
-    // These are example intervals - adjust based on FSRS algorithm output
-    return {
-      1: "< 1m", // Again
-      2: "5m",   // Hard
-      3: "10m",  // Good
-      4: "4d",   // Easy
-    };
-  };
+  // Determine State Label (Mock logic - in real app, node would have card_state attached or fetched)
+  // Since `node` is just the entity, we might need to fetch the card state separately or check if your `node` struct has expanded fields.
+  // For now, I'll use a placeholder or assume `node.metadata` might hold it if you injected it.
+  const cardState = (node as any).card_state || "Review"; // Fallback
+  const currentStep = (node as any).current_step || 0;
 
-  const intervals = getNextIntervals();
+  const getBadgeColor = (state: string) => {
+    switch (state.toLowerCase()) {
+      case "new": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "learning": return "bg-orange-500/20 text-orange-400 border-orange-500/30";
+      case "review": return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "relearning": return "bg-red-500/20 text-red-400 border-red-500/30";
+      default: return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+    }
+  };
 
   const modal = (
     <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-200">
@@ -130,13 +142,29 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
         {/* Header */}
         <div className="h-16 px-8 border-b border-[#2f334d] flex items-center justify-between bg-[#1a1b26] shrink-0">
           <div className="flex items-center gap-4">
+
+            {/* Timer */}
             <div className="flex items-center gap-2 px-3 py-1 bg-[#89b4fa]/10 border border-[#89b4fa]/20 rounded-lg text-[#89b4fa]">
               <Timer size={16} />
               <span className="font-mono font-bold text-lg tabular-nums">
                 {formatTime(elapsed)}
               </span>
             </div>
-            <h2 className="text-xl font-bold text-white truncate max-w-xl">{node.title}</h2>
+
+            {/* State Badge */}
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-lg border text-xs font-bold uppercase tracking-wider ${getBadgeColor(cardState)}`}>
+              <BookOpen size={14} />
+              <span>{cardState}</span>
+              {cardState.toLowerCase() === "learning" && (
+                <span className="opacity-70 ml-1 border-l border-white/20 pl-2">
+                  Step {currentStep + 1}
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-xl font-bold text-white truncate max-w-xl border-l border-[#2f334d] pl-4 ml-2">
+              {node.title}
+            </h2>
           </div>
           <StyledButton variant="ghost" size="sm" icon={<X size={20} />} onClick={onClose} />
         </div>
@@ -195,9 +223,11 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
                         className={`p-3 rounded-xl border transition-all font-bold text-sm relative ${fsrsGrade === btn.val ? "ring-2 ring-white scale-[1.02]" : "opacity-70 hover:opacity-100"
                           } ${btn.color}`}
                       >
-                        <div>{btn.label}</div>
-                        <div className="text-[10px] font-normal mt-1 opacity-70">
-                          {intervals[btn.val as keyof typeof intervals]}
+                        <div className="flex justify-between items-center w-full">
+                          <span>{btn.label}</span>
+                          <span className="text-[10px] bg-black/30 px-1.5 py-0.5 rounded font-mono opacity-80">
+                            {intervals[btn.val]}
+                          </span>
                         </div>
                       </button>
                     ))}
@@ -219,16 +249,15 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
                   </div>
                 )}
 
-                {/* 3. Difficulty Rating (1-10 with click system) */}
+                {/* 3. Difficulty Rating */}
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
                     Problem Difficulty Rating
                   </label>
                   <div className="flex items-center gap-2">
                     {[1, 2, 3, 4, 5].map((star) => {
-                      const starValue = star * 2; // Full star = 2, 4, 6, 8, 10
-                      const halfValue = starValue - 1; // Half star = 1, 3, 5, 7, 9
-
+                      const starValue = star * 2;
+                      const halfValue = starValue - 1;
                       const isFull = difficultyRating >= starValue;
                       const isHalf = difficultyRating === halfValue;
 
@@ -236,9 +265,7 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
                         <button
                           key={star}
                           onClick={() => handleStarClick(star)}
-                          className={`transition-all hover:scale-110 ${isFull || isHalf ? "text-yellow-400" : "text-gray-700"
-                            }`}
-                          title={`Click 1: ${halfValue}/10 | Click 2: ${starValue}/10 | Click 3: Clear`}
+                          className={`transition-all hover:scale-110 ${isFull || isHalf ? "text-yellow-400" : "text-gray-700"}`}
                         >
                           <Star
                             size={28}
@@ -252,9 +279,6 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
                       {difficultyRating}/10
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-600">
-                    Click: Empty → Half → Full → Empty
-                  </p>
                 </div>
 
                 <div className="flex-1" />
@@ -274,13 +298,11 @@ export default function AttemptModal({ isOpen, onClose, node }: AttemptModalProp
                     FINISH SESSION
                   </StyledButton>
                 </div>
-
               </div>
             )}
           </div>
         </div>
 
-        {/* SVG for half-star gradient */}
         <svg width="0" height="0">
           <defs>
             <linearGradient id="half">
