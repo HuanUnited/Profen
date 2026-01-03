@@ -1,16 +1,40 @@
 import { useQuery } from '@tanstack/react-query';
-import { GetDueCards } from '../../wailsjs/go/app/App';
+import { GetDueCards, GetDueCardsQueue } from '../../wailsjs/go/app/App'; // Added GetDueCardsQueue
 import { Clock, Activity, Book, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import StyledButton from '../atomic/StylizedButton';
+import useToast from '../../utils/hooks/useToast'; // Import toast
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const toast = useToast();
+
   const { data: dueNodes, isLoading } = useQuery({
     queryKey: ['dueCards'],
     queryFn: () => GetDueCards(10),
   });
+
+  // Start Session Handler
+  const handleStartSession = async () => {
+    try {
+      // 1. Fetch queue IDs
+      const queueIds = await GetDueCardsQueue(20);
+      
+      if (!queueIds || queueIds.length === 0) {
+        toast.info("No cards due! Great job.");
+        return;
+      }
+
+      // 2. Navigate to Study Session
+      // returnTo ensures we come back to dashboard after finishing
+      navigate(`/study?queue=${queueIds.join(",")}&returnTo=/`);
+      
+    } catch (err) {
+      console.error("Failed to start session:", err);
+      toast.error("Could not start session");
+    }
+  };
 
   if (isLoading) return <div className="p-8 font-mono text-gray-500 animate-pulse">{'>'} Initializing system metrics...</div>;
 
@@ -56,7 +80,7 @@ export default function Dashboard() {
             variant="primary"
             size="md"
             icon={<ArrowRight size={16} />}
-            onClick={() => navigate('/review')}
+            onClick={handleStartSession} // Connected Handler
             className="text-xs text-(--tui-primary) hover:underline flex items-center"
           >
             START_SESSION <ArrowRight size={12} className="ml-1" />
@@ -81,7 +105,10 @@ export default function Dashboard() {
               <div
                 key={JSON.stringify(node.id)}
                 className="group flex items-center justify-between p-4 bg-[#1a1b26] border-l-2 border-transparent hover:border-(--tui-primary) hover:bg-[#20212e] transition-all cursor-pointer shadow-sm"
-                onClick={() => navigate('/review')} // Later: Go to specific review
+                onClick={() => {
+                   // Clicking a single card starts a session with just that card
+                   navigate(`/study?queue=${node.id}&returnTo=/`);
+                }}
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1.5">
