@@ -1,12 +1,15 @@
+// frontend/src/components/layouts/Library.tsx
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { GetNode } from "../../wailsjs/go/app/App";
 import { FileText } from "lucide-react";
 
-// Import Sub-Views
+// Specialized Views
 import RootView from "../views/RootView";
-import ContainerView from "../views/ContainerView"; // Subjects & Topics
-import LeafView from "../views/LeafView"; // Problems & Theories
+import SubjectView from "../views/SubjectView";
+import TopicView from "../views/TopicView";
+import ProblemView from "../views/ProblemView";
+import TheoryView from "../views/TheoryView";
 
 export default function Library() {
   const [searchParams] = useSearchParams();
@@ -19,37 +22,25 @@ export default function Library() {
     retry: false,
   });
 
-  // CASE 0: No Node Selected -> Root View (Subject Grid)
-  if (!nodeId) {
-    return <RootView />;
-  }
+  if (!nodeId) return <RootView />;
 
-  if (isLoading) {
-    return (
-      <div className="h-full flex items-center justify-center text-gray-500 font-mono animate-pulse">
-        Loading...
-      </div>
-    );
-  }
+  if (isLoading) return <div className="h-full flex items-center justify-center text-gray-500 font-mono animate-pulse">Loading Node...</div>;
 
   if (error || !node) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-red-400">
         <FileText size={48} className="mb-4 opacity-50" />
-        <p>Node not found or access denied.</p>
+        <p>Node not found.</p>
       </div>
     );
   }
 
-  // CASE 1: Container Nodes (Subject, Topic)
-  if (node.type === "subject" || node.type === "topic") {
-    return <ContainerView node={node} />;
+  // Strict Routing
+  switch (node.type) {
+    case "subject": return <SubjectView node={node} />;
+    case "topic": return <TopicView node={node} />;
+    case "problem": return <ProblemView node={node} />;
+    case "theory": return <TheoryView node={node} />;
+    default: return <div className="p-8">Unknown node type: {node.type}</div>;
   }
-
-  // CASE 2: Leaf Nodes (Problem, Theory, Term)
-  if (node.type === "problem" || node.type === "theory" || node.type === "term") {
-    return <LeafView node={node} />;
-  }
-
-  return <div>Unknown Node Type: {node.type}</div>;
 }
