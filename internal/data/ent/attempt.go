@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"profen/internal/data/ent/attempt"
 	"profen/internal/data/ent/errordefinition"
@@ -40,6 +41,8 @@ type Attempt struct {
 	ErrorTypeID *uuid.UUID `json:"error_type_id,omitempty"`
 	// Snapshot of what the user typed
 	UserAnswer string `json:"user_answer,omitempty"`
+	// Error logs, difficulty rating, and other attempt metadata
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AttemptQuery when eager-loading is set.
 	Edges        AttemptEdges `json:"edges"`
@@ -86,6 +89,8 @@ func (*Attempt) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case attempt.FieldErrorTypeID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case attempt.FieldMetadata:
+			values[i] = new([]byte)
 		case attempt.FieldIsCorrect:
 			values[i] = new(sql.NullBool)
 		case attempt.FieldStability, attempt.FieldDifficulty:
@@ -180,6 +185,14 @@ func (_m *Attempt) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UserAnswer = value.String
 			}
+		case attempt.FieldMetadata:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field metadata", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Metadata); err != nil {
+					return fmt.Errorf("unmarshal field metadata: %w", err)
+				}
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -257,6 +270,9 @@ func (_m *Attempt) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("user_answer=")
 	builder.WriteString(_m.UserAnswer)
+	builder.WriteString(", ")
+	builder.WriteString("metadata=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Metadata))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -46,7 +46,9 @@ func (s *FSRSService) ReviewCard(
 	grade FSRSGrade,
 	durationMs int64, // Changed to int64 to match App
 	userAnswer string, // <--- NEW ARGUMENT
+	metadata map[string]interface{}, // NEW
 	errorDefID *uuid.UUID,
+
 ) (*ent.FsrsCard, error) {
 
 	// 1. Fetch Card
@@ -68,7 +70,8 @@ func (s *FSRSService) ReviewCard(
 		SetStability(card.Stability).
 		SetDifficulty(card.Difficulty).
 		SetIsCorrect(grade >= GradeGood).
-		SetUserAnswer(userAnswer) // <--- SAVING THE ANSWER
+		SetUserAnswer(userAnswer).
+		SetMetadata(metadata)
 
 	if errorDefID != nil {
 		attemptBuilder.SetErrorTypeID(*errorDefID)

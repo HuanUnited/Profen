@@ -53,10 +53,15 @@ func (Attempt) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 
-		// --- NEW FIELD ---
+		// User Input Field
 		field.String("user_answer").
 			Optional().
 			Comment("Snapshot of what the user typed"),
+
+		// Metadata field for structured data
+		field.JSON("metadata", map[string]interface{}{}).
+			Optional().
+			Comment("Error logs, difficulty rating, and other attempt metadata"),
 	}
 }
 

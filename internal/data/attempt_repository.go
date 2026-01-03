@@ -30,3 +30,8 @@ func (r *AttemptRepository) GetAttemptsByNode(ctx context.Context, nodeID uuid.U
 		Order(ent.Desc(attempt.FieldCreatedAt)).
 		All(ctx)
 }
+
+// GetAttempt retrieves a single attempt by ID
+func (r *AttemptRepository) GetAttempt(ctx context.Context, id uuid.UUID) (*ent.Attempt, error) {
+	return r.client.Attempt.Get(ctx, id)
+}

@@ -7,7 +7,7 @@ import { ent } from "../../../wailsjs/go/models";
 interface Connection {
   node: ent.Node;
   relType: string;
-  direction: "source" | "target"; // Is current node the source or target?
+  direction: "source" | "target";
 }
 
 interface ConnectionGroup {
@@ -48,9 +48,9 @@ export default function ConnectionsPanel({ nodeId, associations, groups }: Conne
       return {
         node: node!,
         relType: assoc.rel_type || "unknown",
-        direction: (isSource ? "source" : "target") as "source" | "target" // FIX: Explicit type assertion
+        direction: (isSource ? "source" : "target") as "source" | "target"
       };
-    }).filter(c => c.node); // Remove null nodes
+    }).filter(c => c.node);
 
     return {
       label: group.label,
@@ -60,17 +60,16 @@ export default function ConnectionsPanel({ nodeId, associations, groups }: Conne
     };
   });
 
+  // Build breadcrumb path in format ~/subject/topic/node
   const buildBreadcrumbs = (node: ent.Node): string => {
-    // Traverse up the hierarchy using parent edges
     const crumbs: string[] = [];
     let current = node;
     let depth = 0;
-    const maxDepth = 5;
+    const maxDepth = 10;
 
     while (current && depth < maxDepth) {
       crumbs.unshift(current.title || "Untitled");
 
-      // Check if parent exists in edges
       if (current.edges?.parent) {
         current = current.edges.parent;
       } else {
@@ -79,11 +78,11 @@ export default function ConnectionsPanel({ nodeId, associations, groups }: Conne
       depth++;
     }
 
-    return crumbs.join(" › ");
+    return "~/" + crumbs.join("/");
   };
 
   return (
-    <div className="bg-[#1a1b26] border border-[#2f334d] rounded-xl overflow-hidden">
+    <div className="bg-[#1a1b26] border border-[#2f334d] rounded-xl overflow-visible">
       <div className="border-b border-[#2f334d] px-4 py-2.5 flex items-center gap-2">
         <Link size={12} className="text-gray-500" />
         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Connections</span>
@@ -103,13 +102,13 @@ export default function ConnectionsPanel({ nodeId, associations, groups }: Conne
           </button>
 
           {expandedGroups[groups[idx].key] && (
-            <div className="px-4 pb-3 space-y-1">
+            <div className="px-4 pb-3 space-y-1 overflow-visible">
               {group.connections.map((conn) => (
                 <div
                   key={String(conn.node.id)}
                   onMouseEnter={() => setHoveredNode(String(conn.node.id))}
                   onMouseLeave={() => setHoveredNode(null)}
-                  className="relative group"
+                  className="relative group overflow-visible"
                 >
                   <div
                     onClick={() => navigate(`/library?nodeId=${conn.node.id}`)}
@@ -124,32 +123,42 @@ export default function ConnectionsPanel({ nodeId, associations, groups }: Conne
                     <Info size={10} className="text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                   </div>
 
-                  {/* Hover Tooltip */}
+                  {/* Hover Tooltip - Fixed positioning to prevent clipping */}
                   {hoveredNode === String(conn.node.id) && (
-                    <div className="absolute left-0 top-full mt-1 z-50 bg-[#16161e] border border-[#2f334d] rounded-lg p-3 shadow-2xl min-w-62.5 max-w-87.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div
+                      className="fixed z-100 bg-[#16161e] border-2 border-[#89b4fa]/50 rounded-lg p-3 shadow-2xl animate-in fade-in slide-in-from-top-1 duration-150 pointer-events-none"
+                      style={{
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        minWidth: '320px',
+                        maxWidth: '450px'
+                      }}
+                    >
                       <div className="space-y-2">
                         <div className="flex items-start justify-between gap-2">
-                          <span className="text-xs font-bold text-white truncate">{conn.node.title}</span>
-                          <span className="text-[9px] bg-gray-800/50 px-1.5 py-0.5 rounded font-mono text-gray-500 shrink-0">
+                          <span className="text-sm font-bold text-white">{conn.node.title}</span>
+                          <span className="text-[9px] bg-gray-800/50 px-2 py-1 rounded font-mono text-gray-400 shrink-0 uppercase">
                             {conn.node.type}
                           </span>
                         </div>
 
                         <div className="text-[10px] text-gray-500 font-mono border-t border-gray-800 pt-2">
-                          ID: {String(conn.node.id)}
+                          <span className="text-gray-600">ID:</span> {String(conn.node.id)}
                         </div>
 
-                        <div className="text-[10px] text-gray-400 leading-relaxed border-t border-gray-800 pt-2">
-                          <span className="text-gray-600">Path:</span><br />
-                          <span className="font-mono">{buildBreadcrumbs(conn.node)}</span>
+                        <div className="text-[11px] text-gray-300 leading-relaxed border-t border-gray-800 pt-2 font-mono break-all">
+                          <span className="text-[#89b4fa] font-bold">PATH:</span><br />
+                          <span className="text-gray-400">{buildBreadcrumbs(conn.node)}</span>
                         </div>
 
-                        <div className="text-[9px] text-purple-400 border-t border-gray-800 pt-2">
-                          Relation: <span className="font-mono bg-purple-900/20 px-1 py-0.5 rounded">
-                            {conn.relType.replace(/_/g, ' ')}
+                        <div className="text-[10px] text-purple-400 border-t border-gray-800 pt-2">
+                          <span className="text-gray-500">Relation:</span>{" "}
+                          <span className="font-mono bg-purple-900/30 px-2 py-1 rounded border border-purple-900/50">
+                            {conn.relType.replace(/_/g, ' ').toUpperCase()}
                           </span>
-                          <span className="text-gray-600 ml-1">
-                            ({conn.direction === "source" ? "outgoing" : "incoming"})
+                          <span className="text-gray-600 ml-2">
+                            ({conn.direction === "source" ? "outgoing →" : "← incoming"})
                           </span>
                         </div>
                       </div>

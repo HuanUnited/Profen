@@ -36,6 +36,8 @@ const (
 	FieldErrorTypeID = "error_type_id"
 	// FieldUserAnswer holds the string denoting the user_answer field in the database.
 	FieldUserAnswer = "user_answer"
+	// FieldMetadata holds the string denoting the metadata field in the database.
+	FieldMetadata = "metadata"
 	// EdgeCard holds the string denoting the card edge name in mutations.
 	EdgeCard = "card"
 	// EdgeErrorDefinition holds the string denoting the error_definition edge name in mutations.
@@ -75,6 +77,7 @@ var Columns = []string{
 	FieldIsCorrect,
 	FieldErrorTypeID,
 	FieldUserAnswer,
+	FieldMetadata,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

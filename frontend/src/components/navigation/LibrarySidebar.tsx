@@ -44,6 +44,29 @@ export default function LibrarySidebar() {
     }
   };
 
+  // Build breadcrumb path ~/subject/topic/node
+  const buildCurrentPath = (): string => {
+    if (!currentNode) return "~/";
+
+    const crumbs: string[] = [];
+    let current = currentNode;
+    let depth = 0;
+    const maxDepth = 10;
+
+    while (current && depth < maxDepth) {
+      crumbs.unshift(current.title || "Untitled");
+
+      if (current.edges?.parent) {
+        current = current.edges.parent;
+      } else {
+        break;
+      }
+      depth++;
+    }
+
+    return "~/" + crumbs.join("/");
+  };
+
   return (
     <>
       <SidebarFrame
@@ -86,10 +109,15 @@ export default function LibrarySidebar() {
           </div>
         }
         toolbar={
-          <div className="flex justify-between items-center w-full">
+          <div className="flex flex-col gap-1 w-full">
             <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">
-              Subjects
+              Navigation
             </span>
+            {currentNode && (
+              <div className="text-[9px] font-mono text-gray-500 truncate" title={buildCurrentPath()}>
+                {buildCurrentPath()}
+              </div>
+            )}
           </div>
         }
         footer={

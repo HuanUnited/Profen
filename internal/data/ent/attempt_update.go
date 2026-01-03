@@ -197,6 +197,18 @@ func (_u *AttemptUpdate) ClearUserAnswer() *AttemptUpdate {
 	return _u
 }
 
+// SetMetadata sets the "metadata" field.
+func (_u *AttemptUpdate) SetMetadata(v map[string]interface{}) *AttemptUpdate {
+	_u.mutation.SetMetadata(v)
+	return _u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (_u *AttemptUpdate) ClearMetadata() *AttemptUpdate {
+	_u.mutation.ClearMetadata()
+	return _u
+}
+
 // SetCard sets the "card" edge to the FsrsCard entity.
 func (_u *AttemptUpdate) SetCard(v *FsrsCard) *AttemptUpdate {
 	return _u.SetCardID(v.ID)
@@ -331,6 +343,12 @@ func (_u *AttemptUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.UserAnswerCleared() {
 		_spec.ClearField(attempt.FieldUserAnswer, field.TypeString)
+	}
+	if value, ok := _u.mutation.Metadata(); ok {
+		_spec.SetField(attempt.FieldMetadata, field.TypeJSON, value)
+	}
+	if _u.mutation.MetadataCleared() {
+		_spec.ClearField(attempt.FieldMetadata, field.TypeJSON)
 	}
 	if _u.mutation.CardCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -578,6 +596,18 @@ func (_u *AttemptUpdateOne) ClearUserAnswer() *AttemptUpdateOne {
 	return _u
 }
 
+// SetMetadata sets the "metadata" field.
+func (_u *AttemptUpdateOne) SetMetadata(v map[string]interface{}) *AttemptUpdateOne {
+	_u.mutation.SetMetadata(v)
+	return _u
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (_u *AttemptUpdateOne) ClearMetadata() *AttemptUpdateOne {
+	_u.mutation.ClearMetadata()
+	return _u
+}
+
 // SetCard sets the "card" edge to the FsrsCard entity.
 func (_u *AttemptUpdateOne) SetCard(v *FsrsCard) *AttemptUpdateOne {
 	return _u.SetCardID(v.ID)
@@ -742,6 +772,12 @@ func (_u *AttemptUpdateOne) sqlSave(ctx context.Context) (_node *Attempt, err er
 	}
 	if _u.mutation.UserAnswerCleared() {
 		_spec.ClearField(attempt.FieldUserAnswer, field.TypeString)
+	}
+	if value, ok := _u.mutation.Metadata(); ok {
+		_spec.SetField(attempt.FieldMetadata, field.TypeJSON, value)
+	}
+	if _u.mutation.MetadataCleared() {
+		_spec.ClearField(attempt.FieldMetadata, field.TypeJSON)
 	}
 	if _u.mutation.CardCleared() {
 		edge := &sqlgraph.EdgeSpec{

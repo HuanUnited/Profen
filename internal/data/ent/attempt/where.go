@@ -456,6 +456,16 @@ func UserAnswerContainsFold(v string) predicate.Attempt {
 	return predicate.Attempt(sql.FieldContainsFold(FieldUserAnswer, v))
 }
 
+// MetadataIsNil applies the IsNil predicate on the "metadata" field.
+func MetadataIsNil() predicate.Attempt {
+	return predicate.Attempt(sql.FieldIsNull(FieldMetadata))
+}
+
+// MetadataNotNil applies the NotNil predicate on the "metadata" field.
+func MetadataNotNil() predicate.Attempt {
+	return predicate.Attempt(sql.FieldNotNull(FieldMetadata))
+}
+
 // HasCard applies the HasEdge predicate on the "card" edge.
 func HasCard() predicate.Attempt {
 	return predicate.Attempt(func(s *sql.Selector) {

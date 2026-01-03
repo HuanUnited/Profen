@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"profen/internal/app/service"
 	"profen/internal/data"
@@ -85,12 +86,25 @@ func (a *App) ReviewCard(cardIDStr string, grade int, durationMs int, userAnswer
 		return nil, fmt.Errorf("grade must be between 1 and 4")
 	}
 
+	// Parse userAnswer as JSON to extract metadata
+	var attemptData map[string]interface{}
+	if err := json.Unmarshal([]byte(userAnswer), &attemptData); err != nil {
+		// If not JSON, treat as plain text
+		attemptData = map[string]interface{}{
+			"text": userAnswer,
+		}
+	}
+
+	// Extract text field for backward compatibility
+	text, _ := attemptData["text"].(string)
+
 	return a.fsrsService.ReviewCard(
 		a.ctx,
 		cardID,
 		service.FSRSGrade(grade),
 		int64(durationMs),
-		userAnswer,
+		text,        // Store text in user_answer field
+		attemptData, // Store full metadata in metadata field
 		nil,
 	)
 }
@@ -258,4 +272,80 @@ func (a *App) DeleteNode(nodeIDStr string) error {
 		return fmt.Errorf("invalid node UUID: %w", err)
 	}
 	return a.nodeRepo.DeleteNode(a.ctx, id)
+}
+
+func (a *App) GetNodeBreadcrumbs(nodeIDStr string) ([]*ent.Node, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID: %w", err)
+	}
+	return a.nodeRepo.GetNodeBreadcrumbs(a.ctx, id)
+}
+
+// GetAttemptDetails retrieves a single attempt with parsed metadata
+func (a *App) GetAttemptDetails(attemptIDStr string) (map[string]interface{}, error) {
+	id, err := uuid.Parse(attemptIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid attempt UUID: %w", err)
+	}
+
+	attempt, err := a.attemptRepo.GetAttempt(a.ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build response with structured data
+	result := map[string]interface{}{
+		"id":          attempt.ID.String(),
+		"rating":      attempt.Rating,
+		"duration_ms": attempt.DurationMs,
+		"is_correct":  attempt.IsCorrect,
+		"created_at":  attempt.CreatedAt,
+		"state":       attempt.State,
+		"stability":   attempt.Stability,
+		"difficulty":  attempt.Difficulty,
+	}
+
+	// Add metadata if exists
+	if attempt.Metadata != nil {
+		result["error_log"] = attempt.Metadata["errorLog"]
+		result["difficulty_rating"] = attempt.Metadata["userDifficultyRating"]
+		result["submitted_at"] = attempt.Metadata["submittedAt"]
+	}
+
+	// Add user answer
+	if attempt.UserAnswer != "" {
+		result["user_answer"] = attempt.UserAnswer
+	}
+
+	return result, nil
+}
+
+func (a *App) DuplicateNode(nodeIDStr string) (*ent.Node, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID: %w", err)
+	}
+
+	original, err := a.nodeRepo.GetNode(a.ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create copy with " (Copy)" suffix
+	newTitle := original.Title + " (Copy)"
+
+	var parentID uuid.UUID
+	if original.ParentID != nil {
+		parentID = *original.ParentID
+	}
+
+	return a.nodeRepo.CreateNode(
+		a.ctx,
+		original.Type,
+		parentID,
+		newTitle,
+		original.Body,
+		original.Metadata,
+	)
 }

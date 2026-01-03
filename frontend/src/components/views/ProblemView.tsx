@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { GetAttemptHistory, GetNodeAssociations, DeleteNode } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
-import { ArrowRight, Pencil, Hash, BookOpen } from "lucide-react";
+import { ArrowRight, Pencil, Hash } from "lucide-react";
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
 import NodeModal from "../smart/NodeModal";
 import AttemptModal from "../smart/AttemptModal";
@@ -12,8 +12,10 @@ import StyledButton from "../atomic/StylizedButton";
 import ContextMenu from "../smart/ContextMenu";
 import ConnectionsPanel from "./panels/ConnectionsPanel";
 import AttemptHistoryPanel from "./panels/AttemptHistoryPanel";
+import ResizablePanel from "./panels/ResizablePanel";
 import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
 import { toast } from 'sonner';
+import { BookOpen, Hash as HashIcon } from "lucide-react";
 
 export default function ProblemView({ node }: { node: ent.Node }) {
   useNavigationHistory();
@@ -55,7 +57,7 @@ export default function ProblemView({ node }: { node: ent.Node }) {
       key: "similar",
       label: "Similar Problems",
       color: "text-blue-400",
-      icon: <Hash size={12} />,
+      icon: <HashIcon size={12} />,
       filter: (a: ent.NodeAssociation, nodeId: string) =>
         a.rel_type === "similar_to" && (
           String(a.source_id) === nodeId || String(a.target_id) === nodeId
@@ -107,10 +109,15 @@ export default function ProblemView({ node }: { node: ent.Node }) {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="w-80 space-y-6 overflow-y-auto pr-2">
-          <AttemptHistoryPanel attempts={attempts} />
-          <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
+        {/* Sidebar with Resizable Panels */}
+        <div className="w-80 flex flex-col gap-4 overflow-hidden">
+          <ResizablePanel defaultHeight={250} minHeight={150} maxHeight={500}>
+            <AttemptHistoryPanel attempts={attempts} />
+          </ResizablePanel>
+
+          <div className="flex-1 overflow-y-auto">
+            <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
+          </div>
         </div>
       </div>
 

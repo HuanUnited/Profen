@@ -58,6 +58,7 @@ type AttemptMutation struct {
 	created_at              *time.Time
 	is_correct              *bool
 	user_answer             *string
+	metadata                *map[string]interface{}
 	clearedFields           map[string]struct{}
 	card                    *uuid.UUID
 	clearedcard             bool
@@ -638,6 +639,55 @@ func (m *AttemptMutation) ResetUserAnswer() {
 	delete(m.clearedFields, attempt.FieldUserAnswer)
 }
 
+// SetMetadata sets the "metadata" field.
+func (m *AttemptMutation) SetMetadata(value map[string]interface{}) {
+	m.metadata = &value
+}
+
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *AttemptMutation) Metadata() (r map[string]interface{}, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the Attempt entity.
+// If the Attempt object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AttemptMutation) OldMetadata(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (m *AttemptMutation) ClearMetadata() {
+	m.metadata = nil
+	m.clearedFields[attempt.FieldMetadata] = struct{}{}
+}
+
+// MetadataCleared returns if the "metadata" field was cleared in this mutation.
+func (m *AttemptMutation) MetadataCleared() bool {
+	_, ok := m.clearedFields[attempt.FieldMetadata]
+	return ok
+}
+
+// ResetMetadata resets all changes to the "metadata" field.
+func (m *AttemptMutation) ResetMetadata() {
+	m.metadata = nil
+	delete(m.clearedFields, attempt.FieldMetadata)
+}
+
 // ClearCard clears the "card" edge to the FsrsCard entity.
 func (m *AttemptMutation) ClearCard() {
 	m.clearedcard = true
@@ -739,7 +789,7 @@ func (m *AttemptMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AttemptMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.rating != nil {
 		fields = append(fields, attempt.FieldRating)
 	}
@@ -770,6 +820,9 @@ func (m *AttemptMutation) Fields() []string {
 	if m.user_answer != nil {
 		fields = append(fields, attempt.FieldUserAnswer)
 	}
+	if m.metadata != nil {
+		fields = append(fields, attempt.FieldMetadata)
+	}
 	return fields
 }
 
@@ -798,6 +851,8 @@ func (m *AttemptMutation) Field(name string) (ent.Value, bool) {
 		return m.ErrorTypeID()
 	case attempt.FieldUserAnswer:
 		return m.UserAnswer()
+	case attempt.FieldMetadata:
+		return m.Metadata()
 	}
 	return nil, false
 }
@@ -827,6 +882,8 @@ func (m *AttemptMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldErrorTypeID(ctx)
 	case attempt.FieldUserAnswer:
 		return m.OldUserAnswer(ctx)
+	case attempt.FieldMetadata:
+		return m.OldMetadata(ctx)
 	}
 	return nil, fmt.Errorf("unknown Attempt field %s", name)
 }
@@ -905,6 +962,13 @@ func (m *AttemptMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserAnswer(v)
+		return nil
+	case attempt.FieldMetadata:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Attempt field %s", name)
@@ -993,6 +1057,9 @@ func (m *AttemptMutation) ClearedFields() []string {
 	if m.FieldCleared(attempt.FieldUserAnswer) {
 		fields = append(fields, attempt.FieldUserAnswer)
 	}
+	if m.FieldCleared(attempt.FieldMetadata) {
+		fields = append(fields, attempt.FieldMetadata)
+	}
 	return fields
 }
 
@@ -1012,6 +1079,9 @@ func (m *AttemptMutation) ClearField(name string) error {
 		return nil
 	case attempt.FieldUserAnswer:
 		m.ClearUserAnswer()
+		return nil
+	case attempt.FieldMetadata:
+		m.ClearMetadata()
 		return nil
 	}
 	return fmt.Errorf("unknown Attempt nullable field %s", name)
@@ -1050,6 +1120,9 @@ func (m *AttemptMutation) ResetField(name string) error {
 		return nil
 	case attempt.FieldUserAnswer:
 		m.ResetUserAnswer()
+		return nil
+	case attempt.FieldMetadata:
+		m.ResetMetadata()
 		return nil
 	}
 	return fmt.Errorf("unknown Attempt field %s", name)

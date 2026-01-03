@@ -1,6 +1,6 @@
 // frontend/src/components/views/TheoryView.tsx
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@antml:react-query";
 import { useNavigate } from "react-router-dom";
 import { GetNodeAssociations, DeleteNode } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
@@ -10,6 +10,7 @@ import NodeModal from "../smart/NodeModal";
 import StyledButton from "../atomic/StylizedButton";
 import ContextMenu from "../smart/ContextMenu";
 import ConnectionsPanel from "./panels/ConnectionsPanel";
+import ResizablePanel from "./panels/ResizablePanel";
 import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
 import { toast } from 'sonner';
 
@@ -90,8 +91,11 @@ export default function TheoryView({ node }: { node: ent.Node }) {
           </div>
         </div>
 
-        <div className="w-80 space-y-4 overflow-y-auto pr-2">
-          <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
+        {/* Sidebar with Resizable Connections Panel */}
+        <div className="w-80 flex flex-col overflow-hidden">
+          <ResizablePanel defaultHeight={400} minHeight={200} maxHeight={700}>
+            <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
+          </ResizablePanel>
         </div>
       </div>
 

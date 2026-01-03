@@ -263,3 +263,36 @@ func (r *NodeRepository) SearchNodes(ctx context.Context, query string) ([]*ent.
 		Limit(20).
 		All(ctx)
 }
+
+// internal/data/node_repository.go
+func (r *NodeRepository) GetNodeBreadcrumbs(ctx context.Context, id uuid.UUID) ([]*ent.Node, error) {
+	path := []*ent.Node{}
+	currentID := id
+	visited := make(map[uuid.UUID]bool) // Prevent cycles
+
+	for depth := 0; depth < 10; depth++ {
+		if visited[currentID] {
+			break // Circular reference detected
+		}
+		visited[currentID] = true
+
+		node, err := r.client.Node.Get(ctx, currentID)
+		if err != nil {
+			return path, nil // Return what we have so far
+		}
+
+		// Prepend to reverse order
+		path = append([]*ent.Node{node}, path...)
+
+		// 1. Check if the pointer is nil (common for optional fields in ent)
+		// 2. Check if the dereferenced value is the "Nil" UUID
+		if node.ParentID == nil || *node.ParentID == uuid.Nil {
+			break
+		}
+
+		// 3. Assign the dereferenced value to currentID
+		currentID = *node.ParentID
+	}
+
+	return path, nil
+}
