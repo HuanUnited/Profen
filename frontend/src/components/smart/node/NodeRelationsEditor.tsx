@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import { Link as LinkIcon, Search, ChevronRight, Trash2 } from 'lucide-react';
 import StyledButton from '../../atomic/StylizedButton';
 import clsx from 'clsx';
-import { ent } from '../../../../wailsjs/go/models';
+import { ent } from '../../../wailsjs/go/models';
 
 interface PendingRelation {
   targetId: string;
@@ -74,9 +73,9 @@ export default function NodeRelationsEditor({
               {searchResults.map((res) => (
                 <button
                   key={String(res.id)}
-                  onClick={() => { 
-                    onTargetSelect({ id: String(res.id), title: String(res.title) }); 
-                    onSearchQueryChange(String(res.title)); 
+                  onClick={() => {
+                    onTargetSelect({ id: String(res.id), title: String(res.title) });
+                    onSearchQueryChange(String(res.title));
                   }}
                   className="w-full text-left px-4 py-3 hover:bg-[#89b4fa]/10 text-sm border-b border-gray-800/50 flex justify-between items-center"
                 >

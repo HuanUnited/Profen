@@ -135,7 +135,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="inline-block text-5xl font-black bg-gradient-to-r from-[#e81cff] to-[#40c9ff] bg-clip-text text-transparent mb-4">
+              <div className="inline-block text-5xl font-black bg-linear-to-r from-[#e81cff] to-[#40c9ff] bg-clip-text text-transparent mb-4">
                 PROFEN
               </div>
               <p className="text-gray-400 text-sm mb-2">Mastery Learning System</p>

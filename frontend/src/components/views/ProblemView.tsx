@@ -171,7 +171,7 @@ export default function ProblemView({ node }: { node: ent.Node }) {
 
       <NodeModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} mode="edit" initialNode={node} />
       <AttemptModal isOpen={isAttemptOpen} onClose={() => setIsAttemptOpen(false)} node={node} />
-      <AttemptDetailModal attemptId={selectedAttemptId} onClose={() => setSelectedAttemptId(null)} />
+      <AttemptDetailModal attemptId={selectedAttemptId} onClose={() => setSelectedAttemptId(null)} isOpen={false} />
     </div>
   );
 }

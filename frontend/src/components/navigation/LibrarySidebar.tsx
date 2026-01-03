@@ -1,76 +1,149 @@
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { GetSubjects } from '../../wailsjs/go/app/App';
-import { ent } from '../../wailsjs/go/models';
-import { BookOpen, Plus } from 'lucide-react';
-import StyledButton from '../atomic/StylizedButton';
-import { useState } from 'react';
-import NodeModal from '../smart/NodeModal';
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, ArrowRight, ArrowUp, Plus, Home } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { GetNode, GetNodeBreadcrumbs } from "../../wailsjs/go/app/App";
+import SidebarFrame from "./SidebarFrame";
+import SubjectList from "../layouts/SubjectList";
+import NodeModal from "../smart/NodeModal";
+import StyledButton from "../atomic/StylizedButton";
+import { useNavigationHistory } from "../../utils/hooks/useNavigationHistory";
 
 export default function LibrarySidebar() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const selectedNodeId = searchParams.get('nodeId');
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const currentNodeId = searchParams.get("nodeId");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { goBack, goForward, canGoForward } = useNavigationHistory();
 
-  const { data: subjects, isLoading } = useQuery({
-    queryKey: ['subjects'],
-    queryFn: GetSubjects,
+  const { data: currentNode } = useQuery({
+    queryKey: ["node", currentNodeId],
+    queryFn: () => GetNode(currentNodeId!),
+    enabled: !!currentNodeId,
   });
 
-  const handleSubjectClick = (nodeId: string) => {
-    navigate(`/library?nodeId=${nodeId}`);
+  // Fetch breadcrumbs from backend
+  const { data: breadcrumbs } = useQuery({
+    queryKey: ["breadcrumbs", currentNodeId],
+    queryFn: () => GetNodeBreadcrumbs(currentNodeId!),
+    enabled: !!currentNodeId,
+  });
+
+  const handleUp = () => {
+    if (!currentNodeId) return;
+    if (currentNode?.parent_id) {
+      navigate(`/library?nodeId=${currentNode.parent_id}`);
+    } else {
+      navigate("/library");
+    }
+  };
+
+  const getDefaultType = () => {
+    if (!currentNode) return "subject";
+    switch (currentNode.type) {
+      case "subject":
+        return "topic";
+      case "topic":
+        return "problem";
+      default:
+        return "subject";
+    }
+  };
+
+  // Build breadcrumb path ~/subject/topic/node
+  const buildCurrentPath = (): string => {
+    if (!breadcrumbs || breadcrumbs.length === 0) return "~/";
+
+    const titles = breadcrumbs.map(node => node.title || "Untitled");
+    return "~/" + titles.join("/");
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#1a1b26] border-r border-[#2f334d]">
-      {/* Header */}
-      <div className="h-16 flex items-center justify-between px-6 border-b border-[#2f334d] shrink-0">
-        <div className="flex items-center gap-2">
-          <BookOpen size={20} className="text-blue-400" />
-          <h2 className="text-lg font-bold text-white">Library</h2>
-        </div>
-        <StyledButton
-          variant="ghost"
-          size="sm"
-          icon={<Plus size={16} />}
-          onClick={() => setIsCreateOpen(true)}
-        />
-      </div>
-
-      {/* Subjects List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-        {isLoading ? (
-          <div className="text-gray-500 text-sm text-center py-8">Loading...</div>
-        ) : !subjects || subjects.length === 0 ? (
-          <div className="text-gray-600 text-sm text-center py-8">
-            No subjects yet. Create one to get started.
-          </div>
-        ) : (
-          subjects.map((subject: ent.Node) => (
+    <>
+      <SidebarFrame
+        resizable={true}
+        initialWidth={280}
+        header={
+          <div className="flex items-center gap-2 w-full">
+            {/* Back like browser */}
             <button
-              key={String(subject.id)}
-              onClick={() => handleSubjectClick(String(subject.id))}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-all ${selectedNodeId === String(subject.id)
-                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                  : 'text-gray-300 hover:bg-[#2f334d]/50 border border-transparent'
-                }`}
+              onClick={goBack}
+              className="flex items-center text-gray-500 hover:text-white transition-colors group pointer-events-auto"
+              title="Back (Alt+←)"
             >
-              <div className="flex items-center gap-3">
-                <BookOpen size={16} className="shrink-0" />
-                <span className="font-medium truncate">{subject.title}</span>
-              </div>
+              <ArrowLeft size={16} />
             </button>
-          ))
-        )}
-      </div>
+
+            {/* Forward only when possible */}
+            {canGoForward && (
+              <button
+                onClick={goForward}
+                className="flex items-center text-gray-500 hover:text-white transition-colors group pointer-events-auto"
+                title="Forward (Alt+→)"
+              >
+                <ArrowRight size={16} />
+              </button>
+            )}
+
+            <button
+              onClick={handleUp}
+              disabled={!currentNodeId}
+              className="flex items-center text-gray-500 hover:text-white transition-colors disabled:opacity-30 pointer-events-auto disabled:cursor-not-allowed"
+              title="Up One Level"
+            >
+              <ArrowUp size={16} />
+            </button>
+
+            <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-gray-600 select-none">
+              LIBRARY
+            </span>
+          </div>
+        }
+        toolbar={
+          <div className="flex flex-col gap-1 w-full">
+            <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">
+              Navigation
+            </span>
+            {currentNode && (
+              <div className="text-[9px] font-mono text-gray-500 truncate" title={buildCurrentPath()}>
+                {buildCurrentPath()}
+              </div>
+            )}
+          </div>
+        }
+        footer={
+          <div className="flex flex-col gap-2">
+            <StyledButton
+              variant="primary"
+              size="md"
+              icon={<Plus size={14} />}
+              onClick={() => setIsModalOpen(true)}
+              className="w-full"
+            >
+              NEW NODE
+            </StyledButton>
+            <StyledButton
+              variant="ghost"
+              size="md"
+              icon={<Home size={14} />}
+              onClick={() => navigate("/")}
+              className="w-full"
+            >
+              DASHBOARD
+            </StyledButton>
+          </div>
+        }
+      >
+        <SubjectList />
+      </SidebarFrame>
 
       <NodeModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         mode="create"
-        defaultType="subject"
+        contextNode={currentNode}
+        defaultType={getDefaultType()}
       />
-    </div>
+    </>
   );
 }

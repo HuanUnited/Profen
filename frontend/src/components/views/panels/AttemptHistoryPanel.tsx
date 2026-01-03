@@ -65,8 +65,7 @@ export default function AttemptHistoryPanel({ nodeId }: AttemptHistoryPanelProps
 
       <AttemptDetailModal
         attemptId={selectedAttemptId}
-        onClose={() => setSelectedAttemptId(null)}
-      />
+        onClose={() => setSelectedAttemptId(null)} isOpen={false} />
     </>
   );
 }

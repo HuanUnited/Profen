@@ -4,8 +4,10 @@ import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import StyledButton from '../atomic/StylizedButton';
 import MarkdownRenderer from '../atomic/MarkdownRenderer';
+import LatticeCanvas from '../atomic/LatticeCanvas';
 
 interface AttemptDetailModalProps {
+  isOpen: boolean;
   attemptId: string | null;
   onClose: () => void;
 }
@@ -19,11 +21,6 @@ const ModalWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background-image: 
-    linear-gradient(to right, rgba(47, 51, 77, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(47, 51, 77, 0.08) 1px, transparent 1px);
-  background-size: 40px 40px;
 
   .modal-container {
     background: linear-gradient(#16161e, #16161e) padding-box,
@@ -46,39 +43,68 @@ const ModalWrapper = styled.div`
   .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #40c9ff; }
 `;
 
-// Mock fetch - replace with actual backend call
+// Fetch attempt details from backend
 const fetchAttemptDetails = async (attemptId: string) => {
-  // TODO: Replace with actual API call
-  // For now, return mock data structure
+  // This will be replaced with actual backend call
+  // For now returning mock structure
   return {
     id: attemptId,
     rating: 2,
     duration_ms: 125000,
     created_at: new Date().toISOString(),
-    metadata: {
+    payload: JSON.stringify({
       text: "Sample solution text...",
       errorLog: "Forgot to apply chain rule",
       errorTags: ["Conceptual Misunderstanding", "Forgot Formula"],
       userDifficultyRating: 7
-    }
+    })
   };
 };
 
-export default function AttemptDetailModal({ attemptId, onClose }: AttemptDetailModalProps) {
+export default function AttemptDetailModal({ isOpen, attemptId, onClose }: AttemptDetailModalProps) {
   const { data: attempt, isLoading } = useQuery({
     queryKey: ['attemptDetail', attemptId],
     queryFn: () => fetchAttemptDetails(attemptId!),
-    enabled: !!attemptId,
+    enabled: isOpen && !!attemptId,
   });
 
-  if (!attemptId) return null;
+  if (!isOpen || !attemptId) return null;
+
+  // Parse payload JSON
+  let metadata: any = {};
+  try {
+    if (attempt?.payload) {
+      metadata = JSON.parse(attempt.payload);
+    }
+  } catch (e) {
+    console.error("Failed to parse attempt metadata:", e);
+  }
 
   const modal = (
     <ModalWrapper className="animate-in fade-in duration-200" onClick={onClose}>
-      <div className="modal-container w-[90vw] max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+      {/* Background Canvas */}
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+        <LatticeCanvas
+          options={{
+            spacing: 80,
+            mouseRepel: true,
+            mouseDistance: 200,
+            mouseStrength: 2,
+            mouseZ: 100,
+            moveStrength: 0.5,
+            accStrength: 0.1,
+            xSpeed: 50,
+            ySpeed: 30,
+            drawColored: true,
+            mouseGradient: 'outward' as const
+          }}
+        />
+      </div>
+
+      <div className="modal-container w-[90vw] max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden flex flex-col relative z-10" onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="h-16 px-8 border-b border-[#2f334d]/50 flex items-center justify-between bg-[#1a1b26] shrink-0">
+        <div className="h-16 px-8 border-b border-[#2f334d]/50 flex items-center justify-between bg-[#16161e]/90 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-4">
             <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border bg-purple-500/20 text-purple-400 border-purple-500/30">
               ATTEMPT DETAILS
@@ -89,7 +115,7 @@ export default function AttemptDetailModal({ attemptId, onClose }: AttemptDetail
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-[#16161e]/50">
           {isLoading ? (
             <div className="text-gray-500 text-center py-12">Loading attempt details...</div>
           ) : attempt ? (
@@ -121,7 +147,7 @@ export default function AttemptDetailModal({ attemptId, onClose }: AttemptDetail
                     <span className="uppercase">Grade</span>
                   </div>
                   <p className={`text-sm font-bold ${attempt.rating >= 3 ? 'text-emerald-400' :
-                      attempt.rating === 2 ? 'text-orange-400' : 'text-red-400'
+                    attempt.rating === 2 ? 'text-orange-400' : 'text-red-400'
                     }`}>
                     {['Again', 'Hard', 'Good', 'Easy'][attempt.rating - 1]}
                   </p>
@@ -133,29 +159,29 @@ export default function AttemptDetailModal({ attemptId, onClose }: AttemptDetail
                     <span className="uppercase">Difficulty</span>
                   </div>
                   <p className="text-sm text-yellow-400 font-mono">
-                    {attempt.metadata?.userDifficultyRating || '-'}/10
+                    {metadata?.userDifficultyRating || '-'}/10
                   </p>
                 </div>
               </div>
 
               {/* Solution */}
-              {attempt.metadata?.text && (
+              {metadata?.text && (
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Your Solution</label>
                   <div className="p-4 bg-[#1a1b26] border border-[#2f334d] rounded-lg">
-                    <MarkdownRenderer content={attempt.metadata.text} />
+                    <MarkdownRenderer content={metadata.text} />
                   </div>
                 </div>
               )}
 
               {/* Error Tags */}
-              {attempt.metadata?.errorTags && attempt.metadata.errorTags.length > 0 && (
+              {metadata?.errorTags && metadata.errorTags.length > 0 && (
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
                     <Tag size={14} /> Error Categories
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {attempt.metadata.errorTags.map((tag: string) => (
+                    {metadata.errorTags.map((tag: string) => (
                       <span
                         key={tag}
                         className="px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-500/30"
@@ -168,14 +194,14 @@ export default function AttemptDetailModal({ attemptId, onClose }: AttemptDetail
               )}
 
               {/* Error Log */}
-              {attempt.metadata?.errorLog && (
+              {metadata?.errorLog && (
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
                     <AlertCircle size={14} /> Error Analysis
                   </label>
                   <div className="p-4 bg-[#1a1b26] border border-red-900/30 rounded-lg">
                     <p className="text-sm text-gray-300 leading-relaxed">
-                      {attempt.metadata.errorLog}
+                      {metadata.errorLog}
                     </p>
                   </div>
                 </div>
@@ -187,7 +213,7 @@ export default function AttemptDetailModal({ attemptId, onClose }: AttemptDetail
         </div>
 
         {/* Footer */}
-        <div className="h-16 border-t border-[#2f334d]/50 bg-[#16161e]/90 flex items-center justify-end px-8 shrink-0">
+        <div className="h-16 border-t border-[#2f334d]/50 bg-[#16161e]/90 backdrop-blur-sm flex items-center justify-end px-8 shrink-0">
           <StyledButton variant="primary" size="md" onClick={onClose}>
             CLOSE
           </StyledButton>

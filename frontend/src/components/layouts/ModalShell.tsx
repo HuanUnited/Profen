@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { X } from 'lucide-react';
 import StyledButton from '../atomic/StylizedButton';
+import LatticeCanvas from '../atomic/LatticeCanvas';
 
 interface ModalShellProps {
   isOpen: boolean;
@@ -25,12 +26,6 @@ const ModalWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-
-  /* Panel background pattern (canvas) */
-  background-image: 
-    linear-gradient(to right, rgba(47, 51, 77, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(47, 51, 77, 0.08) 1px, transparent 1px);
-  background-size: 40px 40px;
 
   .modal-container {
     background: linear-gradient(#16161e, #16161e) padding-box,
@@ -82,7 +77,26 @@ export default function ModalShell({
 
   const modal = (
     <ModalWrapper className="animate-in fade-in duration-200">
-      <div className={`modal-container w-[95vw] ${maxWidthMap[maxWidth]} h-[90vh] rounded-2xl overflow-hidden flex flex-col ${className}`}>
+      {/* Background Canvas */}
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+        <LatticeCanvas
+          options={{
+            spacing: 80,
+            mouseRepel: true,
+            mouseDistance: 200,
+            mouseStrength: 2,
+            mouseZ: 100,
+            moveStrength: 0.5,
+            accStrength: 0.1,
+            xSpeed: 50,
+            ySpeed: 30,
+            drawColored: true,
+            mouseGradient: 'outward' as const
+          }}
+        />
+      </div>
+
+      <div className={`modal-container w-[95vw] ${maxWidthMap[maxWidth]} h-[90vh] rounded-2xl overflow-hidden flex flex-col relative z-10 ${className}`}>
 
         {/* Header */}
         <div className="h-16 flex items-center justify-between px-8 border-b border-[#2f334d]/50 bg-[#16161e]/90 backdrop-blur-sm shrink-0">

@@ -1,4 +1,3 @@
-// frontend/src/components/layouts/SubjectList.tsx
 import { useQuery } from "@tanstack/react-query";
 import { GetSubjects } from "../../wailsjs/go/app/App";
 import { useNavigate, useSearchParams } from "react-router-dom";
