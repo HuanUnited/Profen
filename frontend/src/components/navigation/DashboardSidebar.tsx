@@ -1,77 +1,99 @@
-import { LayoutDashboard, Library, BookOpen, Terminal, Wrench } from "lucide-react";
-import SidebarFrame from "./SidebarFrame";
-import ThemeToggle from "../atomic/ThemeToggle";
+import { LayoutDashboard, Library, BookOpen, Terminal, Settings, Sun, Moon } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import SidebarFrame from "./SidebarFrame";
 import StyledButton from "../atomic/StylizedButton";
-import { useState } from "react";
-
+import SettingsModal from "../smart/SettingsModal";
 
 export default function DashboardSidebar() {
-
   const navigate = useNavigate();
-  const [setupOpen, setSetupOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+
+  // Theme sync
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
 
   return (
-    <SidebarFrame
-      resizable={false} // Fixed width
-      initialWidth={256} // w-64
-      // Slot 1: Header
-      header={
-        <div className="flex items-center">
-          <Terminal className="w-5 h-5 text-[#89b4fa] mr-3" />
-          <span className="font-bold tracking-tight text-lg text-white">PROFEN_OS</span>
-        </div>
-      }
-    >
-      {/* Slot 4: Content (Nav Links) */}
-      <nav className="space-y-1 mt-2">
-        <StyledButton
-          variant="ghost"
-          size="md"
-          className="justify-start w-full px-4 py-3"
-          icon={<LayoutDashboard size={18} />}
-          onClick={() => navigate('/')}
-        >
-          Dashboard
-        </StyledButton>
-        <StyledButton
-          variant="ghost"
-          size="md"
-          className="justify-start w-full px-4 py-3"
-          icon={<Library size={18} />}
-          onClick={() => navigate('/library')}
-        >
-          Library
-        </StyledButton>
-        <StyledButton
-          variant="ghost"
-          size="md"
-          className="justify-start w-full px-4 py-3"
-          icon={<BookOpen size={18} />}
-          onClick={() => navigate('/review')}
-        >
-          Study Session
-        </StyledButton>
-      </nav>
-
-
-
-      <div className="mt-auto pt-4 border-t border-2f334d absolute bottom-4 left-0 right-0 px-4">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-600 font-mono">v0.1.0-alpha</span>
-          {/* ThemeToggle moved to bottom-right */}
-          <ThemeToggle />
+    <>
+      <SidebarFrame
+        resizable={false}
+        initialWidth={256}
+        header={
+          <div className="flex items-center">
+            <Terminal className="w-5 h-5 text-[#89b4fa] mr-3" />
+            <span className="font-bold tracking-tight text-lg text-white">PROFEN_OS</span>
+          </div>
+        }
+      >
+        {/* Navigation Links */}
+        <nav className="space-y-1 mt-2">
           <StyledButton
             variant="ghost"
-            size="sm"
-            icon={<Wrench size={16} />}
-            onClick={() => setSetupOpen(!setupOpen)}
+            size="md"
+            className="justify-start w-full px-4 py-3"
+            icon={<LayoutDashboard size={18} />}
+            onClick={() => navigate('/')}
           >
-            Setup
+            Dashboard
           </StyledButton>
-        </div>
-      </div>
+          <StyledButton
+            variant="ghost"
+            size="md"
+            className="justify-start w-full px-4 py-3"
+            icon={<Library size={18} />}
+            onClick={() => navigate('/library')}
+          >
+            Library
+          </StyledButton>
+          <StyledButton
+            variant="ghost"
+            size="md"
+            className="justify-start w-full px-4 py-3"
+            icon={<BookOpen size={18} />}
+            onClick={() => navigate('/review')}
+          >
+            Study Session
+          </StyledButton>
+        </nav>
 
-    </SidebarFrame>
+        {/* Footer Controls */}
+        <div className="mt-auto pt-4 border-t border-[#2f334d] absolute bottom-4 left-0 right-0 px-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-600 font-mono">v0.1.0-alpha</span>
+
+            <div className="flex items-center gap-2">
+              {/* Compact Theme Toggle */}
+              <button
+                onClick={() => setIsDark(!isDark)}
+                className="p-2 rounded-lg bg-[#1a1b26] border border-[#2f334d] hover:border-[#89b4fa] transition-all"
+                title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {isDark ? (
+                  <Moon size={14} className="text-gray-400" />
+                ) : (
+                  <Sun size={14} className="text-orange-400" />
+                )}
+              </button>
+
+              {/* Compact Settings Button */}
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="p-2 rounded-lg bg-[#1a1b26] border border-[#2f334d] hover:border-[#89b4fa] transition-all"
+                title="Settings"
+              >
+                <Settings size={14} className="text-gray-400" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </SidebarFrame>
+
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
+    </>
   );
 }

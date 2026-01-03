@@ -1,29 +1,22 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { GetDueCards, GetDueCardsQueue } from '../../wailsjs/go/app/App';
-import { Clock, Activity, Book, ArrowRight, Plus } from 'lucide-react';
+import { GetDueCards } from '../../wailsjs/go/app/App';
+import { Clock, Activity, Book, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import StyledButton from '../atomic/StylizedButton';
 import NodeModal from '../smart/NodeModal';
+import AttemptModal from '../smart/AttemptModal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<any | null>(null);
 
   const { data: dueNodes, isLoading } = useQuery({
     queryKey: ['dueCards'],
     queryFn: () => GetDueCards(10),
   });
-
-  const handleStartSession = async () => {
-    try {
-      const queueIds = await GetDueCardsQueue(20);
-      navigate(`/study?queue=${queueIds.join(",")}&returnTo=/`);
-    } catch (err) {
-      console.error("Failed to start session:", err);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -96,14 +89,6 @@ export default function Dashboard() {
               <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
               Action Queue
             </h2>
-            <StyledButton
-              variant="primary"
-              size="md"
-              onClick={handleStartSession}
-              rightElement={<ArrowRight size={12} />}
-            >
-              START SESSION
-            </StyledButton>
           </div>
 
           {(!dueNodes || dueNodes.length === 0) ? (
@@ -124,7 +109,7 @@ export default function Dashboard() {
                   key={JSON.stringify(node.id)}
                   className="group flex items-center justify-between p-4 bg-[#1a1b26] border-l-2 border-transparent hover:border-[#89b4fa] hover:bg-[#20212e] transition-all cursor-pointer shadow-sm animate-in slide-in-from-left-4 duration-500"
                   style={{ animationDelay: `${300 + idx * 50}ms` }}
-                  onClick={() => navigate(`/study?queue=${node.id}&returnTo=/`)}
+                  onClick={() => setSelectedNode(node)}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1.5">
@@ -143,7 +128,6 @@ export default function Dashboard() {
 
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
                     <span className="text-[10px] text-[#89b4fa] font-mono uppercase">Review</span>
-                    <ArrowRight size={14} className="text-[#89b4fa]" />
                   </div>
                 </div>
               ))}
@@ -158,6 +142,14 @@ export default function Dashboard() {
         mode="create"
         defaultType="subject"
       />
+
+      {selectedNode && (
+        <AttemptModal
+          isOpen={!!selectedNode}
+          onClose={() => setSelectedNode(null)}
+          node={selectedNode}
+        />
+      )}
     </>
   );
 }
