@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { GetDueCards } from '../../wailsjs/go/app/App';
-import { Clock, Activity, Book, Plus } from 'lucide-react';
+import { GetDueCards, GetDashboardStats } from '../../wailsjs/go/app/App';
+import { Clock, Activity, Book, Plus, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import StyledButton from '../atomic/StylizedButton';
@@ -13,12 +13,17 @@ export default function Dashboard() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
 
-  const { data: dueNodes, isLoading } = useQuery({
+  const { data: dueNodes, isLoading: loadingDue } = useQuery({
     queryKey: ['dueCards'],
     queryFn: () => GetDueCards(10),
   });
 
-  if (isLoading) {
+  const { data: stats, isLoading: loadingStats } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: GetDashboardStats,
+  });
+
+  if (loadingDue || loadingStats) {
     return (
       <div className="p-8 font-mono text-gray-500 animate-pulse">
         {'>'} Initializing system metrics...
@@ -26,44 +31,53 @@ export default function Dashboard() {
     );
   }
 
-  const stats = [
-    { label: "Due Items", value: dueNodes?.length || 0, icon: <Clock size={16} />, color: "text-red-400" },
-    { label: "Day Streak", value: "12", icon: <Activity size={16} />, color: "text-emerald-400" },
-    { label: "Total Nodes", value: "842", icon: <Book size={16} />, color: "text-blue-400" },
+  const statCards = [
+    {
+      label: "Due Items",
+      value: stats?.dueCount || 0,
+      icon: <Clock size={16} />,
+      color: "text-red-400"
+    },
+    {
+      label: "Day Streak",
+      value: stats?.currentStreak || 0,
+      icon: <Activity size={16} />,
+      color: "text-emerald-400"
+    },
+    {
+      label: "Total Nodes",
+      value: stats?.totalNodes || 0,
+      icon: <Book size={16} />,
+      color: "text-blue-400"
+    },
+    {
+      label: "Mastery Rate",
+      value: `${stats?.masteryRate || 0}%`,
+      icon: <TrendingUp size={16} />,
+      color: "text-purple-400"
+    }
   ];
 
   return (
     <>
       <div className="max-w-6xl mx-auto p-8 space-y-10 animate-in fade-in duration-500">
-
-        {/* Header Section */}
         <div className="flex justify-between items-start animate-in slide-in-from-bottom-3 duration-700">
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight mb-2">System Status</h1>
-            <p className="text-gray-500 font-mono text-sm">Welcome back, User. Your knowledge base is active.</p>
+            <p className="text-gray-500 font-mono text-sm">Welcome back. Your knowledge base is active.</p>
           </div>
           <div className="flex gap-3">
-            <StyledButton
-              variant="secondary"
-              size="md"
-              icon={<Plus size={16} />}
-              onClick={() => setIsCreateOpen(true)}
-            >
+            <StyledButton variant="secondary" size="md" icon={<Plus size={16} />} onClick={() => setIsCreateOpen(true)}>
               CREATE NODE
             </StyledButton>
-            <StyledButton
-              variant="ghost"
-              size="md"
-              onClick={() => navigate('/library')}
-            >
+            <StyledButton variant="ghost" size="md" onClick={() => navigate('/library')}>
               LIBRARY
             </StyledButton>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-bottom-4 duration-700 delay-100">
-          {stats.map((stat, idx) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in slide-in-from-bottom-4 duration-700 delay-100">
+          {statCards.map((stat, idx) => (
             <div
               key={stat.label}
               className="bg-[#1a1b26] border border-[#2f334d] p-5 flex items-center justify-between shadow-sm hover:border-[#89b4fa] transition-colors group"
@@ -82,7 +96,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Priority Action Queue */}
         <div className="space-y-4 animate-in slide-in-from-bottom-5 duration-700 delay-200">
           <div className="flex justify-between items-end border-b border-gray-800 pb-2">
             <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -94,11 +107,7 @@ export default function Dashboard() {
           {(!dueNodes || dueNodes.length === 0) ? (
             <div className="py-16 border-2 border-dashed border-[#2f334d] rounded-lg text-center animate-in fade-in duration-500 delay-300">
               <p className="text-gray-500 font-mono mb-4">All systems nominal. No pending reviews.</p>
-              <StyledButton
-                variant="secondary"
-                size="md"
-                onClick={() => navigate('/library')}
-              >
+              <StyledButton variant="secondary" size="md" onClick={() => navigate('/library')}>
                 BROWSE LIBRARY
               </StyledButton>
             </div>
@@ -125,7 +134,6 @@ export default function Dashboard() {
                     </div>
                     <h3 className="text-gray-200 font-medium group-hover:text-white transition-colors">{node.title}</h3>
                   </div>
-
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
                     <span className="text-[10px] text-[#89b4fa] font-mono uppercase">Review</span>
                   </div>
@@ -136,20 +144,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <NodeModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        mode="create"
-        defaultType="subject"
-      />
-
-      {selectedNode && (
-        <AttemptModal
-          isOpen={!!selectedNode}
-          onClose={() => setSelectedNode(null)}
-          node={selectedNode}
-        />
-      )}
+      <NodeModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} mode="create" defaultType="subject" />
+      {selectedNode && <AttemptModal isOpen={!!selectedNode} onClose={() => setSelectedNode(null)} node={selectedNode} />}
     </>
   );
 }
