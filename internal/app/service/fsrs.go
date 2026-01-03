@@ -252,9 +252,10 @@ func (s *FSRSService) calculateNewStability(
 	}
 
 	multiplier := 1.0
-	if grade == GradeHard {
+	switch grade {
+	case GradeHard:
 		multiplier = hardPenalty
-	} else if grade == GradeEasy {
+	case GradeEasy:
 		multiplier = easyBonus
 	}
 
