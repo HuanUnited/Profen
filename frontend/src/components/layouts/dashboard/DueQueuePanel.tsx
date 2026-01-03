@@ -34,7 +34,7 @@ export default function DueQueuePanel({ dueNodes, onNodeClick }: DueQueuePanelPr
           </StyledButton>
         </div>
       ) : (
-        <div className="space-y-2 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+        <div className="space-y-2 max-h-150 overflow-y-auto custom-scrollbar pr-2">
           {dueNodes.map((node, idx) => (
             <div
               key={JSON.stringify(node.id)}

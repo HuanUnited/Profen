@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, ArrowUp, Plus, Home } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { GetNode, GetNodeBreadcrumbs } from "../../wailsjs/go/app/App";
 import SidebarFrame from "./SidebarFrame";
@@ -121,15 +121,6 @@ export default function LibrarySidebar() {
               className="w-full"
             >
               NEW NODE
-            </StyledButton>
-            <StyledButton
-              variant="ghost"
-              size="md"
-              icon={<Home size={14} />}
-              onClick={() => navigate("/")}
-              className="w-full"
-            >
-              DASHBOARD
             </StyledButton>
           </div>
         }

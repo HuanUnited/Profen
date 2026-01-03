@@ -25,14 +25,23 @@ export default function RootView() {
             <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Knowledge Library</h1>
             <p className="text-gray-500 text-sm">Browse and organize your learning materials</p>
           </div>
-          <StyledButton
-            variant="primary"
-            size="md"
-            icon={<Plus size={16} />}
-            onClick={() => setIsCreateOpen(true)}
-          >
-            NEW SUBJECT
-          </StyledButton>
+          <div className="flex gap-3">
+            <StyledButton
+              variant="secondary"
+              size="md"
+              icon={<Plus size={16} />}
+              onClick={() => setIsCreateOpen(true)}
+            >
+              NEW SUBJECT
+            </StyledButton>
+            <StyledButton
+              variant="ghost"
+              size="md"
+              onClick={() => navigate('/')}
+            >
+              DASHBOARD
+            </StyledButton>
+          </div>
         </div>
 
         {/* Subjects Grid */}

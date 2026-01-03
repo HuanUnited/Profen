@@ -41,8 +41,6 @@ export default function ActivityHeatmapPanel() {
   }
 
   const calculateStreak = () => {
-    // ... logic same as before ...
-    // Calculate streak
     const sortedDates = Object.keys(heatmapData).sort().reverse();
     let currentStreak = 0;
     let longestStreak = 0;
@@ -127,7 +125,7 @@ export default function ActivityHeatmapPanel() {
   };
 
   if (isLoading) {
-    return <div className="bg-[#1a1b26] border border-[#2f334d] rounded-lg p-5 h-[300px] animate-pulse" />;
+    return <div className="bg-[#1a1b26] border border-[#2f334d] rounded-lg p-5 h-75 animate-pulse" />;
   }
 
   return (
@@ -143,7 +141,7 @@ export default function ActivityHeatmapPanel() {
           <button onClick={() => changeMonth('prev')} className="p-1 hover:bg-[#2f334d] rounded transition-colors">
             <ChevronLeft size={14} className="text-gray-400" />
           </button>
-          <span className="text-[10px] font-bold text-gray-400 min-w-[70px] text-center">
+          <span className="text-[10px] font-bold text-gray-400 min-w-17.5 text-center">
             {currentMonth.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
           </span>
           <button onClick={() => changeMonth('next')} className="p-1 hover:bg-[#2f334d] rounded transition-colors">
@@ -208,45 +206,56 @@ export default function ActivityHeatmapPanel() {
       <div className="flex items-center justify-center gap-1.5 mt-3 pt-3 border-t border-[#2f334d]/50">
         <span className="text-[9px] text-gray-500">Less</span>
         {[0, 1, 2, 3, 4].map(level => (
-          <div key={level} className={clsx("w-2 h-2 rounded-[2px] border", getCellColor(level))} />
+          <div key={level} className={clsx("w-2 h-2 rounded-xs border", getCellColor(level))} />
         ))}
         <span className="text-[9px] text-gray-500">More</span>
       </div>
 
-      {/* Collapsible Details */}
-      {selectedDay && selectedDay.attempts.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-[#2f334d] animate-in slide-in-from-top-2 duration-300">
-          <button onClick={() => setSelectedDay(null)} className="flex items-center justify-between w-full mb-3 group">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-white">
-                {selectedDay.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
-              <span className="text-[10px] text-gray-500">
-                {selectedDay.count} {selectedDay.count === 1 ? 'attempt' : 'attempts'}
-              </span>
-            </div>
-            <ChevronUp size={14} className="text-gray-500 group-hover:text-white transition-colors" />
-          </button>
-
-          <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
-            {selectedDay.attempts.map((attempt, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 bg-[#16161e] border border-[#2f334d] rounded-md hover:border-[#89b4fa] transition-colors">
-                <div className="flex items-center gap-2">
-                  <span className={clsx(
-                    "text-[9px] px-1.5 py-0.5 border rounded uppercase font-bold",
-                    attempt.is_correct ? "border-emerald-700 text-emerald-400 bg-emerald-900/20" : "border-red-700 text-red-400 bg-red-900/20"
-                  )}>{attempt.is_correct ? '✓' : '✗'}</span>
-                  <span className="text-[9px] text-gray-500 font-mono">R{attempt.rating}</span>
-                  <span className="text-[9px] text-gray-500">{Math.round((attempt.duration_ms || 0) / 1000)}s</span>
-                </div>
-                <div className="text-[9px] text-gray-500 font-mono">
-                  {new Date(attempt.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                </div>
+      {/* Collapsible Details - SMOOTH ANIMATION */}
+      <div
+        className={clsx(
+          "overflow-hidden transition-all duration-300 ease-in-out",
+          selectedDay && selectedDay.attempts.length > 0 ? "max-h-75 opacity-100 mt-4" : "max-h-0 opacity-0"
+        )}
+      >
+        {selectedDay && selectedDay.attempts.length > 0 && (
+          <div className="pt-3 border-t border-[#2f334d]">
+            <button onClick={() => setSelectedDay(null)} className="flex items-center justify-between w-full mb-3 group">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white">
+                  {selectedDay.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+                <span className="text-[10px] text-gray-500">
+                  {selectedDay.count} {selectedDay.count === 1 ? 'attempt' : 'attempts'}
+                </span>
               </div>
-            ))}
+              <ChevronUp size={14} className="text-gray-500 group-hover:text-white transition-colors" />
+            </button>
+
+            <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+              {selectedDay.attempts.map((attempt, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-2 bg-[#16161e] border border-[#2f334d] rounded-md hover:border-[#89b4fa] transition-colors animate-in fade-in slide-in-from-top-1 duration-200"
+                  style={{ animationDelay: `${idx * 30}ms` }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={clsx(
+                      "text-[9px] px-1.5 py-0.5 border rounded uppercase font-bold",
+                      attempt.is_correct ? "border-emerald-700 text-emerald-400 bg-emerald-900/20" : "border-red-700 text-red-400 bg-red-900/20"
+                    )}>{attempt.is_correct ? '✓' : '✗'}</span>
+                    <span className="text-[9px] text-gray-500 font-mono">R{attempt.rating}</span>
+                    <span className="text-[9px] text-gray-500">{Math.round((attempt.duration_ms || 0) / 1000)}s</span>
+                  </div>
+                  <div className="text-[9px] text-gray-500 font-mono">
+                    {new Date(attempt.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Tooltip */}
       {hoveredDay && hoveredDay.date.getTime() !== 0 && !selectedDay && (
