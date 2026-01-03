@@ -68,6 +68,9 @@ interface NodeModalProps {
   mode: "create" | "edit";
   initialNode?: ent.Node;
   initialParentId?: string;
+  // NEW: Context information
+  contextNode?: ent.Node;  // The node currently being viewed
+  defaultType?: string;    // Suggested type based on context
 }
 
 const NODE_TYPES = ["subject", "topic", "problem", "theory", "term"];
@@ -85,6 +88,8 @@ export default function NodeModal({
   mode,
   initialNode,
   initialParentId,
+  contextNode,
+  defaultType,
 }: NodeModalProps) {
   const queryClient = useQueryClient();
 
@@ -112,36 +117,66 @@ export default function NodeModal({
   });
 
   useEffect(() => {
-    if (isOpen) {
-      if (mode === "edit" && initialNode) {
-        setTitle(initialNode.title || "");
-        setBody(initialNode.body || "");
-        setSelectedType(initialNode.type || "subject");
+    if (isOpen && mode === "create") {
+      // Determine smart defaults based on context
+      if (contextNode) {
+        const nodeType = contextNode.type;
 
-        // Load existing relations with proper type safety
-        if (existingAssociations && existingAssociations.length > 0) {
-          const existingRels: PendingRelation[] = existingAssociations
-            .filter((assoc: ent.NodeAssociation) =>
-              assoc.rel_type !== undefined &&
-              assoc.edges?.target?.title !== undefined
-            )
-            .map((assoc: ent.NodeAssociation) => ({
-              targetId: String(assoc.target_id),
-              relType: assoc.rel_type!,
-              targetTitle: assoc.edges?.target?.title || "Unknown",
-            }));
-          setRelations(existingRels);
+        if (nodeType === "subject") {
+          // In Subject view -> default to creating Topic
+          setSelectedType("topic");
+          setSelectedSubjectId(String(contextNode.id));
+        } else if (nodeType === "topic") {
+          // In Topic view -> default to creating Problem
+          setSelectedType(defaultType || "problem");
+          setSelectedTopicId(String(contextNode.id));
+          // Also need to find and set the parent subject
+          if (contextNode.parent_id) {
+            setSelectedSubjectId(String(contextNode.parent_id));
+          }
         } else {
-          setRelations([]);
+          // For Problem/Theory views, use default or subject
+          setSelectedType(defaultType || "subject");
         }
+      } else if (defaultType) {
+        setSelectedType(defaultType);
       } else {
-        setTitle("");
-        setBody("");
         setSelectedType("subject");
-        setRelations([]);
-        setSelectedSubjectId("");
-        setSelectedTopicId("");
       }
+
+      setTitle("");
+      setBody("");
+      setRelations([]);
+      setSelectedTargetNode(null);
+      setTargetSearchQuery("");
+    } else if (isOpen && mode === "edit" && initialNode) {
+      setTitle(initialNode.title || "");
+      setBody(initialNode.body || "");
+      setSelectedType(initialNode.type || "subject");
+
+      // Load existing relations with proper type safety
+      if (existingAssociations && existingAssociations.length > 0) {
+        const existingRels: PendingRelation[] = existingAssociations
+          .filter((assoc: ent.NodeAssociation) =>
+            assoc.rel_type !== undefined &&
+            assoc.edges?.target?.title !== undefined
+          )
+          .map((assoc: ent.NodeAssociation) => ({
+            targetId: String(assoc.target_id),
+            relType: assoc.rel_type!,
+            targetTitle: assoc.edges?.target?.title || "Unknown",
+          }));
+        setRelations(existingRels);
+      } else {
+        setRelations([]);
+      }
+    } else {
+      setTitle("");
+      setBody("");
+      setSelectedType("subject");
+      setRelations([]);
+      setSelectedSubjectId("");
+      setSelectedTopicId("");
     }
   }, [isOpen, mode, initialNode, existingAssociations]);
 

@@ -1,14 +1,16 @@
-import { Trash2, Pencil } from "lucide-react";
+// frontend/src/components/smart/ContextMenu.tsx
+import { Trash2, Pencil, Plus } from "lucide-react";
 
 interface ContextMenuProps {
   x: number;
   y: number;
   onDelete?: () => void;
   onEdit?: () => void;
+  onCreate?: () => void;
   onClose: () => void;
 }
 
-export default function ContextMenu({ x, y, onDelete, onEdit, onClose }: ContextMenuProps) {
+export default function ContextMenu({ x, y, onDelete, onEdit, onCreate, onClose }: ContextMenuProps) {
   return (
     <>
       {/* Backdrop to close menu */}
@@ -19,10 +21,22 @@ export default function ContextMenu({ x, y, onDelete, onEdit, onClose }: Context
 
       {/* Menu */}
       <div
-        className="fixed z-50 bg-[#1a1b26] border border-[#2f334d] rounded-md shadow-2xl py-1 min-w-[140px]"
+        className="fixed z-50 bg-[#1a1b26] border border-[#2f334d] rounded-md shadow-2xl py-1 min-w-35"
         style={{ left: x, top: y }}
         onClick={(e) => e.stopPropagation()}
       >
+        {onCreate && (
+          <button
+            onClick={() => {
+              onCreate();
+              onClose();
+            }}
+            className="w-full px-3 py-1.5 text-left text-xs text-green-400 hover:bg-green-900/20 flex items-center gap-2 transition-colors"
+          >
+            <Plus size={12} />
+            <span>Create Node</span>
+          </button>
+        )}
         {onEdit && (
           <button
             onClick={() => {

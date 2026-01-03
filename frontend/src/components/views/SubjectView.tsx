@@ -18,7 +18,9 @@ export default function SubjectView({ node }: { node: ent.Node }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; topicId: string; title: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; topic: ent.Node } | null>(null);
+  const [editTarget, setEditTarget] = useState<ent.Node | null>(null);
+  const [createTarget, setCreateTarget] = useState<ent.Node | null>(null);
 
   const { data: children } = useQuery({
     queryKey: ["children", String(node.id)],
@@ -30,10 +32,10 @@ export default function SubjectView({ node }: { node: ent.Node }) {
     t.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleContextMenu = (e: React.MouseEvent, topicId: string, title: string) => {
+  const handleContextMenu = (e: React.MouseEvent, topic: ent.Node) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({ x: e.clientX, y: e.clientY, topicId, title });
+    setContextMenu({ x: e.clientX, y: e.clientY, topic });
   };
 
   const handleDeleteTopic = async () => {
@@ -96,7 +98,7 @@ export default function SubjectView({ node }: { node: ent.Node }) {
             <div
               key={topic.id?.toString()}
               onClick={() => navigate(`/library?nodeId=${topic.id}`)}
-              onContextMenu={(e) => handleContextMenu(e, String(topic.id), topic.title || "Untitled")}
+              onContextMenu={(e) => handleContextMenu(e, topic)}
               className="group p-5 bg-[#1a1b26] border border-[#2f334d] rounded-xl hover:border-[#89b4fa] cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg"
             >
               <div className="flex justify-between items-start mb-2">
@@ -127,8 +129,34 @@ export default function SubjectView({ node }: { node: ent.Node }) {
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          onDelete={() => setDeleteTarget({ id: contextMenu.topicId, title: contextMenu.title })}
+          onCreate={() => setCreateTarget(contextMenu.topic)}
+          onEdit={() => setEditTarget(contextMenu.topic)}
+          onDelete={() => setDeleteTarget({
+            id: String(contextMenu.topic.id),
+            title: contextMenu.topic.title || "Untitled"
+          })}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {/* Edit Modal from Context Menu */}
+      {editTarget && (
+        <NodeModal
+          isOpen={!!editTarget}
+          onClose={() => setEditTarget(null)}
+          mode="edit"
+          initialNode={editTarget}
+        />
+      )}
+
+      {/* Create Modal from Context Menu */}
+      {createTarget && (
+        <NodeModal
+          isOpen={!!createTarget}
+          onClose={() => setCreateTarget(null)}
+          mode="create"
+          contextNode={createTarget}
+          defaultType="problem"
         />
       )}
 

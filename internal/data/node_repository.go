@@ -162,11 +162,18 @@ func (r *NodeRepository) GetDescendants(ctx context.Context, ancestorID uuid.UUI
 		All(ctx)
 }
 
-// CreateAssociation links two nodes
+// CreateAssociation links two nodes with automatic ID ordering
 func (r *NodeRepository) CreateAssociation(ctx context.Context, sourceID, targetID uuid.UUID, relType nodeassociation.RelType) error {
 	if sourceID == targetID {
 		return fmt.Errorf("cannot associate node with itself")
 	}
+
+	// IMPORTANT: Ensure source_id < target_id to satisfy CHECK constraint
+	if sourceID.String() > targetID.String() {
+		// Swap if needed
+		sourceID, targetID = targetID, sourceID
+	}
+
 	return r.client.NodeAssociation.Create().
 		SetSourceID(sourceID).
 		SetTargetID(targetID).

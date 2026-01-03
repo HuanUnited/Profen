@@ -18,7 +18,8 @@ export default function TopicView({ node }: { node: ent.Node }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; type: string } | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string; title: string; type: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childNode: ent.Node; type: string } | null>(null);
+  const [editTarget, setEditTarget] = useState<ent.Node | null>(null);
 
   const { data: children } = useQuery({
     queryKey: ["children", String(node.id)],
@@ -35,10 +36,10 @@ export default function TopicView({ node }: { node: ent.Node }) {
     t.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleContextMenu = (e: React.MouseEvent, nodeId: string, title: string, type: string) => {
+  const handleContextMenu = (e: React.MouseEvent, childNode: ent.Node, type: string) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({ x: e.clientX, y: e.clientY, nodeId, title, type });
+    setContextMenu({ x: e.clientX, y: e.clientY, childNode, type });
   };
 
   const handleDeleteChild = async () => {
@@ -100,7 +101,7 @@ export default function TopicView({ node }: { node: ent.Node }) {
               <div
                 key={t.id?.toString()}
                 onClick={() => navigate(`/library?nodeId=${t.id}`)}
-                onContextMenu={(e) => handleContextMenu(e, String(t.id), t.title || "Untitled", "theory")}
+                onContextMenu={(e) => handleContextMenu(e, t, "theory")}
                 className="p-4 bg-[#1a1b26] border-l-2 border-purple-900 hover:border-purple-500 hover:bg-[#1f2335] cursor-pointer transition-all rounded-r-lg group"
               >
                 <h3 className="font-medium text-gray-300 group-hover:text-white">{t.title}</h3>
@@ -124,7 +125,7 @@ export default function TopicView({ node }: { node: ent.Node }) {
               <div
                 key={p.id?.toString()}
                 onClick={() => navigate(`/library?nodeId=${p.id}`)}
-                onContextMenu={(e) => handleContextMenu(e, String(p.id), p.title || "Untitled", "problem")}
+                onContextMenu={(e) => handleContextMenu(e, p, "problem")}
                 className="p-4 bg-[#1a1b26] border-l-2 border-blue-900 hover:border-blue-500 hover:bg-[#1f2335] cursor-pointer transition-all rounded-r-lg group"
               >
                 <h3 className="font-medium text-gray-300 group-hover:text-white">{p.title}</h3>
@@ -146,8 +147,23 @@ export default function TopicView({ node }: { node: ent.Node }) {
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          onDelete={() => setDeleteTarget({ id: contextMenu.nodeId, title: contextMenu.title, type: contextMenu.type })}
+          onEdit={() => setEditTarget(contextMenu.childNode)}
+          onDelete={() => setDeleteTarget({
+            id: String(contextMenu.childNode.id),
+            title: contextMenu.childNode.title || "Untitled",
+            type: contextMenu.type
+          })}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {/* Edit Modal from Context Menu */}
+      {editTarget && (
+        <NodeModal
+          isOpen={!!editTarget}
+          onClose={() => setEditTarget(null)}
+          mode="edit"
+          initialNode={editTarget}
         />
       )}
 

@@ -14,7 +14,7 @@ export default function LibrarySidebar() {
   const currentNodeId = searchParams.get('nodeId');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch current node to determine "Up" destination
+  // Fetch current node to determine context and "Up" destination
   const { data: currentNode } = useQuery({
     queryKey: ['node', currentNodeId],
     queryFn: () => GetNode(currentNodeId!),
@@ -22,14 +22,26 @@ export default function LibrarySidebar() {
   });
 
   const handleUp = () => {
-    if (!currentNodeId) return; // Already at root
+    if (!currentNodeId) return;
 
     if (currentNode?.parent_id) {
-      // Go to parent
       navigate(`/library?nodeId=${currentNode.parent_id}`);
     } else {
-      // No parent (Subject) -> Go to Root
       navigate('/library');
+    }
+  };
+
+  // Determine default type based on current context
+  const getDefaultType = () => {
+    if (!currentNode) return "subject";
+
+    switch (currentNode.type) {
+      case "subject":
+        return "topic";
+      case "topic":
+        return "problem";
+      default:
+        return "subject";
     }
   };
 
@@ -38,8 +50,6 @@ export default function LibrarySidebar() {
       <SidebarFrame
         resizable={true}
         initialWidth={280}
-
-        // 1. Header (Thinner + Up Button)
         header={
           <div className="flex items-center gap-2 w-full">
             <button
@@ -64,10 +74,6 @@ export default function LibrarySidebar() {
             </span>
           </div>
         }
-
-        // 2. Toolbar (Now thinner/simpler or removed if empty?)
-        // User said "move create button... from next to explorer header".
-        // If we remove the create button, the toolbar might just be the "Explorer" text.
         toolbar={
           <div className="flex justify-between items-center w-full">
             <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">
@@ -75,8 +81,6 @@ export default function LibrarySidebar() {
             </span>
           </div>
         }
-
-        // 3. Footer (New Home for Create Button)
         footer={
           <StyledButton
             variant="primary"
@@ -96,10 +100,8 @@ export default function LibrarySidebar() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         mode="create"
-      // TODO: If we are currently inside a node, maybe pre-fill it?
-      // initialParentId={currentNodeId || undefined} 
-      // ^ Users might expect "New Node" to create a child of current. 
-      // For now, let's keep it generic/root unless user explicitly wants context.
+        contextNode={currentNode}
+        defaultType={getDefaultType()}
       />
     </>
   );

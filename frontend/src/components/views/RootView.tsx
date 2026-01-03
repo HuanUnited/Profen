@@ -5,23 +5,27 @@ import { GetSubjects, DeleteNode } from "../../wailsjs/go/app/App";
 import { useNavigate } from "react-router-dom";
 import { Book } from "lucide-react";
 import { toast } from "sonner";
+import { ent } from "../../wailsjs/go/models";
 import ConfirmDialog from "../smart/ConfirmDialogue";
 import ContextMenu from "../smart/ContextMenu";
+import NodeModal from "../smart/NodeModal";
 
 export default function RootView() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; subjectId: string; title: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; subject: ent.Node } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [editTarget, setEditTarget] = useState<ent.Node | null>(null);
+  const [createTarget, setCreateTarget] = useState<ent.Node | null>(null);
 
   const { data: subjects, isLoading } = useQuery({
     queryKey: ["subjects"],
     queryFn: GetSubjects,
   });
 
-  const handleContextMenu = (e: React.MouseEvent, subjectId: string, title: string) => {
+  const handleContextMenu = (e: React.MouseEvent, subject: ent.Node) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, subjectId, title });
+    setContextMenu({ x: e.clientX, y: e.clientY, subject });
   };
 
   const handleDeleteSubject = async () => {
@@ -59,11 +63,11 @@ export default function RootView() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {subjects?.map((sub: any) => (
+        {subjects?.map((sub: ent.Node) => (
           <div
-            key={sub.id}
+            key={String(sub.id)}
             onClick={() => navigate(`/library?nodeId=${sub.id}`)}
-            onContextMenu={(e) => handleContextMenu(e, String(sub.id), sub.title || "Untitled Subject")}
+            onContextMenu={(e) => handleContextMenu(e, sub)}
             className="group relative bg-[#1a1b26] border border-[#2f334d] p-6 rounded-lg cursor-pointer hover:border-[#89b4fa] transition-all hover:shadow-lg hover:-translate-y-1"
           >
             {/* Context Icon */}
@@ -99,8 +103,34 @@ export default function RootView() {
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          onDelete={() => setDeleteTarget({ id: contextMenu.subjectId, title: contextMenu.title })}
+          onCreate={() => setCreateTarget(contextMenu.subject)}
+          onEdit={() => setEditTarget(contextMenu.subject)}
+          onDelete={() => setDeleteTarget({
+            id: String(contextMenu.subject.id),
+            title: contextMenu.subject.title || "Untitled"
+          })}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editTarget && (
+        <NodeModal
+          isOpen={!!editTarget}
+          onClose={() => setEditTarget(null)}
+          mode="edit"
+          initialNode={editTarget}
+        />
+      )}
+
+      {/* Create Modal */}
+      {createTarget && (
+        <NodeModal
+          isOpen={!!createTarget}
+          onClose={() => setCreateTarget(null)}
+          mode="create"
+          contextNode={createTarget}
+          defaultType="topic"
         />
       )}
 
