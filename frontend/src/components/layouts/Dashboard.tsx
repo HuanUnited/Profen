@@ -37,7 +37,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="max-w-[1600px] mx-auto p-8 space-y-6 animate-in fade-in duration-500 overflow-y-auto h-full hide-scrollbar">
+      <div className="max-w-400 mx-auto p-8 space-y-6 animate-in fade-in duration-500 overflow-y-auto h-full hide-scrollbar">
 
         {/* Header */}
         <div className="flex justify-between items-start animate-in slide-in-from-bottom-3 duration-700">
@@ -55,14 +55,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Main Content Grid: Left Sidebar (Heatmap + Stats) + Center (Due Queue) */}
-        <div className="grid grid-cols-[400px_1fr] gap-6">
-
-          {/* Left Column: Heatmap & Stats */}
-          <div className="space-y-6">
-            <ActivityHeatmapPanel />
-            <StatsPanel stats={stats} />
-          </div>
+        {/* Main Content Grid: Center (Due Queue) + Right Sidebar (320px) */}
+        {/* Scaled from 240px to 320px (~1.33x) */}
+        <div className="grid grid-cols-[1fr_320px] gap-6">
 
           {/* Center Column: Due Queue */}
           <div>
@@ -70,6 +65,12 @@ export default function Dashboard() {
               dueNodes={dueNodes || []}
               onNodeClick={setSelectedNode}
             />
+          </div>
+
+          {/* Right Column: Heatmap & Stats */}
+          <div className="space-y-6">
+            <ActivityHeatmapPanel />
+            <StatsPanel stats={stats} />
           </div>
         </div>
       </div>

@@ -35,7 +35,7 @@ export default function StatsPanel({ stats }: StatsPanelProps) {
 
   return (
     <div className="bg-[#1a1b26] border border-[#2f334d] rounded-lg p-5 animate-in slide-in-from-bottom-5 duration-700 delay-200">
-      <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Statistics</h3>
+      <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Stats</h3>
 
       <div className="space-y-3">
         {statCards.map((stat) => (
@@ -47,11 +47,11 @@ export default function StatsPanel({ stats }: StatsPanelProps) {
               <div className={`p-2 ${stat.bgColor} rounded-md border border-transparent group-hover:${stat.borderColor} transition-all`}>
                 <span className={stat.color}>{stat.icon}</span>
               </div>
-              <span className="text-xs text-gray-400 uppercase tracking-wide font-semibold">
+              <span className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
                 {stat.label}
               </span>
             </div>
-            <span className={`text-2xl font-bold font-mono ${stat.color}`}>
+            <span className={`text-xl font-bold font-mono ${stat.color}`}>
               {stat.value}
             </span>
           </div>
