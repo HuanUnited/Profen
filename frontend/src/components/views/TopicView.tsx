@@ -1,18 +1,22 @@
 // frontend/src/components/views/TopicView.tsx
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { GetChildren } from "../../wailsjs/go/app/App";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { GetChildren, DeleteNode } from "../../wailsjs/go/app/App";
 import { useNavigate } from "react-router-dom";
 import { ent } from "../../wailsjs/go/models";
-import { Hash, Beaker, FolderOpen, Pencil } from "lucide-react";
+import { Hash, Beaker, FolderOpen, Pencil, X } from "lucide-react";
+import { toast } from "sonner";
 import NodeModal from "../smart/NodeModal";
 import StyledSearch from "../atomic/Search";
 import StyledButton from "../atomic/StylizedButton";
+import ConfirmDialog from "../smart/ConfirmDialogue";
 
 export default function TopicView({ node }: { node: ent.Node }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; type: string } | null>(null);
 
   const { data: children } = useQuery({
     queryKey: ["children", String(node.id)],
@@ -28,6 +32,26 @@ export default function TopicView({ node }: { node: ent.Node }) {
   const filteredTheories = theories.filter(t =>
     t.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleDeleteChild = async () => {
+    if (!deleteTarget) return;
+
+    const loadingToast = toast.loading(`Deleting ${deleteTarget.type}...`);
+    try {
+      await DeleteNode(deleteTarget.id);
+      await queryClient.refetchQueries({
+        queryKey: ["children", String(node.id)],
+        type: 'active'
+      });
+      toast.dismiss(loadingToast);
+      toast.success(`"${deleteTarget.title}" deleted successfully`);
+      setDeleteTarget(null);
+    } catch (e: any) {
+      toast.dismiss(loadingToast);
+      console.error("Delete failed:", e);
+      toast.error(e?.message || `Failed to delete ${deleteTarget.type}`);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col p-8 animate-in fade-in">
@@ -67,10 +91,26 @@ export default function TopicView({ node }: { node: ent.Node }) {
             {filteredTheories.map(t => (
               <div
                 key={t.id?.toString()}
-                onClick={() => navigate(`/library?nodeId=${t.id}`)}
-                className="p-4 bg-[#1a1b26] border-l-2 border-purple-900 hover:border-purple-500 hover:bg-[#1f2335] cursor-pointer transition-all rounded-r-lg group"
+                className="group relative p-4 bg-[#1a1b26] border-l-2 border-purple-900 hover:border-purple-500 hover:bg-[#1f2335] transition-all rounded-r-lg"
               >
-                <h3 className="font-medium text-gray-300 group-hover:text-white">{t.title}</h3>
+                {/* Delete Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget({ id: String(t.id), title: t.title || "Untitled", type: "theory" });
+                  }}
+                  className="absolute top-2 right-2 p-1 bg-red-900/20 border border-red-900/30 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-900/40"
+                  title="Delete theory"
+                >
+                  <X size={12} className="text-red-400" />
+                </button>
+
+                <div
+                  onClick={() => navigate(`/library?nodeId=${t.id}`)}
+                  className="cursor-pointer pr-8"
+                >
+                  <h3 className="font-medium text-gray-300 group-hover:text-white">{t.title}</h3>
+                </div>
               </div>
             ))}
             {filteredTheories.length === 0 && (
@@ -90,10 +130,26 @@ export default function TopicView({ node }: { node: ent.Node }) {
             {filteredProblems.map(p => (
               <div
                 key={p.id?.toString()}
-                onClick={() => navigate(`/library?nodeId=${p.id}`)}
-                className="p-4 bg-[#1a1b26] border-l-2 border-blue-900 hover:border-blue-500 hover:bg-[#1f2335] cursor-pointer transition-all rounded-r-lg group"
+                className="group relative p-4 bg-[#1a1b26] border-l-2 border-blue-900 hover:border-blue-500 hover:bg-[#1f2335] transition-all rounded-r-lg"
               >
-                <h3 className="font-medium text-gray-300 group-hover:text-white">{p.title}</h3>
+                {/* Delete Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget({ id: String(p.id), title: p.title || "Untitled", type: "problem" });
+                  }}
+                  className="absolute top-2 right-2 p-1 bg-red-900/20 border border-red-900/30 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-900/40"
+                  title="Delete problem"
+                >
+                  <X size={12} className="text-red-400" />
+                </button>
+
+                <div
+                  onClick={() => navigate(`/library?nodeId=${p.id}`)}
+                  className="cursor-pointer pr-8"
+                >
+                  <h3 className="font-medium text-gray-300 group-hover:text-white">{p.title}</h3>
+                </div>
               </div>
             ))}
             {filteredProblems.length === 0 && (
@@ -106,6 +162,14 @@ export default function TopicView({ node }: { node: ent.Node }) {
       </div>
 
       <NodeModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} mode="edit" initialNode={node} />
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteChild}
+        title={`Delete ${deleteTarget?.type || "Node"}`}
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? All related practice data will be permanently deleted.`}
+      />
     </div>
   );
 }

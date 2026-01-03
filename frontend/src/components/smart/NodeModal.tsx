@@ -21,6 +21,7 @@ import StyledFormContainer from "../atomic/StyledFormContainer";
 import StyledFormGroup from "../atomic/StylizedFormGroup";
 import StyledButton from "../atomic/StylizedButton";
 import ConfirmDialog from "../smart/ConfirmDialogue";
+import { toast } from 'sonner';
 
 // Enhanced Modal Wrapper
 const ModalWrapper = styled.div`
@@ -157,6 +158,8 @@ export default function NodeModal({
 
   const handleDelete = async () => {
     if (!initialNode) return;
+    const loadingToast = toast.loading('Deleting node...');
+
     try {
       await DeleteNode(String(initialNode.id));
 
@@ -174,15 +177,24 @@ export default function NodeModal({
         exact: true
       });
 
+      toast.dismiss(loadingToast);
+      toast.success(`"${title}" deleted successfully`);
       onClose();
-    } catch (e) {
+    } catch (e: any) {
+      toast.dismiss(loadingToast);
       console.error("Delete failed:", e);
-      alert("Failed to delete node. It may have dependencies.");
+      toast.error(e?.message || "Failed to delete node. It may have dependencies.");
     }
   };
 
   const handleSubmit = async () => {
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      toast.error("Title cannot be empty");
+      return;
+    }
+
+    const loadingToast = toast.loading(mode === "create" ? "Creating node..." : "Saving changes...");
+
     try {
       let nodeId = "";
       if (mode === "create") {
@@ -226,10 +238,13 @@ export default function NodeModal({
         await queryClient.refetchQueries({ queryKey: ["associations", String(initialNode.id)], type: 'active' });
       }
 
+      toast.dismiss(loadingToast);
+      toast.success(mode === "create" ? `"${title}" created successfully` : "Changes saved successfully");
       onClose();
-    } catch (e) {
+    } catch (e: any) {
+      toast.dismiss(loadingToast);
       console.error(e);
-      alert("Failed to save node. Check console for details.");
+      toast.error(e?.message || "Failed to save node. Check console for details.");
     }
   };
 
