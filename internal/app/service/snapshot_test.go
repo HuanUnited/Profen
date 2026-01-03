@@ -21,7 +21,6 @@ func TestExportSnapshot(t *testing.T) {
 	defer client.Close()
 
 	client.Node.Use(hooks.NodeClosureHook(client))
-	// client.Node.Use(hooks.FsrsCardInitHook(client)) // Not strictly needed for snapshot but good practice
 
 	ctx := context.Background()
 	// Cleanup
@@ -43,18 +42,14 @@ func TestExportSnapshot(t *testing.T) {
 	// Problem
 	problem, _ := client.Node.Create().SetType(node.TypeProblem).SetParentID(topic.ID).SetBody("Solve 2x=4").Save(ctx)
 
-	// Force ID order compliance
-	src, tgt := problem.ID, theory.ID
-	if src.String() > tgt.String() {
-		src, tgt = tgt, src
-	}
-
-	// Link Problem -> Theory (Tests)
-	client.NodeAssociation.Create().
+	// ✅ FIX: Link Problem -> Theory (Tests relationship)
+	// The snapshot service expects: problem (source) -> tests -> theory (target)
+	_, err := client.NodeAssociation.Create().
 		SetSourceID(problem.ID).
 		SetTargetID(theory.ID).
-		SetRelType(nodeassociation.RelTypeTests). // Verify this Enum exists!
+		SetRelType(nodeassociation.RelTypeTests).
 		Save(ctx)
+	require.NoError(t, err)
 
 	// 2. Run Export
 	snap, err := svc.ExportSnapshot(ctx, problem.ID)
@@ -64,12 +59,10 @@ func TestExportSnapshot(t *testing.T) {
 	assert.Equal(t, "Solve 2x=4", snap.TargetNode.Body)
 
 	// Ancestry: Should contain "Algebra" and "Math"
-	// Note: Order depends on Depth sort. Root (Math) usually deepest?
-	// Or Self (0), Parent (1), Root (2).
 	assert.Contains(t, snap.AncestryPath, "Algebra")
 	assert.Contains(t, snap.AncestryPath, "Math")
 
 	// Related Theory
-	require.NotNil(t, snap.RelatedTheory)
+	require.NotNil(t, snap.RelatedTheory) // ✅ Should now pass
 	assert.Equal(t, "Linear Eq", snap.RelatedTheory.Body)
 }

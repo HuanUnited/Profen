@@ -6,7 +6,6 @@ import (
 
 	"profen/internal/data/ent"
 	"profen/internal/data/ent/errorresolution"
-	"profen/internal/data/ent/node"
 	"profen/internal/data/ent/nodeassociation"
 	"profen/internal/data/ent/nodeclosure"
 
@@ -81,25 +80,14 @@ func (s *SnapshotService) ExportSnapshot(ctx context.Context, nodeID uuid.UUID) 
 	// 3. Fetch Linked Theory (Context)
 	// Query: Find a node linked via 'tests' (if this is a problem) or 'defined_by'
 	// Usually: Problem -> (tests) -> Theory
-	theory, err := s.client.Node.Query().
+	theory, err := s.client.NodeAssociation.Query().
 		Where(
-			node.Or(
-				// Forward: Problem -> tests -> Theory
-				node.HasIncomingAssociationsWith(
-					nodeassociation.SourceID(nodeID),
-					nodeassociation.RelTypeEQ(nodeassociation.RelTypeTests),
-				),
-				// Reverse: Theory -> defined_by -> Problem (If you have this enum)
-				// If not, maybe just check 'tests' in reverse? (Semantic abuse but works for MVP)
-				node.HasOutgoingAssociationsWith(
-					nodeassociation.TargetID(nodeID),
-					nodeassociation.RelTypeEQ(nodeassociation.RelTypeTests), // Assuming bidirectional usage of 'tests' tag
-				),
-			),
+			nodeassociation.SourceID(nodeID),
+			nodeassociation.RelTypeEQ(nodeassociation.RelTypeTests),
 		).
+		QueryTarget(). // ✅ Get the target node
 		First(ctx)
 
-	// If checking bidirectional or other types, expand logic here.
 	if err == nil && theory != nil {
 		snapshot.RelatedTheory = &NodeSummary{
 			ID:   theory.ID.String(),

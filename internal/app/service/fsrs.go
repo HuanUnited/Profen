@@ -73,10 +73,13 @@ func (s *FSRSService) ReviewCard(
 		return nil, fmt.Errorf("card must be in review state to use FSRS")
 	}
 
-	// Calculate days since last review
-	daysSinceLastReview := int(time.Since(card.NextReview).Hours() / 24)
-	if daysSinceLastReview < 0 {
-		daysSinceLastReview = 0
+	// ✅ FIX: Calculate days since scheduled review (not since creation)
+	// If NextReview is in the past, card is overdue
+	var daysSinceLastReview int
+	if time.Now().After(card.NextReview) {
+		daysSinceLastReview = int(time.Since(card.NextReview).Hours() / 24)
+	} else {
+		daysSinceLastReview = 0 // Reviewed early
 	}
 
 	// Calculate retrievability
