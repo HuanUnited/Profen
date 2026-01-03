@@ -1,90 +1,72 @@
-// frontend/src/components/views/panels/AttemptHistoryPanel.tsx
-import { useState } from "react";
-import { Clock, CheckCircle2, XCircle, History, Eye } from "lucide-react";
-import { ent } from "../../../wailsjs/go/models";
-import AttemptDetailModal from "../../smart/AttemptDetailModal";
+import { useQuery } from '@tanstack/react-query';
+import { GetAttemptHistory } from '../../../wailsjs/go/app/App';
+import { History } from 'lucide-react';
+import { useState } from 'react';
+import AttemptDetailModal from '../../smart/AttemptDetailModal';
 
 interface AttemptHistoryPanelProps {
-  attempts?: ent.Attempt[];
+  nodeId: string;
 }
 
-export default function AttemptHistoryPanel({ attempts }: AttemptHistoryPanelProps) {
+export default function AttemptHistoryPanel({ nodeId }: AttemptHistoryPanelProps) {
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
 
-  const getRatingColor = (rating: number) => {
-    switch (rating) {
-      case 1: return "text-red-400";
-      case 2: return "text-orange-400";
-      case 3: return "text-green-400";
-      case 4: return "text-blue-400";
-      default: return "text-gray-400";
-    }
-  };
+  const { data: attempts, isLoading } = useQuery({
+    queryKey: ['attempts', nodeId],
+    queryFn: () => GetAttemptHistory(nodeId),
+  });
 
-  const formatDate = (date: string) => {
-    const d = new Date(date);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
+  const totalAttempts = attempts?.length || 0;
 
   return (
     <>
-      <div className="bg-[#1a1b26] border border-[#2f334d] rounded-xl overflow-hidden flex flex-col h-full">
-        <div className="border-b border-[#2f334d] px-4 py-2.5 flex items-center gap-2 shrink-0">
-          <History size={12} className="text-gray-500" />
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Attempt History
-          </span>
+      <div className="bg-[#1a1b26] border border-[#2f334d] rounded-lg overflow-hidden flex flex-col">
+        <div className="px-4 py-2 border-b border-[#2f334d] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <History size={14} className="text-gray-500" />
+            <span className="text-xs font-bold text-gray-400 uppercase">History</span>
+          </div>
+          <span className="text-xs text-gray-500 font-mono">{totalAttempts} attempts</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
-          {!attempts || attempts.length === 0 ? (
-            <div className="text-center text-gray-600 text-xs py-8">No attempts yet</div>
+        <div className="max-h-80 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+          {isLoading ? (
+            <div className="text-gray-500 text-xs animate-pulse text-center py-4">Loading...</div>
+          ) : (!attempts || attempts.length === 0) ? (
+            <div className="text-gray-600 text-xs text-center py-8">No attempts yet</div>
           ) : (
-            <div className="space-y-2">
-              {attempts.map((attempt) => (
-                <div
-                  key={String(attempt.id)}
-                  onClick={() => setSelectedAttemptId(String(attempt.id))}
-                  className="bg-[#16161e] border border-[#2f334d] rounded-lg p-3 hover:border-blue-500/50 transition-colors cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {attempt.is_correct ? (
-                        <CheckCircle2 size={14} className="text-green-400" />
-                      ) : (
-                        <XCircle size={14} className="text-red-400" />
-                      )}
-                      <span className={`text-xs font-bold ${getRatingColor(attempt.rating ?? 0)}`}>
-                        {attempt.rating === 1 ? "Again" :
-                          attempt.rating === 2 ? "Hard" :
-                            attempt.rating === 3 ? "Good" : "Easy"}
-                      </span>
-                    </div>
-                    <Eye size={12} className="text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            attempts.map((attempt: any) => (
+              <div
+                key={attempt.id}
+                onClick={() => setSelectedAttemptId(attempt.id)}
+                className="p-2 bg-[#16161e] border border-[#2f334d] rounded hover:border-blue-500/50 cursor-pointer transition-colors group text-xs"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${attempt.rating >= 3 ? 'bg-emerald-500' :
+                      attempt.rating === 2 ? 'bg-orange-500' : 'bg-red-500'
+                      }`} />
+                    <span className="text-gray-300">
+                      {['Again', 'Hard', 'Good', 'Easy'][attempt.rating - 1]}
+                    </span>
                   </div>
-
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-gray-500">{formatDate(attempt.created_at)}</span>
-                    <div className="flex items-center gap-1 text-gray-500">
-                      <Clock size={10} />
-                      <span>{Math.floor(attempt.duration_ms ?? 0 / 1000)}s</span>
-                    </div>
-                  </div>
+                  <span className="text-gray-500 font-mono">
+                    {Math.round(attempt.duration_ms / 1000)}s
+                  </span>
                 </div>
-              ))}
-            </div>
+                <p className="text-[10px] text-gray-600 mt-1">
+                  {new Date(attempt.created_at).toLocaleString()}
+                </p>
+              </div>
+            ))
           )}
         </div>
       </div>
 
-      {/* Attempt Detail Modal */}
-      {selectedAttemptId && (
-        <AttemptDetailModal
-          isOpen={!!selectedAttemptId}
-          onClose={() => setSelectedAttemptId(null)}
-          attemptId={selectedAttemptId}
-        />
-      )}
+      <AttemptDetailModal
+        attemptId={selectedAttemptId}
+        onClose={() => setSelectedAttemptId(null)}
+      />
     </>
   );
 }

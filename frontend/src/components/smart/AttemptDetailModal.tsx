@@ -1,224 +1,200 @@
-// frontend/src/components/smart/AttemptDetailModal.tsx
-import { X, Clock, Target, AlertCircle, Calendar, TrendingUp, Star } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { GetAttemptDetails } from "../../wailsjs/go/app/App";
+import { useQuery } from '@tanstack/react-query';
+import { X, Clock, Calendar, Star, Tag, AlertCircle } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import styled from 'styled-components';
+import StyledButton from '../atomic/StylizedButton';
+import MarkdownRenderer from '../atomic/MarkdownRenderer';
 
 interface AttemptDetailModalProps {
-  isOpen: boolean;
+  attemptId: string | null;
   onClose: () => void;
-  attemptId: string;
 }
 
-export default function AttemptDetailModal({ isOpen, onClose, attemptId }: AttemptDetailModalProps) {
+const ModalWrapper = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-image: 
+    linear-gradient(to right, rgba(47, 51, 77, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(47, 51, 77, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+
+  .modal-container {
+    background: linear-gradient(#16161e, #16161e) padding-box,
+                linear-gradient(145deg, transparent 35%, #e81cff, #40c9ff) border-box;
+    border: 2px solid transparent;
+    animation: gradient 5s ease infinite;
+    background-size: 200% 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #2f334d; border-radius: 3px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #40c9ff; }
+`;
+
+// Mock fetch - replace with actual backend call
+const fetchAttemptDetails = async (attemptId: string) => {
+  // TODO: Replace with actual API call
+  // For now, return mock data structure
+  return {
+    id: attemptId,
+    rating: 2,
+    duration_ms: 125000,
+    created_at: new Date().toISOString(),
+    metadata: {
+      text: "Sample solution text...",
+      errorLog: "Forgot to apply chain rule",
+      errorTags: ["Conceptual Misunderstanding", "Forgot Formula"],
+      userDifficultyRating: 7
+    }
+  };
+};
+
+export default function AttemptDetailModal({ attemptId, onClose }: AttemptDetailModalProps) {
   const { data: attempt, isLoading } = useQuery({
-    queryKey: ["attemptDetails", attemptId],
-    queryFn: () => GetAttemptDetails(attemptId),
-    enabled: isOpen && !!attemptId,
+    queryKey: ['attemptDetail', attemptId],
+    queryFn: () => fetchAttemptDetails(attemptId!),
+    enabled: !!attemptId,
   });
 
-  if (!isOpen) return null;
+  if (!attemptId) return null;
 
-  const getRatingLabel = (rating: number) => {
-    switch (rating) {
-      case 1: return { text: "Again", color: "text-red-400", bg: "bg-red-900/20" };
-      case 2: return { text: "Hard", color: "text-orange-400", bg: "bg-orange-900/20" };
-      case 3: return { text: "Good", color: "text-green-400", bg: "bg-green-900/20" };
-      case 4: return { text: "Easy", color: "text-blue-400", bg: "bg-blue-900/20" };
-      default: return { text: "Unknown", color: "text-gray-400", bg: "bg-gray-900/20" };
-    }
-  };
+  const modal = (
+    <ModalWrapper className="animate-in fade-in duration-200" onClick={onClose}>
+      <div className="modal-container w-[90vw] max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
 
-  const formatDuration = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    const centiseconds = Math.floor((ms % 1000) / 10);
-
-    if (minutes > 0) {
-      return `${minutes}m ${remainingSeconds}s`;
-    }
-    return `${remainingSeconds}.${centiseconds.toString().padStart(2, '0')}s`;
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const rating = attempt ? getRatingLabel(attempt.rating) : null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#1a1b26] border-2 border-[#2f334d] rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-linear-to-r from-[#2f334d] to-[#1a1b26] px-6 py-4 flex items-center justify-between border-b border-[#2f334d]">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Target size={20} className="text-blue-400" />
-            Attempt Details
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-          >
-            <X size={20} />
-          </button>
+        <div className="h-16 px-8 border-b border-[#2f334d]/50 flex items-center justify-between bg-[#1a1b26] shrink-0">
+          <div className="flex items-center gap-4">
+            <span className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border bg-purple-500/20 text-purple-400 border-purple-500/30">
+              ATTEMPT DETAILS
+            </span>
+            <h2 className="text-xl font-bold text-white">Review Session</h2>
+          </div>
+          <StyledButton variant="ghost" size="sm" icon={<X size={20} />} onClick={onClose} />
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(85vh-80px)]">
+        <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
           {isLoading ? (
-            <div className="text-center py-12 text-gray-400">Loading attempt details...</div>
+            <div className="text-gray-500 text-center py-12">Loading attempt details...</div>
           ) : attempt ? (
-            <div className="space-y-6">
-              {/* Stats Grid */}
+            <>
+              {/* Metadata */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Rating */}
-                <div className={`${rating?.bg} border border-gray-800 rounded-lg p-4`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp size={16} className={rating?.color} />
-                    <span className="text-xs font-bold text-gray-400 uppercase">Rating</span>
+                <div className="p-4 bg-[#1a1b26] border border-[#2f334d] rounded-lg">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                    <Calendar size={12} />
+                    <span className="uppercase">Date</span>
                   </div>
-                  <div className={`text-2xl font-bold ${rating?.color}`}>
-                    {rating?.text}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {attempt.is_correct ? "✓ Correct" : "✗ Incorrect"}
-                  </div>
+                  <p className="text-sm text-white font-mono">
+                    {new Date(attempt.created_at).toLocaleString()}
+                  </p>
                 </div>
 
-                {/* Duration */}
-                <div className="bg-purple-900/20 border border-gray-800 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock size={16} className="text-purple-400" />
-                    <span className="text-xs font-bold text-gray-400 uppercase">Duration</span>
+                <div className="p-4 bg-[#1a1b26] border border-[#2f334d] rounded-lg">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                    <Clock size={12} />
+                    <span className="uppercase">Duration</span>
                   </div>
-                  <div className="text-2xl font-bold text-purple-400">
-                    {formatDuration(attempt.duration_ms)}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">Time spent</div>
+                  <p className="text-sm text-white font-mono">
+                    {Math.round(attempt.duration_ms / 1000)}s
+                  </p>
                 </div>
 
-                {/* Difficulty Rating */}
-                {attempt.difficulty_rating && (
-                  <div className="bg-yellow-900/20 border border-gray-800 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle size={16} className="text-yellow-400" />
-                      <span className="text-xs font-bold text-gray-400 uppercase">Difficulty</span>
-                    </div>
-                    <div className="text-2xl font-bold text-yellow-400">
-                      {attempt.difficulty_rating}/10
-                    </div>
-                    <div className="flex gap-1 mt-2">
-                      {[1, 2, 3, 4, 5].map((star) => {
-                        const starValue = star * 2;
-                        const halfValue = starValue - 1;
-                        const isFull = attempt.difficulty_rating >= starValue;
-                        const isHalf = attempt.difficulty_rating === halfValue;
+                <div className="p-4 bg-[#1a1b26] border border-[#2f334d] rounded-lg">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                    <span className="uppercase">Grade</span>
+                  </div>
+                  <p className={`text-sm font-bold ${attempt.rating >= 3 ? 'text-emerald-400' :
+                      attempt.rating === 2 ? 'text-orange-400' : 'text-red-400'
+                    }`}>
+                    {['Again', 'Hard', 'Good', 'Easy'][attempt.rating - 1]}
+                  </p>
+                </div>
 
-                        return (
-                          <Star
-                            key={star}
-                            size={16}
-                            className={isFull || isHalf ? "text-yellow-400" : "text-gray-700"}
-                            fill={isFull ? "currentColor" : isHalf ? "url(#half-detail)" : "none"}
-                          />
-                        );
-                      })}
-                    </div>
+                <div className="p-4 bg-[#1a1b26] border border-[#2f334d] rounded-lg">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                    <Star size={12} />
+                    <span className="uppercase">Difficulty</span>
                   </div>
-                )}
-
-                {/* Date */}
-                <div className="bg-gray-900/20 border border-gray-800 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar size={16} className="text-gray-400" />
-                    <span className="text-xs font-bold text-gray-400 uppercase">Submitted</span>
-                  </div>
-                  <div className="text-sm font-mono text-gray-300">
-                    {formatDate(attempt.created_at)}
-                  </div>
+                  <p className="text-sm text-yellow-400 font-mono">
+                    {attempt.metadata?.userDifficultyRating || '-'}/10
+                  </p>
                 </div>
               </div>
 
-              {/* FSRS Stats */}
-              <div className="bg-[#16161e] border border-[#2f334d] rounded-lg p-4">
-                <div className="text-xs font-bold text-gray-400 uppercase mb-3">FSRS Metrics</div>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-xs text-gray-500">State</div>
-                    <div className="text-sm font-bold text-blue-400 uppercase mt-1">
-                      {attempt.state}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500">Stability</div>
-                    <div className="text-sm font-bold text-green-400 mt-1">
-                      {attempt.stability?.toFixed(2)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500">Difficulty</div>
-                    <div className="text-sm font-bold text-orange-400 mt-1">
-                      {attempt.difficulty?.toFixed(2)}
-                    </div>
+              {/* Solution */}
+              {attempt.metadata?.text && (
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Your Solution</label>
+                  <div className="p-4 bg-[#1a1b26] border border-[#2f334d] rounded-lg">
+                    <MarkdownRenderer content={attempt.metadata.text} />
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* User Answer */}
-              {attempt.user_answer && (
-                <div className="bg-[#16161e] border border-[#2f334d] rounded-lg p-4">
-                  <div className="text-xs font-bold text-gray-400 uppercase mb-3">Your Solution</div>
-                  <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-mono">
-                    {attempt.user_answer}
+              {/* Error Tags */}
+              {attempt.metadata?.errorTags && attempt.metadata.errorTags.length > 0 && (
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                    <Tag size={14} /> Error Categories
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {attempt.metadata.errorTags.map((tag: string) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-500/30"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Error Log */}
-              {attempt.error_log && (
-                <div className="bg-red-900/10 border border-red-900/30 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <AlertCircle size={16} className="text-red-400" />
-                    <span className="text-xs font-bold text-red-400 uppercase">Error Analysis</span>
-                  </div>
-                  <div className="text-sm text-gray-300 leading-relaxed">
-                    {attempt.error_log}
+              {attempt.metadata?.errorLog && (
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
+                    <AlertCircle size={14} /> Error Analysis
+                  </label>
+                  <div className="p-4 bg-[#1a1b26] border border-red-900/30 rounded-lg">
+                    <p className="text-sm text-gray-300 leading-relaxed">
+                      {attempt.metadata.errorLog}
+                    </p>
                   </div>
                 </div>
               )}
-            </div>
+            </>
           ) : (
-            <div className="text-center py-12 text-red-400">Failed to load attempt details</div>
+            <div className="text-gray-500 text-center py-12">Attempt not found</div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="bg-[#16161e] px-6 py-4 border-t border-[#2f334d] flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-[#2f334d] hover:bg-[#3f435d] text-white rounded-lg transition-colors text-sm font-medium"
-          >
-            Close
-          </button>
+        <div className="h-16 border-t border-[#2f334d]/50 bg-[#16161e]/90 flex items-center justify-end px-8 shrink-0">
+          <StyledButton variant="primary" size="md" onClick={onClose}>
+            CLOSE
+          </StyledButton>
         </div>
-
-        {/* SVG for half-star in detail view */}
-        <svg width="0" height="0">
-          <defs>
-            <linearGradient id="half-detail">
-              <stop offset="50%" stopColor="currentColor" />
-              <stop offset="50%" stopColor="transparent" />
-            </linearGradient>
-          </defs>
-        </svg>
       </div>
-    </div>
+    </ModalWrapper>
   );
+
+  return createPortal(modal, document.body);
 }

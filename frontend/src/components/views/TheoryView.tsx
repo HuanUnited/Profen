@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { GetNodeAssociations, DeleteNode } from "../../wailsjs/go/app/App";
+import { GetAttemptHistory, GetNodeAssociations, DeleteNode } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
-import { Pencil, BookOpen } from "lucide-react";
+import { Pencil, BookOpen, Activity } from "lucide-react";
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
 import NodeModal from "../smart/NodeModal";
+import AttemptModal from "../smart/AttemptModal";
+import AttemptDetailModal from "../smart/AttemptDetailModal";
 import StyledButton from "../atomic/StylizedButton";
 import ContextMenu from "../smart/ContextMenu";
 import ConnectionsPanel from "./panels/ConnectionsPanel";
@@ -20,6 +22,14 @@ export default function TheoryView({ node }: { node: ent.Node }) {
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isAttemptOpen, setIsAttemptOpen] = useState(false);
+  const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
+
+  // Fetch Attempts
+  const { data: attempts, isLoading: isAttemptsLoading } = useQuery({
+    queryKey: ['attempts', String(node.id)],
+    queryFn: () => GetAttemptHistory(String(node.id)),
+  });
 
   const { data: associations } = useQuery({
     queryKey: ["associations", String(node.id)],
@@ -53,6 +63,8 @@ export default function TheoryView({ node }: { node: ent.Node }) {
     }
   ];
 
+  const totalAttempts = attempts?.length || 0;
+
   return (
     <div className="h-full flex flex-col p-8 animate-in fade-in focus:outline-none" onContextMenu={handleBackgroundContextMenu}>
 
@@ -66,9 +78,14 @@ export default function TheoryView({ node }: { node: ent.Node }) {
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">{node.title}</h1>
         </div>
-        <StyledButton variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => setIsEditOpen(true)}>
-          Edit
-        </StyledButton>
+        <div className="flex gap-2">
+          <StyledButton variant="primary" size="sm" icon={<Activity size={14} />} onClick={() => setIsAttemptOpen(true)}>
+            Practice
+          </StyledButton>
+          <StyledButton variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => setIsEditOpen(true)}>
+            Edit
+          </StyledButton>
+        </div>
       </div>
 
       <div className="flex-1 flex gap-6 overflow-hidden">
@@ -89,6 +106,43 @@ export default function TheoryView({ node }: { node: ent.Node }) {
           {/* FSRS Status */}
           <FsrsStatusPanel nodeId={String(node.id)} />
 
+          {/* Attempt History */}
+          <div className="flex-1 bg-[#1a1b26] border border-[#2f334d] rounded-lg overflow-hidden flex flex-col">
+            <div className="px-4 py-2 border-b border-[#2f334d] flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-400 uppercase">Practice History</span>
+              <span className="text-xs text-gray-500 font-mono">{totalAttempts} attempts</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+              {isAttemptsLoading ? (
+                <div className="text-gray-500 text-xs animate-pulse">Loading...</div>
+              ) : (!attempts || attempts.length === 0) ? (
+                <div className="text-gray-600 text-xs text-center py-8">No practice attempts yet</div>
+              ) : (
+                attempts.map((attempt: any) => (
+                  <div
+                    key={attempt.id}
+                    onClick={() => setSelectedAttemptId(attempt.id)}
+                    className="p-2 bg-[#16161e] border border-[#2f334d] rounded hover:border-blue-500/50 cursor-pointer transition-colors group text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${attempt.rating >= 3 ? 'bg-emerald-500' : attempt.rating === 2 ? 'bg-orange-500' : 'bg-red-500'
+                          }`} />
+                        <span className="text-gray-300">
+                          {['Again', 'Hard', 'Good', 'Easy'][attempt.rating - 1]}
+                        </span>
+                      </div>
+                      <span className="text-gray-500 font-mono">{Math.round(attempt.duration_ms / 1000)}s</span>
+                    </div>
+                    <p className="text-[10px] text-gray-600 mt-1">
+                      {new Date(attempt.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           {/* Connections */}
           <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
         </div>
@@ -99,6 +153,8 @@ export default function TheoryView({ node }: { node: ent.Node }) {
       )}
 
       <NodeModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} mode="edit" initialNode={node} />
+      <AttemptModal isOpen={isAttemptOpen} onClose={() => setIsAttemptOpen(false)} node={node} />
+      <AttemptDetailModal attemptId={selectedAttemptId} onClose={() => setSelectedAttemptId(null)} />
     </div>
   );
 }

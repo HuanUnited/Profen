@@ -1,25 +1,40 @@
-import { AlertCircle, Star, Check } from 'lucide-react';
+import { AlertCircle, Star, Check, Tag } from 'lucide-react';
 import StyledButton from '../../atomic/StylizedButton';
 
 interface GradingStepProps {
   fsrsGrade: number | null;
   intervals: Record<number, string>;
   errorLog: string;
+  errorTags: string[];
   difficultyRating: number;
   onGradeSelect: (grade: number) => void;
   onErrorLogChange: (value: string) => void;
+  onErrorTagsChange: (tags: string[]) => void;
   onDifficultyChange: (rating: number) => void;
   onBack: () => void;
   onSubmit: () => void;
 }
 
+const COMMON_ERROR_TAGS = [
+  "Conceptual Misunderstanding",
+  "Calculation Error",
+  "Missed Step",
+  "Forgot Formula",
+  "Wrong Approach",
+  "Careless Mistake",
+  "Time Pressure",
+  "Incomplete Solution"
+];
+
 export default function GradingStep({
   fsrsGrade,
   intervals,
   errorLog,
+  errorTags,
   difficultyRating,
   onGradeSelect,
   onErrorLogChange,
+  onErrorTagsChange,
   onDifficultyChange,
   onBack,
   onSubmit
@@ -35,6 +50,14 @@ export default function GradingStep({
       onDifficultyChange(starValue);
     } else {
       onDifficultyChange(halfValue);
+    }
+  };
+
+  const toggleErrorTag = (tag: string) => {
+    if (errorTags.includes(tag)) {
+      onErrorTagsChange(errorTags.filter(t => t !== tag));
+    } else {
+      onErrorTagsChange([...errorTags, tag]);
     }
   };
 
@@ -70,18 +93,43 @@ export default function GradingStep({
         </div>
       </div>
 
-      {/* Error Logging */}
+      {/* Error Analysis Section */}
       {(fsrsGrade === 1 || fsrsGrade === 2) && (
-        <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-          <label className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
-            <AlertCircle size={14} /> What went wrong?
-          </label>
-          <textarea
-            value={errorLog}
-            onChange={(e) => onErrorLogChange(e.target.value)}
-            placeholder="Identify the gap in your knowledge..."
-            className="w-full h-24 bg-[#16161e] border border-red-900/30 rounded-lg p-3 text-sm text-gray-300 focus:border-red-500/50 outline-none resize-none"
-          />
+        <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
+
+          {/* Error Tags */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+              <Tag size={14} /> Error Categories
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {COMMON_ERROR_TAGS.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => toggleErrorTag(tag)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${errorTags.includes(tag)
+                    ? 'bg-orange-500/30 text-orange-300 border border-orange-500/50'
+                    : 'bg-[#16161e] text-gray-400 border border-[#2f334d] hover:border-orange-500/30'
+                    }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Error Log */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
+              <AlertCircle size={14} /> Detailed Analysis
+            </label>
+            <textarea
+              value={errorLog}
+              onChange={(e) => onErrorLogChange(e.target.value)}
+              placeholder="Describe what went wrong and why..."
+              className="w-full h-24 bg-[#16161e] border border-red-900/30 rounded-lg p-3 text-sm text-gray-300 focus:border-red-500/50 outline-none resize-none"
+            />
+          </div>
         </div>
       )}
 

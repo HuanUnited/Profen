@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { GetAttemptHistory, GetNodeAssociations, DeleteNode, GetNodeWithCard } from '../../wailsjs/go/app/App';
+import { GetAttemptHistory, GetNodeAssociations, DeleteNode } from '../../wailsjs/go/app/App';
 import { ent } from '../../wailsjs/go/models';
 import { Pencil, BookOpen, Hash, Activity } from 'lucide-react';
 import MarkdownRenderer from '../atomic/MarkdownRenderer';
@@ -39,10 +39,10 @@ export default function ProblemView({ node }: { node: ent.Node }) {
   });
 
   // Fetch FSRS State
-  const { data: cardState } = useQuery({
-    queryKey: ['cardState', String(node.id)],
-    queryFn: () => GetNodeWithCard(String(node.id)),
-  });
+  // const { data: cardState } = useQuery({
+  //   queryKey: ['cardState', String(node.id)],
+  //   queryFn: () => GetNodeWithCard(String(node.id)),
+  // });
 
   const handleBackgroundContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -171,7 +171,7 @@ export default function ProblemView({ node }: { node: ent.Node }) {
 
       <NodeModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} mode="edit" initialNode={node} />
       <AttemptModal isOpen={isAttemptOpen} onClose={() => setIsAttemptOpen(false)} node={node} />
-      <AttemptDetailModal attemptId={String(selectedAttemptId)} onClose={() => setSelectedAttemptId(null)} isOpen={false} />
+      <AttemptDetailModal attemptId={selectedAttemptId} onClose={() => setSelectedAttemptId(null)} />
     </div>
   );
 }

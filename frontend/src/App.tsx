@@ -1,19 +1,34 @@
-// frontend/src/App.tsx
-import { RouterProvider } from "react-router-dom";
-import { router } from "./routes";
-import { AppProviders } from "./providers/AppProviders";
-import SetupPanel from "./components/atomic/SetupPanel";
-import { useFullscreenToggle } from "./utils/hooks/useFullscreenToggle";
+import { useState } from 'react';
+import { RouterProvider } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { router } from './routes';
+import { Toaster } from 'sonner';
+import BootAnimation from './components/layouts/BootAnimation';
+import './App.css';
+
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+        },
+    },
+});
 
 function App() {
-    // Enable F11 fullscreen toggle globally
-    useFullscreenToggle();
+    const [showBoot, setShowBoot] = useState(true);
 
     return (
-        <AppProviders>
-            <SetupPanel isOpen={false} />
-            <RouterProvider router={router} />
-        </AppProviders>
+        <QueryClientProvider client={queryClient}>
+            {showBoot ? (
+                <BootAnimation onComplete={() => setShowBoot(false)} />
+            ) : (
+                <>
+                    <RouterProvider router={router} />
+                    <Toaster position="top-right" theme="dark" />
+                </>
+            )}
+        </QueryClientProvider>
     );
 }
 
