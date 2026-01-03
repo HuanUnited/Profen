@@ -1,6 +1,6 @@
 // frontend/src/components/views/TheoryView.tsx
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@antml:react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { GetNodeAssociations, DeleteNode } from "../../wailsjs/go/app/App";
 import { ent } from "../../wailsjs/go/models";
