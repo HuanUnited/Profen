@@ -1,3 +1,4 @@
+// internal/app/app.go
 package app
 
 import (
@@ -16,27 +17,40 @@ import (
 
 // App struct
 type App struct {
-	ctx             context.Context
-	client          *ent.Client
-	fsrsService     *service.FSRSService
-	snapshotService *service.SnapshotService
-	nodeRepo        *data.NodeRepository
-	suggestionRepo  *data.SuggestionRepository
-	attemptRepo     *data.AttemptRepository
-	statsRepo       *data.StatsRepository
-	isFullscreen    bool // Track fullscreen state
+	ctx               context.Context
+	client            *ent.Client
+	reviewCoordinator *service.ReviewCoordinator
+	learningService   *service.LearningStepsService
+	fsrsService       *service.FSRSService
+	snapshotService   *service.SnapshotService
+	nodeRepo          *data.NodeRepository
+	suggestionRepo    *data.SuggestionRepository
+	attemptRepo       *data.AttemptRepository
+	statsRepo         *data.StatsRepository
+	isFullscreen      bool // Track fullscreen state
 }
 
 // NewApp creates a new App application struct
 func NewApp(client *ent.Client) *App {
+	// Initialize configurations
+	learningConfig := service.DefaultLearningConfig()
+	fsrsConfig := service.DefaultFSRSConfig()
+
+	// Initialize services
+	learningService := service.NewLearningStepsService(client, learningConfig)
+	fsrsService := service.NewFSRSService(client, fsrsConfig)
+	coordinator := service.NewReviewCoordinator(learningService, fsrsService, client)
+
 	return &App{
-		client:          client,
-		fsrsService:     service.NewFSRSService(client),
-		snapshotService: service.NewSnapshotService(client),
-		nodeRepo:        data.NewNodeRepository(client),
-		suggestionRepo:  data.NewSuggestionRepository(client),
-		attemptRepo:     data.NewAttemptRepository(client),
-		statsRepo:       data.NewStatsRepository(client),
+		client:            client,
+		reviewCoordinator: coordinator,
+		learningService:   learningService,
+		fsrsService:       fsrsService,
+		snapshotService:   service.NewSnapshotService(client),
+		nodeRepo:          data.NewNodeRepository(client),
+		suggestionRepo:    data.NewSuggestionRepository(client),
+		attemptRepo:       data.NewAttemptRepository(client),
+		statsRepo:         data.NewStatsRepository(client),
 	}
 }
 
@@ -94,15 +108,15 @@ func (a *App) GetDueCards(limit int) ([]*ent.Node, error) {
 	return a.suggestionRepo.GetDueCards(a.ctx, limit)
 }
 
-// ReviewCard processes a user answer
-func (a *App) ReviewCard(cardIDStr string, grade int, durationMs int, userAnswer string) (*ent.FsrsCard, error) {
-	cardID, err := uuid.Parse(cardIDStr)
+// ReviewCard processes a user answer using the coordinator
+func (a *App) ReviewCard(nodeIDStr string, grade int, durationMs int, userAnswer string) error {
+	nodeID, err := uuid.Parse(nodeIDStr)
 	if err != nil {
-		return nil, fmt.Errorf("invalid card UUID: %w", err)
+		return fmt.Errorf("invalid node UUID: %w", err)
 	}
 
 	if grade < 1 || grade > 4 {
-		return nil, fmt.Errorf("grade must be between 1 and 4")
+		return fmt.Errorf("grade must be between 1 and 4")
 	}
 
 	// Parse userAnswer as JSON to extract metadata
@@ -114,18 +128,44 @@ func (a *App) ReviewCard(cardIDStr string, grade int, durationMs int, userAnswer
 		}
 	}
 
-	// Extract text field for backward compatibility
-	text, _ := attemptData["text"].(string)
+	// Process review through coordinator
+	_, err = a.reviewCoordinator.ProcessReview(a.ctx, nodeID, grade)
+	if err != nil {
+		return err
+	}
 
-	return a.fsrsService.ReviewCard(
+	// Create attempt record
+	text, _ := attemptData["text"].(string)
+	errorLog, _ := attemptData["errorLog"].(string)
+	difficultyRating, _ := attemptData["userDifficultyRating"].(float64)
+
+	// Get the card to record attempt
+	card, err := a.reviewCoordinator.GetCard(a.ctx, nodeID)
+	if err != nil {
+		return err
+	}
+
+	// Record the attempt
+	return a.attemptRepo.CreateAttempt(
 		a.ctx,
-		cardID,
-		service.FSRSGrade(grade),
+		card.ID,
+		grade,
 		int64(durationMs),
-		text,        // Store text in user_answer field
-		attemptData, // Store full metadata in metadata field
-		nil,
+		text,
+		errorLog,
+		int(difficultyRating),
+		attemptData,
 	)
+}
+
+// GetSchedulingInfo returns the intervals for all 4 grade buttons
+func (a *App) GetSchedulingInfo(nodeIDStr string) (map[int]string, error) {
+	nodeID, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid node UUID: %w", err)
+	}
+
+	return a.reviewCoordinator.GetSchedulingInfo(a.ctx, nodeID)
 }
 
 // UpdateNode updates the node's title and body.
@@ -173,7 +213,25 @@ func (a *App) CreateNode(typeStr string, parentIDStr string, title string) (*ent
 }
 
 // CreateAssociation links two nodes
-// Helper function (add to app.go or a utils file)
+func (a *App) CreateAssociation(sourceIDStr, targetIDStr, relTypeStr string) error {
+	sourceID, err := uuid.Parse(sourceIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid source UUID: %w", err)
+	}
+	targetID, err := uuid.Parse(targetIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid target UUID: %w", err)
+	}
+
+	relType, err := parseRelType(relTypeStr)
+	if err != nil {
+		return err
+	}
+
+	return a.nodeRepo.CreateAssociation(a.ctx, sourceID, targetID, relType)
+}
+
+// Helper function for parsing relationship types
 func parseRelType(relTypeStr string) (nodeassociation.RelType, error) {
 	switch relTypeStr {
 	case "comes_before":
@@ -199,28 +257,8 @@ func parseRelType(relTypeStr string) (nodeassociation.RelType, error) {
 	}
 }
 
-// Then use it:
-func (a *App) CreateAssociation(sourceIDStr, targetIDStr, relTypeStr string) error {
-	sourceID, err := uuid.Parse(sourceIDStr)
-	if err != nil {
-		return fmt.Errorf("invalid source UUID: %w", err)
-	}
-	targetID, err := uuid.Parse(targetIDStr)
-	if err != nil {
-		return fmt.Errorf("invalid target UUID: %w", err)
-	}
-
-	relType, err := parseRelType(relTypeStr)
-	if err != nil {
-		return err
-	}
-
-	return a.nodeRepo.CreateAssociation(a.ctx, sourceID, targetID, relType)
-}
-
 // SearchNodes finds nodes by title or body
 func (a *App) SearchNodes(query string) ([]*ent.Node, error) {
-	// We need to implement SearchNodes in NodeRepository first
 	return a.nodeRepo.SearchNodes(a.ctx, query)
 }
 
@@ -230,11 +268,10 @@ func (a *App) GetAttemptHistory(nodeIDStr string) ([]*ent.Attempt, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid node UUID: %w", err)
 	}
-	// Now a.attemptRepo exists!
 	return a.attemptRepo.GetAttemptsByNode(a.ctx, id)
 }
 
-// Add method:
+// GetDashboardStats returns dashboard statistics
 func (a *App) GetDashboardStats() (*data.DashboardStats, error) {
 	return a.statsRepo.GetDashboardStats(a.ctx)
 }
@@ -265,7 +302,7 @@ func (a *App) GetRelatedNodes(nodeIDStr, relTypeStr, direction string) ([]*ent.N
 	return a.nodeRepo.GetRelatedNodesByType(a.ctx, id, relType, asSource)
 }
 
-// In app.go
+// GetNodeMastery returns mastery statistics for a node
 func (a *App) GetNodeMastery(nodeIDStr string) (map[string]interface{}, error) {
 	id, err := uuid.Parse(nodeIDStr)
 	if err != nil {
@@ -285,6 +322,7 @@ func (a *App) GetNodeMastery(nodeIDStr string) (map[string]interface{}, error) {
 	}, nil
 }
 
+// DeleteNode deletes a node and its children
 func (a *App) DeleteNode(nodeIDStr string) error {
 	id, err := uuid.Parse(nodeIDStr)
 	if err != nil {
@@ -293,6 +331,7 @@ func (a *App) DeleteNode(nodeIDStr string) error {
 	return a.nodeRepo.DeleteNode(a.ctx, id)
 }
 
+// GetNodeBreadcrumbs returns the path from root to this node
 func (a *App) GetNodeBreadcrumbs(nodeIDStr string) ([]*ent.Node, error) {
 	id, err := uuid.Parse(nodeIDStr)
 	if err != nil {
@@ -340,6 +379,7 @@ func (a *App) GetAttemptDetails(attemptIDStr string) (map[string]interface{}, er
 	return result, nil
 }
 
+// DuplicateNode creates a copy of an existing node
 func (a *App) DuplicateNode(nodeIDStr string) (*ent.Node, error) {
 	id, err := uuid.Parse(nodeIDStr)
 	if err != nil {

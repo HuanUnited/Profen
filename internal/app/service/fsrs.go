@@ -1,19 +1,16 @@
+// internal/app/service/fsrs.go
 package service
 
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"profen/internal/data/ent"
-	"profen/internal/data/ent/attempt"
-	"profen/internal/data/ent/fsrscard"
-
-	"github.com/google/uuid"
-	"github.com/open-spaced-repetition/go-fsrs/v3"
 )
 
-// FSRSGrade represents the user's rating of their recall.
+// FSRSGrade represents review grades
 type FSRSGrade int
 
 const (
@@ -23,233 +20,279 @@ const (
 	GradeEasy  FSRSGrade = 4
 )
 
-type FSRSService struct {
-	client *ent.Client
-	params fsrs.Parameters
-	fsrs   *fsrs.FSRS
-}
-
-func NewFSRSService(client *ent.Client) *FSRSService {
-	params := fsrs.DefaultParam()
-	return &FSRSService{
-		client: client,
-		params: params,
-		fsrs:   fsrs.NewFSRS(params),
-	}
-}
-
-// Add to FSRSConfig
+// FSRSConfig for algorithm parameters
 type FSRSConfig struct {
-	DesiredRetention float64 `json:"desired_retention"`
-	MaxInterval      int     `json:"max_interval"`
-	LearningSteps    []int   `json:"learning_steps"`   // NEW: minutes (e.g., [10, 30])
-	RelearningSteps  []int   `json:"relearning_steps"` // NEW: minutes (e.g., [10])
+	DesiredRetention float64   `json:"desired_retention"`
+	MaxInterval      int       `json:"max_interval"`
+	W                []float64 `json:"w"` // FSRS weights
 }
 
-// Default configuration
+// DefaultFSRSConfig returns default FSRS v4 parameters
 func DefaultFSRSConfig() FSRSConfig {
 	return FSRSConfig{
 		DesiredRetention: 0.9,
-		MaxInterval:      36500,         // 100 years
-		LearningSteps:    []int{10, 30}, // 10m, 30m
-		RelearningSteps:  []int{10},     // 10m
+		MaxInterval:      36500, // ~100 years
+		W: []float64{
+			0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61,
+		},
 	}
 }
 
-type CardState int
-
-const (
-	StateNew CardState = iota
-	StateLearning
-	StateReview
-	StateRelearning
-)
-
-// Add to FSRSCard tracking
-type ReviewResult struct {
-	Card         *ent.FsrsCard
-	NextInterval time.Duration // For review cards
-	NextState    CardState
-	CurrentStep  int // For learning/relearning cards
+// FSRSService handles spaced repetition calculations
+type FSRSService struct {
+	client *ent.Client
+	config FSRSConfig
 }
 
-// Add this method to FSRSService:
-func (s *FSRSService) GetOrCreateCard(ctx context.Context, nodeID uuid.UUID) (*ent.FsrsCard, error) {
-	// Try to find existing card
-	card, err := s.client.FsrsCard.Query().
-		Where(fsrscard.NodeID(nodeID)).
-		Only(ctx)
-
-	// If card exists, return it
-	if err == nil {
-		return card, nil
+// NewFSRSService creates a new FSRS service
+func NewFSRSService(client *ent.Client, config FSRSConfig) *FSRSService {
+	return &FSRSService{
+		client: client,
+		config: config,
 	}
-
-	// If error is not "not found", return the error
-	if !ent.IsNotFound(err) {
-		return nil, fmt.Errorf("error querying card: %w", err)
-	}
-
-	// Card doesn't exist, create a new one with default FSRS parameters
-	newCard, err := s.client.FsrsCard.Create().
-		SetNodeID(nodeID).
-		SetState(fsrscard.StateNew).
-		SetStability(0.0).
-		SetDifficulty(5.0). // Default difficulty
-		SetElapsedDays(0).
-		SetScheduledDays(0).
-		SetReps(0).
-		SetLapses(0).
-		Save(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new card: %w", err)
-	}
-
-	return newCard, nil
 }
 
-// ReviewCard processes a user's attempt.
-// UPDATED SIGNATURE: Added userAnswer string
-// Update ReviewCard to use GetOrCreateCard
+// FSRSResult contains the scheduling outcome
+type FSRSResult struct {
+	Stability       float64   `json:"stability"`
+	Difficulty      float64   `json:"difficulty"`
+	NextReviewAt    time.Time `json:"next_review_at"`
+	IntervalDays    int       `json:"interval_days"`
+	IntervalDisplay string    `json:"interval_display"`
+}
+
+// ReviewCard processes a review for cards in Review state only
 func (s *FSRSService) ReviewCard(
 	ctx context.Context,
-	cardID uuid.UUID,
+	card *ent.FsrsCard,
 	grade FSRSGrade,
-	durationMs int64,
-	userAnswer string,
-	metadata map[string]interface{},
-	errorDefID *uuid.UUID,
-) (*ent.FsrsCard, error) {
+) (*FSRSResult, error) {
 
-	// Get or create card
-	card, err := s.GetOrCreateCard(ctx, cardID)
+	// Ensure card is in review state
+	if CardState(card.CardState) != StateReview {
+		return nil, fmt.Errorf("card must be in review state to use FSRS")
+	}
+
+	// Calculate days since last review
+	daysSinceLastReview := int(time.Since(card.NextReview).Hours() / 24)
+	if daysSinceLastReview < 0 {
+		daysSinceLastReview = 0
+	}
+
+	// Calculate retrievability
+	retrievability := s.calculateRetrievability(
+		float64(daysSinceLastReview),
+		card.Stability,
+	)
+
+	// Calculate new stability
+	newStability := s.calculateNewStability(
+		card.Difficulty,
+		card.Stability,
+		retrievability,
+		grade,
+	)
+
+	// Calculate new difficulty
+	newDifficulty := s.calculateNewDifficulty(card.Difficulty, grade)
+
+	// Calculate next interval
+	interval := s.calculateInterval(newStability, s.config.DesiredRetention)
+	intervalDays := int(math.Round(interval))
+
+	// Cap at max interval
+	if intervalDays > s.config.MaxInterval {
+		intervalDays = s.config.MaxInterval
+	}
+
+	nextReview := time.Now().Add(time.Duration(intervalDays) * 24 * time.Hour)
+
+	// Update card
+	updateBuilder := card.Update().
+		SetStability(newStability).
+		SetDifficulty(newDifficulty).
+		SetScheduledDays(intervalDays).
+		SetElapsedDays(daysSinceLastReview).
+		SetNextReview(nextReview).
+		SetReps(card.Reps + 1)
+
+	// If failed, will need to go to relearning (handled by coordinator)
+	if grade == GradeAgain {
+		updateBuilder = updateBuilder.
+			SetLapses(card.Lapses + 1).
+			SetCardState(string(StateRelearning)).
+			SetCurrentStep(0)
+	}
+
+	err := updateBuilder.Save(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch card: %w", err)
+		return nil, err
 	}
 
-	// 2. Log Attempt (History)
-	attemptState := attempt.State(card.State.String())
+	return &FSRSResult{
+		Stability:       newStability,
+		Difficulty:      newDifficulty,
+		NextReviewAt:    nextReview,
+		IntervalDays:    intervalDays,
+		IntervalDisplay: s.formatInterval(intervalDays),
+	}, nil
+}
 
-	attemptBuilder := s.client.Attempt.Create().
-		SetCardID(card.ID).
-		SetRating(int(grade)).
-		SetDurationMs(int(durationMs)).
-		SetState(attemptState).
-		SetStability(card.Stability).
-		SetDifficulty(card.Difficulty).
-		SetIsCorrect(grade >= GradeGood).
-		SetUserAnswer(userAnswer).
-		SetMetadata(metadata)
+// GraduateCard initializes a card that completed learning steps
+func (s *FSRSService) GraduateCard(
+	ctx context.Context,
+	card *ent.FsrsCard,
+	grade FSRSGrade,
+	graduatingInterval int, // From learning config
+) (*FSRSResult, error) {
 
-	if errorDefID != nil {
-		attemptBuilder.SetErrorTypeID(*errorDefID)
+	// Calculate initial stability and difficulty
+	stability := s.calculateInitialStability(grade)
+	difficulty := s.calculateInitialDifficulty(grade)
+
+	intervalDays := graduatingInterval
+	if grade == GradeEasy {
+		// Use easy interval from learning config instead
+		intervalDays = graduatingInterval * 4 // Example: 4x multiplier
 	}
 
-	_, err = attemptBuilder.Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to log attempt: %w", err)
-	}
+	nextReview := time.Now().Add(time.Duration(intervalDays) * 24 * time.Hour)
 
-	// 3. Update Error Resolutions (Diagnostic Stream)
-	if errorDefID != nil && grade <= GradeHard {
-		def, err := s.client.ErrorDefinition.Get(ctx, *errorDefID)
-		weight := 1.0
-		if err == nil {
-			weight = def.BaseWeight
-		}
-
-		_, err = s.client.ErrorResolution.Create().
-			SetNodeID(card.NodeID).
-			SetErrorTypeID(*errorDefID).
-			SetWeightImpact(weight).
-			SetIsResolved(false).
-			Save(ctx)
-		if err != nil {
-			// Non-fatal, just log it? For now return error
-			return nil, fmt.Errorf("failed to record error resolution: %w", err)
-		}
-	}
-
-	// 4. Map Ent -> go-fsrs Card
-	libCard := fsrs.Card{
-		Stability:     card.Stability,
-		Difficulty:    card.Difficulty,
-		ElapsedDays:   uint64(card.ElapsedDays),
-		ScheduledDays: uint64(card.ScheduledDays),
-		Reps:          uint64(card.Reps),
-		Lapses:        uint64(card.Lapses),
-		State:         mapStateToLib(card.State),
-		LastReview:    safeTime(card.LastReview),
-		Due:           card.Due,
-	}
-
-	// 5. Calculate Next Schedule
-	now := time.Now()
-	scheduledItem := s.fsrs.Repeat(libCard, now)
-
-	nextSchedule, exists := scheduledItem[fsrs.Rating(grade)]
-	if !exists {
-		return nil, fmt.Errorf("invalid grade provided: %d", grade)
-	}
-
-	nextCard := nextSchedule.Card
-
-	// 6. Update DB with New State
-	updatedCard, err := s.client.FsrsCard.UpdateOne(card).
-		SetStability(nextCard.Stability).
-		SetDifficulty(nextCard.Difficulty).
-		SetElapsedDays(int(nextCard.ElapsedDays)).
-		SetScheduledDays(int(nextCard.ScheduledDays)).
-		SetReps(int(nextCard.Reps)).
-		SetLapses(int(nextCard.Lapses)).
-		SetState(mapStateFromLib(nextCard.State)).
-		SetLastReview(nextCard.LastReview).
-		SetDue(nextCard.Due).
+	// Update card to review state
+	err := card.Update().
+		SetCardState(string(StateReview)).
+		SetStability(stability).
+		SetDifficulty(difficulty).
+		SetScheduledDays(intervalDays).
+		SetElapsedDays(0).
+		SetNextReview(nextReview).
+		SetReps(1).
+		SetCurrentStep(-1).
 		Save(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to save card update: %w", err)
+		return nil, err
 	}
 
-	return updatedCard, nil
+	return &FSRSResult{
+		Stability:       stability,
+		Difficulty:      difficulty,
+		NextReviewAt:    nextReview,
+		IntervalDays:    intervalDays,
+		IntervalDisplay: s.formatInterval(intervalDays),
+	}, nil
 }
 
-// --- HELPERS ---
+// GetNextIntervals predicts intervals for all grades
+func (s *FSRSService) GetNextIntervals(card *ent.FsrsCard) map[int]string {
+	intervals := make(map[int]string)
 
-func mapStateToLib(s fsrscard.State) fsrs.State {
-	switch s {
-	case fsrscard.StateNew:
-		return fsrs.New
-	case fsrscard.StateLearning:
-		return fsrs.Learning
-	case fsrscard.StateReview:
-		return fsrs.Review
-	case fsrscard.StateRelearning:
-		return fsrs.Relearning
-	default:
-		return fsrs.New
+	for grade := 1; grade <= 4; grade++ {
+		if grade == 1 {
+			// Again goes to relearning, show relearning interval
+			intervals[grade] = "10m" // This should come from learning config
+			continue
+		}
+
+		// Predict stability for this grade
+		daysSinceLastReview := int(time.Since(card.NextReview).Hours() / 24)
+		if daysSinceLastReview < 0 {
+			daysSinceLastReview = 0
+		}
+
+		retrievability := s.calculateRetrievability(
+			float64(daysSinceLastReview),
+			card.Stability,
+		)
+
+		newStability := s.calculateNewStability(
+			card.Difficulty,
+			card.Stability,
+			retrievability,
+			FSRSGrade(grade),
+		)
+
+		interval := s.calculateInterval(newStability, s.config.DesiredRetention)
+		intervalDays := int(math.Round(interval))
+
+		if intervalDays > s.config.MaxInterval {
+			intervalDays = s.config.MaxInterval
+		}
+
+		intervals[grade] = s.formatInterval(intervalDays)
 	}
+
+	return intervals
 }
 
-func mapStateFromLib(s fsrs.State) fsrscard.State {
-	switch s {
-	case fsrs.New:
-		return fsrscard.StateNew
-	case fsrs.Learning:
-		return fsrscard.StateLearning
-	case fsrs.Review:
-		return fsrscard.StateReview
-	case fsrs.Relearning:
-		return fsrscard.StateRelearning
-	default:
-		return fsrscard.StateNew
-	}
+// FSRS Algorithm Core Functions
+
+func (s *FSRSService) calculateInitialStability(grade FSRSGrade) float64 {
+	return s.config.W[int(grade)-1]
 }
 
-func safeTime(t *time.Time) time.Time {
-	if t == nil {
-		return time.Time{}
+func (s *FSRSService) calculateInitialDifficulty(grade FSRSGrade) float64 {
+	return s.config.W[4] - (float64(grade)-3)*s.config.W[5]
+}
+
+func (s *FSRSService) calculateRetrievability(elapsedDays, stability float64) float64 {
+	return math.Pow(1+elapsedDays/(9*stability), -1)
+}
+
+func (s *FSRSService) calculateNewStability(
+	difficulty, stability, retrievability float64,
+	grade FSRSGrade,
+) float64 {
+	hardPenalty := s.config.W[15]
+	easyBonus := s.config.W[16]
+
+	if grade == GradeAgain {
+		return s.config.W[11] * math.Pow(difficulty, -s.config.W[12]) *
+			(math.Pow(stability+1, s.config.W[13]) - 1) *
+			math.Exp(s.config.W[14]*(1-retrievability))
 	}
-	return *t
+
+	multiplier := 1.0
+	if grade == GradeHard {
+		multiplier = hardPenalty
+	} else if grade == GradeEasy {
+		multiplier = easyBonus
+	}
+
+	return stability *
+		(1 + math.Exp(s.config.W[8])*
+			(11-difficulty)*
+			math.Pow(stability, -s.config.W[9])*
+			(math.Exp(s.config.W[10]*(1-retrievability))-1)*
+			multiplier)
+}
+
+func (s *FSRSService) calculateNewDifficulty(difficulty float64, grade FSRSGrade) float64 {
+	deltaDifficulty := -s.config.W[6] * (float64(grade) - 3)
+	newDifficulty := difficulty + deltaDifficulty
+
+	// Clamp between 1 and 10
+	if newDifficulty < 1 {
+		return 1
+	}
+	if newDifficulty > 10 {
+		return 10
+	}
+	return newDifficulty
+}
+
+func (s *FSRSService) calculateInterval(stability, desiredRetention float64) float64 {
+	return stability / desiredRetention * (math.Pow(desiredRetention, 1.0/stability) - 1)
+}
+
+func (s *FSRSService) formatInterval(days int) string {
+	if days < 30 {
+		return fmt.Sprintf("%dd", days)
+	}
+	if days < 365 {
+		months := days / 30
+		return fmt.Sprintf("%dmo", months)
+	}
+	years := float64(days) / 365.0
+	return fmt.Sprintf("%.1fy", years)
 }

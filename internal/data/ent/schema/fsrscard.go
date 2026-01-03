@@ -65,6 +65,19 @@ func (FsrsCard) Fields() []ent.Field {
 		// Foreign Key
 		field.UUID("node_id", uuid.UUID{}).
 			Unique(),
+
+		// Add these fields:
+		field.String("card_state").
+			Default("new").
+			Comment("Current state: new, learning, review, relearning"),
+
+		field.Int("current_step").
+			Default(0).
+			Comment("Current index in learning/relearning steps"),
+
+		field.Time("next_review").
+			Default(time.Now).
+			Comment("When this card should be reviewed next"),
 	}
 }
 
