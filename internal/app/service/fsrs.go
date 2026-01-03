@@ -38,23 +38,92 @@ func NewFSRSService(client *ent.Client) *FSRSService {
 	}
 }
 
+// Add to FSRSConfig
+type FSRSConfig struct {
+	DesiredRetention float64 `json:"desired_retention"`
+	MaxInterval      int     `json:"max_interval"`
+	LearningSteps    []int   `json:"learning_steps"`   // NEW: minutes (e.g., [10, 30])
+	RelearningSteps  []int   `json:"relearning_steps"` // NEW: minutes (e.g., [10])
+}
+
+// Default configuration
+func DefaultFSRSConfig() FSRSConfig {
+	return FSRSConfig{
+		DesiredRetention: 0.9,
+		MaxInterval:      36500,         // 100 years
+		LearningSteps:    []int{10, 30}, // 10m, 30m
+		RelearningSteps:  []int{10},     // 10m
+	}
+}
+
+type CardState int
+
+const (
+	StateNew CardState = iota
+	StateLearning
+	StateReview
+	StateRelearning
+)
+
+// Add to FSRSCard tracking
+type ReviewResult struct {
+	Card         *ent.FsrsCard
+	NextInterval time.Duration // For review cards
+	NextState    CardState
+	CurrentStep  int // For learning/relearning cards
+}
+
+// Add this method to FSRSService:
+func (s *FSRSService) GetOrCreateCard(ctx context.Context, nodeID uuid.UUID) (*ent.FsrsCard, error) {
+	// Try to find existing card
+	card, err := s.client.FsrsCard.Query().
+		Where(fsrscard.NodeID(nodeID)).
+		Only(ctx)
+
+	// If card exists, return it
+	if err == nil {
+		return card, nil
+	}
+
+	// If error is not "not found", return the error
+	if !ent.IsNotFound(err) {
+		return nil, fmt.Errorf("error querying card: %w", err)
+	}
+
+	// Card doesn't exist, create a new one with default FSRS parameters
+	newCard, err := s.client.FsrsCard.Create().
+		SetNodeID(nodeID).
+		SetState(fsrscard.StateNew).
+		SetStability(0.0).
+		SetDifficulty(5.0). // Default difficulty
+		SetElapsedDays(0).
+		SetScheduledDays(0).
+		SetReps(0).
+		SetLapses(0).
+		Save(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new card: %w", err)
+	}
+
+	return newCard, nil
+}
+
 // ReviewCard processes a user's attempt.
 // UPDATED SIGNATURE: Added userAnswer string
+// Update ReviewCard to use GetOrCreateCard
 func (s *FSRSService) ReviewCard(
 	ctx context.Context,
 	cardID uuid.UUID,
 	grade FSRSGrade,
-	durationMs int64, // Changed to int64 to match App
-	userAnswer string, // <--- NEW ARGUMENT
-	metadata map[string]interface{}, // NEW
+	durationMs int64,
+	userAnswer string,
+	metadata map[string]interface{},
 	errorDefID *uuid.UUID,
-
 ) (*ent.FsrsCard, error) {
 
-	// 1. Fetch Card
-	card, err := s.client.FsrsCard.Query().
-		Where(fsrscard.IDEQ(cardID)).
-		Only(ctx)
+	// Get or create card
+	card, err := s.GetOrCreateCard(ctx, cardID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch card: %w", err)
 	}

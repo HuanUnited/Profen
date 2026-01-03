@@ -1,5 +1,5 @@
 // frontend/src/components/smart/AttemptDetailModal.tsx
-import { X, Clock, Target, AlertCircle, Calendar, TrendingUp } from "lucide-react";
+import { X, Clock, Target, AlertCircle, Calendar, TrendingUp, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { GetAttemptDetails } from "../../wailsjs/go/app/App";
 
@@ -32,7 +32,12 @@ export default function AttemptDetailModal({ isOpen, onClose, attemptId }: Attem
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return minutes > 0 ? `${minutes}m ${remainingSeconds}s` : `${remainingSeconds}s`;
+    const centiseconds = Math.floor((ms % 1000) / 10);
+
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`;
+    }
+    return `${remainingSeconds}.${centiseconds.toString().padStart(2, '0')}s`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -52,7 +57,7 @@ export default function AttemptDetailModal({ isOpen, onClose, attemptId }: Attem
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#1a1b26] border-2 border-[#2f334d] rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#2f334d] to-[#1a1b26] px-6 py-4 flex items-center justify-between border-b border-[#2f334d]">
+        <div className="bg-linear-to-r from-[#2f334d] to-[#1a1b26] px-6 py-4 flex items-center justify-between border-b border-[#2f334d]">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Target size={20} className="text-blue-400" />
             Attempt Details
@@ -107,9 +112,25 @@ export default function AttemptDetailModal({ isOpen, onClose, attemptId }: Attem
                       <span className="text-xs font-bold text-gray-400 uppercase">Difficulty</span>
                     </div>
                     <div className="text-2xl font-bold text-yellow-400">
-                      {attempt.difficulty_rating}/5
+                      {attempt.difficulty_rating}/10
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">User rated</div>
+                    <div className="flex gap-1 mt-2">
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const starValue = star * 2;
+                        const halfValue = starValue - 1;
+                        const isFull = attempt.difficulty_rating >= starValue;
+                        const isHalf = attempt.difficulty_rating === halfValue;
+
+                        return (
+                          <Star
+                            key={star}
+                            size={16}
+                            className={isFull || isHalf ? "text-yellow-400" : "text-gray-700"}
+                            fill={isFull ? "currentColor" : isHalf ? "url(#half-detail)" : "none"}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -187,6 +208,16 @@ export default function AttemptDetailModal({ isOpen, onClose, attemptId }: Attem
             Close
           </button>
         </div>
+
+        {/* SVG for half-star in detail view */}
+        <svg width="0" height="0">
+          <defs>
+            <linearGradient id="half-detail">
+              <stop offset="50%" stopColor="currentColor" />
+              <stop offset="50%" stopColor="transparent" />
+            </linearGradient>
+          </defs>
+        </svg>
       </div>
     </div>
   );
