@@ -18,9 +18,9 @@ export default function SubjectView({ node }: { node: ent.Node }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; topic: ent.Node } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; topic?: ent.Node } | null>(null);
   const [editTarget, setEditTarget] = useState<ent.Node | null>(null);
-  const [createTarget, setCreateTarget] = useState<ent.Node | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const { data: children } = useQuery({
     queryKey: ["children", String(node.id)],
@@ -32,10 +32,18 @@ export default function SubjectView({ node }: { node: ent.Node }) {
     t.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleContextMenu = (e: React.MouseEvent, topic: ent.Node) => {
+  const handleItemContextMenu = (e: React.MouseEvent, topic: ent.Node) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({ x: e.clientX, y: e.clientY, topic });
+  };
+
+  const handleBackgroundContextMenu = (e: React.MouseEvent) => {
+    // Only trigger on background, not on items
+    if (e.target === e.currentTarget || (e.target as HTMLElement).closest('.topics-grid-container')) {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    }
   };
 
   const handleDeleteTopic = async () => {
@@ -88,7 +96,10 @@ export default function SubjectView({ node }: { node: ent.Node }) {
       </div>
 
       {/* Topics Grid */}
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className="flex-1 overflow-y-auto topics-grid-container"
+        onContextMenu={handleBackgroundContextMenu}
+      >
         <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
           <Folder size={14} /> Topics ({filteredTopics.length})
         </h2>
@@ -98,7 +109,7 @@ export default function SubjectView({ node }: { node: ent.Node }) {
             <div
               key={topic.id?.toString()}
               onClick={() => navigate(`/library?nodeId=${topic.id}`)}
-              onContextMenu={(e) => handleContextMenu(e, topic)}
+              onContextMenu={(e) => handleItemContextMenu(e, topic)}
               className="group p-5 bg-[#1a1b26] border border-[#2f334d] rounded-xl hover:border-[#89b4fa] cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg"
             >
               <div className="flex justify-between items-start mb-2">
@@ -129,12 +140,12 @@ export default function SubjectView({ node }: { node: ent.Node }) {
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          onCreate={() => setCreateTarget(contextMenu.topic)}
-          onEdit={() => setEditTarget(contextMenu.topic)}
-          onDelete={() => setDeleteTarget({
-            id: String(contextMenu.topic.id),
-            title: contextMenu.topic.title || "Untitled"
-          })}
+          onCreate={() => setIsCreateOpen(true)}
+          onEdit={contextMenu.topic ? () => setEditTarget(contextMenu.topic!) : undefined}
+          onDelete={contextMenu.topic ? () => setDeleteTarget({
+            id: String(contextMenu.topic!.id),
+            title: contextMenu.topic!.title || "Untitled"
+          }) : undefined}
           onClose={() => setContextMenu(null)}
         />
       )}
@@ -149,16 +160,14 @@ export default function SubjectView({ node }: { node: ent.Node }) {
         />
       )}
 
-      {/* Create Modal from Context Menu */}
-      {createTarget && (
-        <NodeModal
-          isOpen={!!createTarget}
-          onClose={() => setCreateTarget(null)}
-          mode="create"
-          contextNode={createTarget}
-          defaultType="problem"
-        />
-      )}
+      {/* Create Modal */}
+      <NodeModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        mode="create"
+        contextNode={node}
+        defaultType="topic"
+      />
 
       <ConfirmDialog
         isOpen={!!deleteTarget}

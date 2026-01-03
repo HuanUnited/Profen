@@ -8,9 +8,11 @@ import { Pencil, BookOpen, ChevronDown, ChevronRight, Hash, History, Link, Arrow
 import MarkdownRenderer from "../atomic/MarkdownRenderer";
 import NodeModal from "../smart/NodeModal";
 import StyledButton from "../atomic/StylizedButton";
+import ContextMenu from "../smart/ContextMenu";
 
 export default function TheoryView({ node }: { node: ent.Node }) {
   const navigate = useNavigate();
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [showLinkedProblems, setShowLinkedProblems] = useState(true);
   const [showRelatedTheories, setShowRelatedTheories] = useState(true);
@@ -44,8 +46,13 @@ export default function TheoryView({ node }: { node: ent.Node }) {
     navigate(`/library?nodeId=${nodeId}`);
   };
 
+  const handleBackgroundContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
   return (
-    <div className="h-full flex flex-col p-6 animate-in fade-in slide-in-from-bottom-2">
+    <div className="h-full flex flex-col p-6 animate-in fade-in slide-in-from-bottom-2" onContextMenu={handleBackgroundContextMenu}>
       {/* Header */}
       <div className="mb-6 flex justify-between items-start border-b border-[#2f334d] pb-4">
         <div>
@@ -195,7 +202,21 @@ export default function TheoryView({ node }: { node: ent.Node }) {
         </div>
       </div>
 
-      <NodeModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} mode="edit" initialNode={node} />
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onEdit={() => setIsEditOpen(true)}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      <NodeModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        mode="edit"
+        initialNode={node}
+      />
     </div>
   );
 }

@@ -13,19 +13,28 @@ import NodeModal from "../smart/NodeModal";
 export default function RootView() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; subject: ent.Node } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; subject?: ent.Node } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [editTarget, setEditTarget] = useState<ent.Node | null>(null);
-  const [createTarget, setCreateTarget] = useState<ent.Node | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const { data: subjects, isLoading } = useQuery({
     queryKey: ["subjects"],
     queryFn: GetSubjects,
   });
 
-  const handleContextMenu = (e: React.MouseEvent, subject: ent.Node) => {
+  const handleItemContextMenu = (e: React.MouseEvent, subject: ent.Node) => {
     e.preventDefault();
+    e.stopPropagation();
     setContextMenu({ x: e.clientX, y: e.clientY, subject });
+  };
+
+  const handleBackgroundContextMenu = (e: React.MouseEvent) => {
+    // Only trigger if clicking on the background, not on a card
+    if (e.target === e.currentTarget) {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    }
   };
 
   const handleDeleteSubject = async () => {
@@ -52,7 +61,10 @@ export default function RootView() {
   if (isLoading) return null;
 
   return (
-    <div className="p-8 h-full overflow-y-auto animate-in fade-in duration-500">
+    <div
+      className="p-8 h-full overflow-y-auto animate-in fade-in duration-500"
+      onContextMenu={handleBackgroundContextMenu}
+    >
       <header className="mb-8 border-b border-[#2f334d] pb-4">
         <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
           Knowledge Base
@@ -67,7 +79,7 @@ export default function RootView() {
           <div
             key={String(sub.id)}
             onClick={() => navigate(`/library?nodeId=${sub.id}`)}
-            onContextMenu={(e) => handleContextMenu(e, sub)}
+            onContextMenu={(e) => handleItemContextMenu(e, sub)}
             className="group relative bg-[#1a1b26] border border-[#2f334d] p-6 rounded-lg cursor-pointer hover:border-[#89b4fa] transition-all hover:shadow-lg hover:-translate-y-1"
           >
             {/* Context Icon */}
@@ -103,12 +115,12 @@ export default function RootView() {
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          onCreate={() => setCreateTarget(contextMenu.subject)}
-          onEdit={() => setEditTarget(contextMenu.subject)}
-          onDelete={() => setDeleteTarget({
-            id: String(contextMenu.subject.id),
-            title: contextMenu.subject.title || "Untitled"
-          })}
+          onCreate={contextMenu.subject ? () => setIsCreateOpen(true) : () => setIsCreateOpen(true)}
+          onEdit={contextMenu.subject ? () => setEditTarget(contextMenu.subject!) : undefined}
+          onDelete={contextMenu.subject ? () => setDeleteTarget({
+            id: String(contextMenu.subject!.id),
+            title: contextMenu.subject!.title || "Untitled"
+          }) : undefined}
           onClose={() => setContextMenu(null)}
         />
       )}
@@ -124,15 +136,12 @@ export default function RootView() {
       )}
 
       {/* Create Modal */}
-      {createTarget && (
-        <NodeModal
-          isOpen={!!createTarget}
-          onClose={() => setCreateTarget(null)}
-          mode="create"
-          contextNode={createTarget}
-          defaultType="topic"
-        />
-      )}
+      <NodeModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        mode="create"
+        defaultType="subject"
+      />
 
       <ConfirmDialog
         isOpen={!!deleteTarget}

@@ -18,8 +18,9 @@ export default function TopicView({ node }: { node: ent.Node }) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; type: string } | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childNode: ent.Node; type: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childNode?: ent.Node; type?: string } | null>(null);
   const [editTarget, setEditTarget] = useState<ent.Node | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const { data: children } = useQuery({
     queryKey: ["children", String(node.id)],
@@ -36,10 +37,21 @@ export default function TopicView({ node }: { node: ent.Node }) {
     t.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleContextMenu = (e: React.MouseEvent, childNode: ent.Node, type: string) => {
+  const handleItemContextMenu = (e: React.MouseEvent, childNode: ent.Node, type: string) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({ x: e.clientX, y: e.clientY, childNode, type });
+  };
+
+  const handleBackgroundContextMenu = (e: React.MouseEvent) => {
+    // Only trigger on background
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('topic-view-container') ||
+      target.classList.contains('children-grid-container') ||
+      target.closest('.children-grid-container')) {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    }
   };
 
   const handleDeleteChild = async () => {
@@ -63,7 +75,10 @@ export default function TopicView({ node }: { node: ent.Node }) {
   };
 
   return (
-    <div className="h-full flex flex-col p-8 animate-in fade-in">
+    <div
+      className="h-full flex flex-col p-8 animate-in fade-in topic-view-container"
+      onContextMenu={handleBackgroundContextMenu}
+    >
       <div className="mb-8 border-b border-[#2f334d] pb-6 flex justify-between items-start">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-3 text-xs text-gray-500 font-mono uppercase tracking-wider">
@@ -90,7 +105,7 @@ export default function TopicView({ node }: { node: ent.Node }) {
         </StyledButton>
       </div>
 
-      <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-12 children-grid-container">
         {/* Theories Column */}
         <div>
           <h2 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-purple-900/30 pb-2">
@@ -101,7 +116,7 @@ export default function TopicView({ node }: { node: ent.Node }) {
               <div
                 key={t.id?.toString()}
                 onClick={() => navigate(`/library?nodeId=${t.id}`)}
-                onContextMenu={(e) => handleContextMenu(e, t, "theory")}
+                onContextMenu={(e) => handleItemContextMenu(e, t, "theory")}
                 className="p-4 bg-[#1a1b26] border-l-2 border-purple-900 hover:border-purple-500 hover:bg-[#1f2335] cursor-pointer transition-all rounded-r-lg group"
               >
                 <h3 className="font-medium text-gray-300 group-hover:text-white">{t.title}</h3>
@@ -125,7 +140,7 @@ export default function TopicView({ node }: { node: ent.Node }) {
               <div
                 key={p.id?.toString()}
                 onClick={() => navigate(`/library?nodeId=${p.id}`)}
-                onContextMenu={(e) => handleContextMenu(e, p, "problem")}
+                onContextMenu={(e) => handleItemContextMenu(e, p, "problem")}
                 className="p-4 bg-[#1a1b26] border-l-2 border-blue-900 hover:border-blue-500 hover:bg-[#1f2335] cursor-pointer transition-all rounded-r-lg group"
               >
                 <h3 className="font-medium text-gray-300 group-hover:text-white">{p.title}</h3>
@@ -147,12 +162,13 @@ export default function TopicView({ node }: { node: ent.Node }) {
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          onEdit={() => setEditTarget(contextMenu.childNode)}
-          onDelete={() => setDeleteTarget({
-            id: String(contextMenu.childNode.id),
-            title: contextMenu.childNode.title || "Untitled",
-            type: contextMenu.type
-          })}
+          onCreate={() => setIsCreateOpen(true)}
+          onEdit={contextMenu.childNode ? () => setEditTarget(contextMenu.childNode!) : undefined}
+          onDelete={contextMenu.childNode ? () => setDeleteTarget({
+            id: String(contextMenu.childNode!.id),
+            title: contextMenu.childNode!.title || "Untitled",
+            type: contextMenu.type!
+          }) : undefined}
           onClose={() => setContextMenu(null)}
         />
       )}
@@ -166,6 +182,15 @@ export default function TopicView({ node }: { node: ent.Node }) {
           initialNode={editTarget}
         />
       )}
+
+      {/* Create Modal */}
+      <NodeModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        mode="create"
+        contextNode={node}
+        defaultType="problem"
+      />
 
       <ConfirmDialog
         isOpen={!!deleteTarget}
