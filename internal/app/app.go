@@ -430,3 +430,8 @@ func (a *App) GetDueCardsFromNode(parentIDStr string, limit int) ([]string, erro
 	}
 	return a.studyCoordinator.GetDueCardsFromNode(a.ctx, id, limit)
 }
+
+// GetAllAttempts returns all attempts for the activity heatmap
+func (a *App) GetAllAttempts() ([]*ent.Attempt, error) {
+	return a.attemptRepo.GetAllAttempts(a.ctx)
+}

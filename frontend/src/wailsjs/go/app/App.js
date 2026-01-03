@@ -18,6 +18,10 @@ export function DuplicateNode(arg1) {
   return window['go']['app']['App']['DuplicateNode'](arg1);
 }
 
+export function GetAllAttempts() {
+  return window['go']['app']['App']['GetAllAttempts']();
+}
+
 export function GetAttemptDetails(arg1) {
   return window['go']['app']['App']['GetAttemptDetails'](arg1);
 }

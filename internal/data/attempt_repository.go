@@ -96,6 +96,13 @@ func (r *AttemptRepository) GetRecentAttempts(ctx context.Context, limit int) ([
 		All(ctx)
 }
 
+// GetAllAttempts retrieves all attempts (for activity heatmap)
+func (r *AttemptRepository) GetAllAttempts(ctx context.Context) ([]*ent.Attempt, error) {
+	return r.client.Attempt.Query().
+		Order(ent.Desc(attempt.FieldCreatedAt)).
+		All(ctx)
+}
+
 // GetAttemptStats returns aggregate statistics for a node
 func (r *AttemptRepository) GetAttemptStats(ctx context.Context, nodeID uuid.UUID) (map[string]interface{}, error) {
 	attempts, err := r.GetAttemptsByNode(ctx, nodeID)

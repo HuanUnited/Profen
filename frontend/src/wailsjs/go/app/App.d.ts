@@ -11,6 +11,8 @@ export function DeleteNode(arg1:string):Promise<void>;
 
 export function DuplicateNode(arg1:string):Promise<ent.Node>;
 
+export function GetAllAttempts():Promise<Array<ent.Attempt>>;
+
 export function GetAttemptDetails(arg1:string):Promise<Record<string, any>>;
 
 export function GetAttemptHistory(arg1:string):Promise<Array<ent.Attempt>>;
