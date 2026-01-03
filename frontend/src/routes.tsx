@@ -4,6 +4,7 @@ import DashboardSidebar from "./components/navigation/DashboardSidebar";
 import LibrarySidebar from "./components/navigation/LibrarySidebar";
 import Dashboard from "./components/layouts/Dashboard";
 import Library from "./components/layouts/Library";
+import Study from "./components/layouts/Study";
 
 export const router = createBrowserRouter([
   // Group 1: Dashboard Context
@@ -24,5 +25,11 @@ export const router = createBrowserRouter([
         element: <Library />
       }
     ]
+  },
+
+  // Group 3: Study Context (Fullscreen, no sidebar)
+  {
+    path: "/study",
+    element: <Study />
   }
 ]);
