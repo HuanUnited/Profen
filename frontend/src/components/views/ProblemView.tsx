@@ -10,8 +10,8 @@ import AttemptModal from '../smart/AttemptModal';
 import StyledButton from '../atomic/StylizedButton';
 import ContextMenu from '../smart/ContextMenu';
 import ConnectionsPanel from './panels/ConnectionsPanel';
-import ResizablePanel from './panels/ResizablePanel';
 import AttemptDetailModal from '../smart/AttemptDetailModal';
+import FsrsStatusPanel from './panels/FsrsStatusPanel';
 import { useNavigationHistory } from '../../utils/hooks/useNavigationHistory';
 import { toast } from 'sonner';
 
@@ -118,40 +118,10 @@ export default function ProblemView({ node }: { node: ent.Node }) {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-80 flex flex-col gap-6 overflow-hidden">
+        <div className="w-80 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
 
           {/* FSRS Status */}
-          <div className="bg-[#1a1b26] border border-[#2f334d] rounded-lg p-4 space-y-3">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">FSRS Status</h3>
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <div>
-                <p className="text-[10px] text-gray-500 uppercase">State</p>
-                <p className="text-sm font-mono text-blue-400">
-                  {cardState?.card_state === 2 ? 'Review' :
-                    cardState?.card_state === 1 ? 'Learning' :
-                      cardState?.card_state === 3 ? 'Relearning' : 'New'}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-500 uppercase">Stability</p>
-                <p className="text-sm font-mono text-emerald-400">
-                  {cardState?.stability ? Number(cardState.stability).toFixed(2) : '-'}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-500 uppercase">Difficulty</p>
-                <p className="text-sm font-mono text-orange-400">
-                  {cardState?.difficulty ? Number(cardState.difficulty).toFixed(2) : '-'}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-500 uppercase">Next</p>
-                <p className="text-xs font-mono text-gray-300">
-                  {cardState?.next_review ? new Date(cardState.next_review).toLocaleDateString() : 'Now'}
-                </p>
-              </div>
-            </div>
-          </div>
+          <FsrsStatusPanel nodeId={String(node.id)} />
 
           {/* Attempt History */}
           <div className="flex-1 bg-[#1a1b26] border border-[#2f334d] rounded-lg overflow-hidden flex flex-col">
@@ -191,9 +161,7 @@ export default function ProblemView({ node }: { node: ent.Node }) {
           </div>
 
           {/* Connections */}
-          <ResizablePanel defaultHeight={300} minHeight={200} maxHeight={600}>
-            <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
-          </ResizablePanel>
+          <ConnectionsPanel nodeId={String(node.id)} associations={associations} groups={connectionGroups} />
         </div>
       </div>
 
