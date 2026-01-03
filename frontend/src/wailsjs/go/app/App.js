@@ -18,6 +18,10 @@ export function GetChildren(arg1) {
   return window['go']['app']['App']['GetChildren'](arg1);
 }
 
+export function GetDashboardStats() {
+  return window['go']['app']['App']['GetDashboardStats']();
+}
+
 export function GetDueCards(arg1) {
   return window['go']['app']['App']['GetDueCards'](arg1);
 }

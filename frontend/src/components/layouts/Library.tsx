@@ -1,40 +1,46 @@
+// frontend/src/components/layouts/Library.tsx
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { GetNode } from "../../wailsjs/go/app/App";
-import ContainerNodeView from "./library/ContainerNodeView";
-import LeafNodeView from "./library/LeafNodeView";
 import { FileText } from "lucide-react";
+
+// Specialized Views
+import RootView from "../views/RootView";
+import SubjectView from "../views/SubjectView";
+import TopicView from "../views/TopicView";
+import ProblemView from "../views/ProblemView";
+import TheoryView from "../views/TheoryView";
 
 export default function Library() {
   const [searchParams] = useSearchParams();
-  const nodeId = searchParams.get('nodeId');
+  const nodeId = searchParams.get("nodeId");
 
-  const { data: node, isLoading } = useQuery({
-    queryKey: ['node', nodeId],
-    queryFn: () => GetNode(nodeId!), // This will now succeed
+  const { data: node, isLoading, error } = useQuery({
+    queryKey: ["node", nodeId],
+    queryFn: () => GetNode(nodeId!),
     enabled: !!nodeId,
-    retry: false
+    retry: false,
   });
 
-  if (!nodeId) return <EmptyState />;
-  if (isLoading) return <div className="p-8 text-gray-500 font-mono animate-pulse">{">"} Fetching node signal...</div>;
-  if (!node) return <div className="p-8 text-red-400 font-mono">Error: Signal lost.</div>;
+  if (!nodeId) return <RootView />;
 
-  // CONTEXT SWITCHER LOGIC
-  if (node.type === 'subject' || node.type === 'topic') {
-    return <ContainerNodeView node={node} />;
-  } else {
-    return <LeafNodeView node={node} />;
-  }
-}
+  if (isLoading) return <div className="h-full flex items-center justify-center text-gray-500 font-mono animate-pulse">Loading Node...</div>;
 
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-gray-600 space-y-4 animate-in fade-in">
-      <div className="p-6 bg-(--tui-sidebar) rounded-full">
-        <FileText size={48} className="opacity-50 text-(--tui-primary)" />
+  if (error || !node) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-red-400">
+        <FileText size={48} className="mb-4 opacity-50" />
+        <p>Node not found.</p>
       </div>
-      <p className="font-mono text-sm tracking-wide">Select a node to view contents.</p>
-    </div>
-  )
+    );
+  }
+
+  // Strict Routing
+  switch (node.type) {
+    case "subject": return <SubjectView node={node} />;
+    case "topic": return <TopicView node={node} />;
+    case "problem": return <ProblemView node={node} />;
+    case "theory": return <TheoryView node={node} />;
+    default: return <div className="p-8">Unknown node type: {node.type}</div>;
+  }
 }

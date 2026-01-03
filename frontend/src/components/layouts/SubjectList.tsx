@@ -10,12 +10,11 @@ export default function SubjectList() {
   const { data: subjects, isLoading, error } = useQuery({
     queryKey: ['subjects'],
     queryFn: GetSubjects,
-    retry: false, // Don't retry if it's a code/DB error
+    retry: false,
   });
 
   if (isLoading) return <div className="p-4 text-xs text-gray-500 animate-pulse">Loading hierarchy...</div>;
 
-  // DEBUG: Display the actual error message
   if (error) {
     console.error("GetSubjects Error:", error);
     return (
@@ -42,7 +41,6 @@ function TreeNode({ node }: { node: ent.Node }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedId = searchParams.get('nodeId');
-  // Ensure ID is a clean string (handling potential Wails/JSON inconsistencies)
   const nodeIdStr = String(node.id).replace(/"/g, '');
   const isSelected = selectedId === nodeIdStr;
 
@@ -72,7 +70,7 @@ function TreeNode({ node }: { node: ent.Node }) {
         className={clsx(
           "flex items-center py-1.5 px-2 rounded cursor-pointer transition-colors text-sm select-none",
           isSelected
-            ? "bg-[#89b4fa] text-black font-bold" // Using fixed color if css var fails
+            ? "bg-[#89b4fa] text-black font-bold"
             : "text-gray-400 hover:text-white hover:bg-white/5"
         )}
       >
@@ -82,7 +80,7 @@ function TreeNode({ node }: { node: ent.Node }) {
           )}
         </span>
         <Icon size={14} className="mr-2 shrink-0" />
-        <span className="truncate">{node.body || "Untitled"}</span>
+        <span className="truncate">{node.title || "Untitled"}</span>
       </div>
 
       {isOpen && (

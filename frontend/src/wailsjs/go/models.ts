@@ -1,3 +1,24 @@
+export namespace data {
+	
+	export class DashboardStats {
+	    total_nodes: number;
+	    total_attempts: number;
+	    due_cards: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DashboardStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.total_nodes = source["total_nodes"];
+	        this.total_attempts = source["total_attempts"];
+	        this.due_cards = source["due_cards"];
+	    }
+	}
+
+}
+
 export namespace ent {
 	
 	export class ErrorDefinitionEdges {

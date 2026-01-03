@@ -37,7 +37,11 @@ export default function LeafNodeView({ node }: { node: ent.Node }) {
       // Reconstruct body: Ensure Title is the first line if we want that convention
       // For now, we just save the 'body' state directly to keep it simple.
       // If you want strict Title separation, we'd Prepend 'title' to body here.
-      return UpdateNode(node.id as any, body);
+      return UpdateNode(
+        String(node.id),
+        title,
+        body,
+      );
     },
     onSuccess: (updated) => {
       setIsDirty(false);

@@ -187,11 +187,18 @@ export default function NodeModal({
         );
       }
 
-      queryClient.invalidateQueries({ queryKey: ["subjects"] });
-      if (parentId) queryClient.invalidateQueries({ queryKey: ["children", parentId] });
-      if (initialNode)
-        queryClient.invalidateQueries({ queryKey: ["node", String(initialNode.id)] });
+      await queryClient.refetchQueries({ queryKey: ["subjects"] });
+
+      if (parentId) {
+        await queryClient.refetchQueries({ queryKey: ["children", parentId] });
+      }
+
+      if (initialNode) {
+        await queryClient.refetchQueries({ queryKey: ["node", String(initialNode.id)] });
+      }
+
       onClose();
+
     } catch (e) {
       console.error(e);
     }
