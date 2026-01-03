@@ -97,11 +97,11 @@ func (s *LearningStepsService) processLearning(
 	steps := s.config.LearningSteps
 	currentStep := card.CurrentStep
 
-	// Grade 1 (Again) - restart from beginning
 	if grade == 1 {
 		nextReview := time.Now().Add(time.Duration(steps[0]) * time.Minute)
 
-		err := card.Update().
+		// FIX: Save returns (card, error)
+		_, err := card.Update().
 			SetCardState(string(StateLearning)).
 			SetCurrentStep(0).
 			SetNextReview(nextReview).
@@ -134,11 +134,11 @@ func (s *LearningStepsService) processLearning(
 	// Grade 2 (Hard) or 3 (Good) - advance through steps
 	nextStep := currentStep + 1
 
-	// Still in learning steps
 	if nextStep < len(steps) {
 		nextReview := time.Now().Add(time.Duration(steps[nextStep]) * time.Minute)
 
-		err := card.Update().
+		// FIX: Save returns (card, error)
+		_, err := card.Update().
 			SetCardState(string(StateLearning)).
 			SetCurrentStep(nextStep).
 			SetNextReview(nextReview).
@@ -177,11 +177,11 @@ func (s *LearningStepsService) processRelearning(
 	steps := s.config.RelearningSteps
 	currentStep := card.CurrentStep
 
-	// Grade 1 (Again) - restart relearning
 	if grade == 1 {
 		nextReview := time.Now().Add(time.Duration(steps[0]) * time.Minute)
 
-		err := card.Update().
+		// FIX: Save returns (card, error)
+		_, err := card.Update().
 			SetCardState(string(StateRelearning)).
 			SetCurrentStep(0).
 			SetNextReview(nextReview).
@@ -201,13 +201,14 @@ func (s *LearningStepsService) processRelearning(
 		}, nil
 	}
 
-	// Any other grade - complete relearning and return to review
+	// Line 210 - Continue relearning steps
 	nextStep := currentStep + 1
 
 	if nextStep < len(steps) {
 		nextReview := time.Now().Add(time.Duration(steps[nextStep]) * time.Minute)
 
-		err := card.Update().
+		// FIX: Save returns (card, error)
+		_, err := card.Update().
 			SetCardState(string(StateRelearning)).
 			SetCurrentStep(nextStep).
 			SetNextReview(nextReview).

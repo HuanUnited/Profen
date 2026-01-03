@@ -108,6 +108,7 @@ func (s *FSRSService) ReviewCard(
 	nextReview := time.Now().Add(time.Duration(intervalDays) * 24 * time.Hour)
 
 	// Update card
+	// Update card - FIX: Save returns (card, error)
 	updateBuilder := card.Update().
 		SetStability(newStability).
 		SetDifficulty(newDifficulty).
@@ -116,7 +117,6 @@ func (s *FSRSService) ReviewCard(
 		SetNextReview(nextReview).
 		SetReps(card.Reps + 1)
 
-	// If failed, will need to go to relearning (handled by coordinator)
 	if grade == GradeAgain {
 		updateBuilder = updateBuilder.
 			SetLapses(card.Lapses + 1).
@@ -124,7 +124,7 @@ func (s *FSRSService) ReviewCard(
 			SetCurrentStep(0)
 	}
 
-	err := updateBuilder.Save(ctx)
+	_, err := updateBuilder.Save(ctx) // FIX: Capture both return values
 	if err != nil {
 		return nil, err
 	}
@@ -139,27 +139,26 @@ func (s *FSRSService) ReviewCard(
 }
 
 // GraduateCard initializes a card that completed learning steps
+// Line 162 - GraduateCard method
 func (s *FSRSService) GraduateCard(
 	ctx context.Context,
 	card *ent.FsrsCard,
 	grade FSRSGrade,
-	graduatingInterval int, // From learning config
+	graduatingInterval int,
 ) (*FSRSResult, error) {
 
-	// Calculate initial stability and difficulty
 	stability := s.calculateInitialStability(grade)
 	difficulty := s.calculateInitialDifficulty(grade)
 
 	intervalDays := graduatingInterval
 	if grade == GradeEasy {
-		// Use easy interval from learning config instead
-		intervalDays = graduatingInterval * 4 // Example: 4x multiplier
+		intervalDays = graduatingInterval * 4
 	}
 
 	nextReview := time.Now().Add(time.Duration(intervalDays) * 24 * time.Hour)
 
-	// Update card to review state
-	err := card.Update().
+	// FIX: Save returns (card, error)
+	_, err := card.Update().
 		SetCardState(string(StateReview)).
 		SetStability(stability).
 		SetDifficulty(difficulty).

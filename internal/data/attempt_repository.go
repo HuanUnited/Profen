@@ -53,7 +53,8 @@ func (r *AttemptRepository) CreateAttempt(
 	}
 
 	// Add metadata (error logs, difficulty rating, etc.)
-	if metadata != nil && len(metadata) > 0 {
+	if len(metadata) > 0 {
+		// omitted nil check
 		builder = builder.SetMetadata(metadata)
 	}
 
