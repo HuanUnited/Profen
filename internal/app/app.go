@@ -21,6 +21,7 @@ type App struct {
 	nodeRepo        *data.NodeRepository
 	suggestionRepo  *data.SuggestionRepository
 	attemptRepo     *data.AttemptRepository
+	statsRepo       *data.StatsRepository
 }
 
 // NewApp creates a new App application struct
@@ -32,6 +33,7 @@ func NewApp(client *ent.Client) *App {
 		nodeRepo:        data.NewNodeRepository(client),
 		suggestionRepo:  data.NewSuggestionRepository(client),
 		attemptRepo:     data.NewAttemptRepository(client),
+		statsRepo:       data.NewStatsRepository(client),
 	}
 }
 
@@ -197,4 +199,9 @@ func (a *App) GetAttemptHistory(nodeIDStr string) ([]*ent.Attempt, error) {
 	}
 	// Now a.attemptRepo exists!
 	return a.attemptRepo.GetAttemptsByNode(a.ctx, id)
+}
+
+// Add method:
+func (a *App) GetDashboardStats() (*data.DashboardStats, error) {
+	return a.statsRepo.GetDashboardStats(a.ctx)
 }

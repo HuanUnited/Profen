@@ -20,7 +20,7 @@ func FsrsCardInitHook(c *ent.Client) ent.Hook {
 				return next.Mutate(ctx, m)
 			}
 
-			// 2. Execute Node Creation First (need the ID)
+			// 2. Execute Node Creation First
 			v, err := next.Mutate(ctx, m)
 			if err != nil {
 				return nil, err
@@ -31,18 +31,25 @@ func FsrsCardInitHook(c *ent.Client) ent.Hook {
 				return nil, fmt.Errorf("unexpected type %T", v)
 			}
 
-			// 3. Create the Default FSRS Card
-			// Default State is "New", Stability=0, Due=Now
-			err = c.FsrsCard.Create().
-				SetNodeID(newNode.ID).
-				SetState("new").
-				SetStability(0).
-				SetDifficulty(0).
-				SetDue(time.Now()). // Due immediately
-				Exec(ctx)
+			// 3. Conditional Creation: Only for Problem or Theory
+			if newNode.Type == node.TypeProblem || newNode.Type == node.TypeTheory {
+				err = c.FsrsCard.Create().
+					SetNodeID(newNode.ID).
+					SetState("new"). // New
+					SetStability(0).
+					SetDifficulty(0).
+					SetElapsedDays(0).
+					SetScheduledDays(0).
+					SetReps(0).
+					SetLapses(0).
+					SetDue(time.Now()). // Due Immediately
+					Exec(ctx)
 
-			if err != nil {
-				return nil, fmt.Errorf("failed to init fsrs card: %w", err)
+				if err != nil {
+					// Log error but allow node creation to succeed?
+					// Better to fail so we don't have orphaned practice nodes.
+					return nil, fmt.Errorf("failed to init fsrs card for practice node: %w", err)
+				}
 			}
 
 			return v, nil

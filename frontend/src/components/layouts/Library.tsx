@@ -1,40 +1,55 @@
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { GetNode } from "../../wailsjs/go/app/App";
-import ContainerNodeView from "./library/ContainerNodeView";
-import LeafNodeView from "./library/LeafNodeView";
 import { FileText } from "lucide-react";
+
+// Import Sub-Views
+import RootView from "../views/RootView";
+import ContainerView from "../views/ContainerView"; // Subjects & Topics
+import LeafView from "../views/LeafView"; // Problems & Theories
 
 export default function Library() {
   const [searchParams] = useSearchParams();
-  const nodeId = searchParams.get('nodeId');
+  const nodeId = searchParams.get("nodeId");
 
-  const { data: node, isLoading } = useQuery({
-    queryKey: ['node', nodeId],
-    queryFn: () => GetNode(nodeId!), // This will now succeed
+  const { data: node, isLoading, error } = useQuery({
+    queryKey: ["node", nodeId],
+    queryFn: () => GetNode(nodeId!),
     enabled: !!nodeId,
-    retry: false
+    retry: false,
   });
 
-  if (!nodeId) return <EmptyState />;
-  if (isLoading) return <div className="p-8 text-gray-500 font-mono animate-pulse">{">"} Fetching node signal...</div>;
-  if (!node) return <div className="p-8 text-red-400 font-mono">Error: Signal lost.</div>;
-
-  // CONTEXT SWITCHER LOGIC
-  if (node.type === 'subject' || node.type === 'topic') {
-    return <ContainerNodeView node={node} />;
-  } else {
-    return <LeafNodeView node={node} />;
+  // CASE 0: No Node Selected -> Root View (Subject Grid)
+  if (!nodeId) {
+    return <RootView />;
   }
-}
 
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-gray-600 space-y-4 animate-in fade-in">
-      <div className="p-6 bg-(--tui-sidebar) rounded-full">
-        <FileText size={48} className="opacity-50 text-(--tui-primary)" />
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center text-gray-500 font-mono animate-pulse">
+        Loading...
       </div>
-      <p className="font-mono text-sm tracking-wide">Select a node to view contents.</p>
-    </div>
-  )
+    );
+  }
+
+  if (error || !node) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-red-400">
+        <FileText size={48} className="mb-4 opacity-50" />
+        <p>Node not found or access denied.</p>
+      </div>
+    );
+  }
+
+  // CASE 1: Container Nodes (Subject, Topic)
+  if (node.type === "subject" || node.type === "topic") {
+    return <ContainerView node={node} />;
+  }
+
+  // CASE 2: Leaf Nodes (Problem, Theory, Term)
+  if (node.type === "problem" || node.type === "theory" || node.type === "term") {
+    return <LeafView node={node} />;
+  }
+
+  return <div>Unknown Node Type: {node.type}</div>;
 }
