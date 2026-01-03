@@ -205,3 +205,49 @@ func (a *App) GetAttemptHistory(nodeIDStr string) ([]*ent.Attempt, error) {
 func (a *App) GetDashboardStats() (*data.DashboardStats, error) {
 	return a.statsRepo.GetDashboardStats(a.ctx)
 }
+
+// GetNodeAssociations returns all associations for a node
+func (a *App) GetNodeAssociations(nodeIDStr string) ([]*ent.NodeAssociation, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid node UUID: %w", err)
+	}
+	return a.nodeRepo.GetNodeAssociations(a.ctx, id)
+}
+
+// GetRelatedNodes fetches nodes by relationship type
+// direction: "source" or "target"
+func (a *App) GetRelatedNodes(nodeIDStr, relTypeStr, direction string) ([]*ent.Node, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid node UUID: %w", err)
+	}
+
+	relType, err := parseRelType(relTypeStr)
+	if err != nil {
+		return nil, err
+	}
+
+	asSource := direction == "source"
+	return a.nodeRepo.GetRelatedNodesByType(a.ctx, id, relType, asSource)
+}
+
+// In app.go
+func (a *App) GetNodeMastery(nodeIDStr string) (map[string]interface{}, error) {
+	id, err := uuid.Parse(nodeIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID: %w", err)
+	}
+
+	masteryService := data.NewMasteryService(a.client)
+	correct, total, mastered, err := masteryService.GetNodeMastery(a.ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"correct_count":  correct,
+		"total_attempts": total,
+		"is_mastered":    mastered,
+	}, nil
+}

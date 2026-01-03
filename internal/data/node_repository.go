@@ -107,3 +107,52 @@ func (r *NodeRepository) SearchNodes(ctx context.Context, query string) ([]*ent.
 		Limit(20).
 		All(ctx)
 }
+
+// GetNodeAssociations returns all associations for a given node (both as source and target)
+func (r *NodeRepository) GetNodeAssociations(ctx context.Context, nodeID uuid.UUID) ([]*ent.NodeAssociation, error) {
+	return r.client.NodeAssociation.Query().
+		Where(
+			nodeassociation.Or(
+				nodeassociation.SourceIDEQ(nodeID),
+				nodeassociation.TargetIDEQ(nodeID),
+			),
+		).
+		WithSource(). // Eager load the source node
+		WithTarget(). // Eager load the target node
+		All(ctx)
+}
+
+// GetRelatedNodesByType returns nodes related by specific relationship type
+func (r *NodeRepository) GetRelatedNodesByType(
+	ctx context.Context,
+	nodeID uuid.UUID,
+	relType nodeassociation.RelType,
+	asSource bool,
+) ([]*ent.Node, error) {
+
+	if asSource {
+		// Current node is source -> find target nodes
+		return r.client.Node.Query().
+			Where(
+				node.HasIncomingAssociationsWith(
+					nodeassociation.And(
+						nodeassociation.SourceIDEQ(nodeID),
+						nodeassociation.RelTypeEQ(relType),
+					),
+				),
+			).
+			All(ctx)
+	} else {
+		// Current node is target -> find source nodes
+		return r.client.Node.Query().
+			Where(
+				node.HasOutgoingAssociationsWith(
+					nodeassociation.And(
+						nodeassociation.TargetIDEQ(nodeID),
+						nodeassociation.RelTypeEQ(relType),
+					),
+				),
+			).
+			All(ctx)
+	}
+}

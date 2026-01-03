@@ -18,9 +18,22 @@ export default function TheoryView({ node }: { node: ent.Node }) {
     queryFn: () => GetAttemptHistory(String(node.id)),
   });
 
-  // TODO: Fetch from node associations
-  const linkedProblems: any[] = [];
-  const relatedTheories: any[] = [];
+  // In ProblemView.tsx
+  const { data: associations } = useQuery({
+    queryKey: ["associations", String(node.id)],
+    queryFn: () => GetNodeAssociations(String(node.id)),
+  });
+
+  // Filter by relationship type
+  const similarProblems = associations
+    ?.filter(a => a.rel_type === "similar_to" && String(a.source_id) === String(node.id))
+    .map(a => a.edges?.target)
+    .filter(Boolean) || [];
+
+  const linkedTheories = associations
+    ?.filter(a => a.rel_type === "tests" && String(a.source_id) === String(node.id))
+    .map(a => a.edges?.target)
+    .filter(Boolean) || [];
 
   return (
     <div className="h-full flex flex-col p-6 animate-in fade-in slide-in-from-bottom-2">

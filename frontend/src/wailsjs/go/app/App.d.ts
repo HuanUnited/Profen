@@ -17,6 +17,12 @@ export function GetDueCards(arg1:number):Promise<Array<ent.Node>>;
 
 export function GetNode(arg1:string):Promise<ent.Node>;
 
+export function GetNodeAssociations(arg1:string):Promise<Array<ent.NodeAssociation>>;
+
+export function GetNodeMastery(arg1:string):Promise<Record<string, any>>;
+
+export function GetRelatedNodes(arg1:string,arg2:string,arg3:string):Promise<Array<ent.Node>>;
+
 export function GetSubjects():Promise<Array<ent.Node>>;
 
 export function ReviewCard(arg1:string,arg2:number,arg3:number,arg4:string):Promise<ent.FsrsCard>;

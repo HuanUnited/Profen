@@ -30,6 +30,18 @@ export function GetNode(arg1) {
   return window['go']['app']['App']['GetNode'](arg1);
 }
 
+export function GetNodeAssociations(arg1) {
+  return window['go']['app']['App']['GetNodeAssociations'](arg1);
+}
+
+export function GetNodeMastery(arg1) {
+  return window['go']['app']['App']['GetNodeMastery'](arg1);
+}
+
+export function GetRelatedNodes(arg1, arg2, arg3) {
+  return window['go']['app']['App']['GetRelatedNodes'](arg1, arg2, arg3);
+}
+
 export function GetSubjects() {
   return window['go']['app']['App']['GetSubjects']();
 }
