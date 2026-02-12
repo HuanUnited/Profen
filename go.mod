@@ -11,6 +11,8 @@ require (
 	github.com/wailsapp/wails/v2 v2.11.0
 )
 
+require github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
+
 require (
 	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
@@ -18,6 +20,7 @@ require (
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fergusstrange/embedded-postgres v1.33.0
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
